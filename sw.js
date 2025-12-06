@@ -2,7 +2,8 @@
 // SERVICE WORKER - PWA ve Offline Desteği
 // ============================================
 
-const CACHE_NAME = 'hasene-v1';
+const CACHE_NAME = 'hasene-v2';
+const DATA_CACHE_NAME = 'hasene-data-v2';
 const urlsToCache = [
     './',
     './index.html',
@@ -23,18 +24,41 @@ const urlsToCache = [
     './assets/images/icon-512.png'
 ];
 
+// JSON dosyaları için ayrı cache
+const dataUrlsToCache = [
+    './data/kelimebul.json',
+    './data/ayetoku.json',
+    './data/duaet.json',
+    './data/hadisoku.json'
+];
+
 // Install event
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Cache açıldı');
+        Promise.all([
+            // App dosyalarını cache'le
+            caches.open(CACHE_NAME).then((cache) => {
+                console.log('App cache açıldı');
                 return cache.addAll(urlsToCache);
+            }),
+            // JSON dosyalarını cache'le (background'da, hata olsa bile devam et)
+            caches.open(DATA_CACHE_NAME).then((cache) => {
+                console.log('Data cache açıldı');
+                // Her dosyayı ayrı ayrı ekle, biri başarısız olsa bile diğerleri yüklensin
+                return Promise.allSettled(
+                    dataUrlsToCache.map(url => 
+                        cache.add(url).catch(err => {
+                            console.warn(`${url} cache'lenemedi:`, err);
+                        })
+                    )
+                );
             })
-            .catch((error) => {
-                console.error('Cache hatası:', error);
-            })
+        ]).catch((error) => {
+            console.error('Cache hatası:', error);
+        })
     );
+    // Yeni Service Worker'ı hemen aktif et
+    self.skipWaiting();
 });
 
 // Activate event
@@ -43,43 +67,97 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
+                    // Yeni cache isimlerini koru, eski olanları sil
+                    if (cacheName !== CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
                         console.log('Eski cache siliniyor:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
+        }).then(() => {
+            // Tüm client'lara yeni Service Worker'ı bildir
+            return self.clients.claim();
         })
     );
 });
 
-// Fetch event - Network first strategy
+// Fetch event - Strateji: JSON dosyaları için Cache First, diğerleri için Network First
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                // Response'u cache'e ekle
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME)
-                    .then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                return response;
-            })
-            .catch(() => {
-                // Network hatası durumunda cache'den döndür
-                return caches.match(event.request)
-                    .then((response) => {
-                        if (response) {
+    const url = new URL(event.request.url);
+    const isDataFile = url.pathname.includes('/data/') && url.pathname.endsWith('.json');
+    
+    if (isDataFile) {
+        // JSON dosyaları için: Cache First (hızlı yükleme)
+        event.respondWith(
+            caches.match(event.request)
+                .then((cachedResponse) => {
+                    if (cachedResponse) {
+                        // Cache'den döndür ve arka planda güncelle
+                        fetch(event.request)
+                            .then((networkResponse) => {
+                                if (networkResponse.ok) {
+                                    const responseToCache = networkResponse.clone();
+                                    caches.open(DATA_CACHE_NAME)
+                                        .then((cache) => {
+                                            cache.put(event.request, responseToCache);
+                                        });
+                                }
+                            })
+                            .catch(() => {
+                                // Network hatası, cache'den devam et
+                            });
+                        return cachedResponse;
+                    }
+                    
+                    // Cache'de yoksa network'ten yükle
+                    return fetch(event.request)
+                        .then((response) => {
+                            if (response.ok) {
+                                const responseToCache = response.clone();
+                                caches.open(DATA_CACHE_NAME)
+                                    .then((cache) => {
+                                        cache.put(event.request, responseToCache);
+                                    });
+                            }
                             return response;
-                        }
-                        // Cache'de de yoksa offline sayfası göster
-                        if (event.request.destination === 'document') {
-                            return caches.match('./index.html');
-                        }
-                    });
-            })
-    );
+                        })
+                        .catch(() => {
+                            // Network hatası
+                            return new Response(JSON.stringify([]), {
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                        });
+                })
+        );
+    } else {
+        // Diğer dosyalar için: Network First
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Response'u cache'e ekle
+                    const responseToCache = response.clone();
+                    const cacheName = url.pathname.includes('/data/') ? DATA_CACHE_NAME : CACHE_NAME;
+                    caches.open(cacheName)
+                        .then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    return response;
+                })
+                .catch(() => {
+                    // Network hatası durumunda cache'den döndür
+                    return caches.match(event.request)
+                        .then((response) => {
+                            if (response) {
+                                return response;
+                            }
+                            // Cache'de de yoksa offline sayfası göster
+                            if (event.request.destination === 'document') {
+                                return caches.match('./index.html');
+                            }
+                        });
+                })
+        );
+    }
 });
 
 

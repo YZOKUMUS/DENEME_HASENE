@@ -3343,6 +3343,11 @@ window.addEventListener('load', async () => {
     // İstatistikleri yükle
     await loadStats();
     
+    // Arka planda JSON verilerini önceden yükle (non-blocking)
+    if (typeof preloadAllDataBackground === 'function') {
+        preloadAllDataBackground();
+    }
+    
     // Onboarding kontrolü
     if (!localStorage.getItem('hasene_onboarding_seen_v2')) {
         setTimeout(() => {

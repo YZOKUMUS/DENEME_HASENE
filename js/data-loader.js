@@ -16,19 +16,71 @@ const loadingStates = {
     hadis: false
 };
 
+// IndexedDB cache key'leri
+const CACHE_KEYS = {
+    kelime: 'kelime_data_cache',
+    ayet: 'ayet_data_cache',
+    dua: 'dua_data_cache',
+    hadis: 'hadis_data_cache'
+};
+
 /**
- * JSON dosyasını yükler
+ * JSON dosyasını yükler (IndexedDB cache ile)
  */
-async function loadJSONFile(filePath) {
+async function loadJSONFile(filePath, cacheKey) {
     try {
-        const response = await fetch(filePath);
+        // Önce IndexedDB'den kontrol et
+        if (typeof loadFromIndexedDB === 'function' && cacheKey) {
+            const cached = await loadFromIndexedDB(cacheKey);
+            if (cached && Array.isArray(cached) && cached.length > 0) {
+                infoLog(`${cacheKey} IndexedDB'den yüklendi:`, cached.length, 'item');
+                // Arka planda güncelle
+                fetch(filePath)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (typeof saveToIndexedDB === 'function') {
+                            saveToIndexedDB(cacheKey, data);
+                        }
+                    })
+                    .catch(() => {
+                        // Hata olsa bile devam et
+                    });
+                return cached;
+            }
+        }
+        
+        // IndexedDB'de yoksa network'ten yükle
+        const response = await fetch(filePath, {
+            cache: 'default',
+            headers: {
+                'Cache-Control': 'max-age=3600'
+            }
+        });
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const data = await response.json();
+        
+        // IndexedDB'ye kaydet
+        if (typeof saveToIndexedDB === 'function' && cacheKey && data) {
+            saveToIndexedDB(cacheKey, data).catch(() => {
+                // Hata olsa bile devam et
+            });
+        }
+        
         return data;
     } catch (error) {
         errorLog('JSON yükleme hatası:', error);
+        // Hata durumunda IndexedDB'den tekrar dene
+        if (typeof loadFromIndexedDB === 'function' && cacheKey) {
+            const cached = await loadFromIndexedDB(cacheKey);
+            if (cached) {
+                infoLog(`${cacheKey} hata durumunda IndexedDB'den yüklendi`);
+                return cached;
+            }
+        }
         throw error;
     }
 }
@@ -52,7 +104,7 @@ async function loadKelimeData() {
     loadingStates.kelime = true;
     try {
         infoLog('Kelime verileri yükleniyor...');
-        kelimeData = await loadJSONFile(CONFIG.DATA_PATH + 'kelimebul.json');
+        kelimeData = await loadJSONFile(CONFIG.DATA_PATH + 'kelimebul.json', CACHE_KEYS.kelime);
         infoLog('Kelime verileri yüklendi:', kelimeData.length, 'kelime');
         return kelimeData;
     } catch (error) {
@@ -81,7 +133,7 @@ async function loadAyetData() {
     loadingStates.ayet = true;
     try {
         infoLog('Ayet verileri yükleniyor...');
-        ayetData = await loadJSONFile(CONFIG.DATA_PATH + 'ayetoku.json');
+        ayetData = await loadJSONFile(CONFIG.DATA_PATH + 'ayetoku.json', CACHE_KEYS.ayet);
         infoLog('Ayet verileri yüklendi:', ayetData.length, 'ayet');
         return ayetData;
     } catch (error) {
@@ -110,7 +162,7 @@ async function loadDuaData() {
     loadingStates.dua = true;
     try {
         infoLog('Dua verileri yükleniyor...');
-        duaData = await loadJSONFile(CONFIG.DATA_PATH + 'duaet.json');
+        duaData = await loadJSONFile(CONFIG.DATA_PATH + 'duaet.json', CACHE_KEYS.dua);
         infoLog('Dua verileri yüklendi:', duaData.length, 'dua');
         return duaData;
     } catch (error) {
@@ -139,7 +191,7 @@ async function loadHadisData() {
     loadingStates.hadis = true;
     try {
         infoLog('Hadis verileri yükleniyor...');
-        hadisData = await loadJSONFile(CONFIG.DATA_PATH + 'hadisoku.json');
+        hadisData = await loadJSONFile(CONFIG.DATA_PATH + 'hadisoku.json', CACHE_KEYS.hadis);
         infoLog('Hadis verileri yüklendi:', hadisData.length, 'hadis');
         return hadisData;
     } catch (error) {
@@ -151,20 +203,38 @@ async function loadHadisData() {
 }
 
 /**
- * Tüm verileri önceden yükler (preload)
+ * Tüm verileri önceden yükler (preload) - arka planda
  */
 async function preloadAllData() {
     infoLog('Tüm veriler önceden yükleniyor...');
     try {
-        await Promise.all([
-            loadKelimeData(),
-            loadAyetData(),
-            loadDuaData(),
-            loadHadisData()
+        // Paralel yükleme, hata olsa bile devam et
+        await Promise.allSettled([
+            loadKelimeData().catch(err => errorLog('Kelime yükleme hatası:', err)),
+            loadAyetData().catch(err => errorLog('Ayet yükleme hatası:', err)),
+            loadDuaData().catch(err => errorLog('Dua yükleme hatası:', err)),
+            loadHadisData().catch(err => errorLog('Hadis yükleme hatası:', err))
         ]);
         infoLog('Tüm veriler yüklendi');
     } catch (error) {
         errorLog('Veri ön yükleme hatası:', error);
+    }
+}
+
+/**
+ * Arka planda verileri önceden yükler (non-blocking)
+ */
+function preloadAllDataBackground() {
+    // Sayfa yüklendikten sonra arka planda yükle
+    if (document.readyState === 'complete') {
+        preloadAllData();
+    } else {
+        window.addEventListener('load', () => {
+            // 1 saniye bekle, sonra arka planda yükle
+            setTimeout(() => {
+                preloadAllData();
+            }, 1000);
+        });
     }
 }
 
@@ -186,6 +256,7 @@ if (typeof window !== 'undefined') {
     window.loadDuaData = loadDuaData;
     window.loadHadisData = loadHadisData;
     window.preloadAllData = preloadAllData;
+    window.preloadAllDataBackground = preloadAllDataBackground;
     window.clearDataCache = clearDataCache;
 }
 
