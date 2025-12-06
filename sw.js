@@ -4,23 +4,23 @@
 
 const CACHE_NAME = 'hasene-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/js/config.js',
-    '/js/constants.js',
-    '/js/utils.js',
-    '/js/indexeddb-cache.js',
-    '/js/data-loader.js',
-    '/js/badge-visualization.js',
-    '/js/game-core.js',
-    '/js/detailed-stats.js',
-    '/js/notifications.js',
-    '/js/onboarding.js',
-    '/js/error-handler.js',
-    '/manifest.json',
-    '/assets/images/icon-192.png',
-    '/assets/images/icon-512.png'
+    './',
+    './index.html',
+    './style.css',
+    './js/config.js',
+    './js/constants.js',
+    './js/utils.js',
+    './js/indexeddb-cache.js',
+    './js/data-loader.js',
+    './js/badge-visualization.js',
+    './js/game-core.js',
+    './js/detailed-stats.js',
+    './js/notifications.js',
+    './js/onboarding.js',
+    './js/error-handler.js',
+    './manifest.json',
+    './assets/images/icon-192.png',
+    './assets/images/icon-512.png'
 ];
 
 // Install event
@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
                         }
                         // Cache'de de yoksa offline sayfası göster
                         if (event.request.destination === 'document') {
-                            return caches.match('/index.html');
+                            return caches.match('./index.html');
                         }
                     });
             })
