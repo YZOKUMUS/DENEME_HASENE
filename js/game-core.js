@@ -615,8 +615,8 @@ async function startKelimeCevirGame(subMode) {
         return;
     }
     
-    // Soruları seç
-    questions = getRandomItems(filteredWords, CONFIG.QUESTIONS_PER_GAME);
+    // Soruları seç (akıllı algoritma ile)
+    questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, false);
     
     // Ekranı göster
     document.getElementById('kelime-submode-selection').style.display = 'none';
@@ -897,7 +897,8 @@ async function startDinleBulGame() {
         return;
     }
     
-    questions = getRandomItems(filteredWords, CONFIG.QUESTIONS_PER_GAME);
+    // Soruları seç (akıllı algoritma ile)
+    questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, false);
     
     loadDinleQuestion();
 }
@@ -2372,6 +2373,142 @@ function getStrugglingWords() {
         });
     
     return allWords;
+}
+
+/**
+ * Akıllı kelime seçimi algoritması
+ * Öncelik sırası:
+ * 1. Son yanlış cevap verilen kelimeler (100x, 50x, 25x, ...)
+ * 2. Zorlanılan kelimeler (3x)
+ * 3. Review mode'da zorlanılan kelimelere ekstra öncelik
+ * 4. Ustalık seviyesi düşük kelimeler
+ * 5. Rastgele seçim (ağırlıklı)
+ */
+function selectIntelligentWords(words, count, isReviewMode = false) {
+    if (words.length === 0) return [];
+    
+    const today = getLocalDateString();
+    const recentWrongWords = [];
+    const strugglingWords = [];
+    const lowMasteryWords = [];
+    const normalWords = [];
+    
+    // Son 10 yanlış cevabı al (tarih sırasına göre)
+    const wrongAnswers = Object.keys(wordStats)
+        .map(wordId => {
+            const stats = wordStats[wordId];
+            if (stats.lastWrong) {
+                const daysDiff = getDaysDifference(stats.lastWrong, today);
+                return {
+                    wordId,
+                    stats,
+                    daysDiff,
+                    priority: daysDiff <= 0 ? 100 : daysDiff === 1 ? 50 : daysDiff === 2 ? 25 : daysDiff === 3 ? 12 : 0
+                };
+            }
+            return null;
+        })
+        .filter(w => w && w.priority > 0)
+        .sort((a, b) => a.daysDiff - b.daysDiff)
+        .slice(0, 10);
+    
+    // Kelimeleri kategorilere ayır
+    words.forEach(word => {
+        const wordId = word.id;
+        const stats = wordStats[wordId];
+        
+        if (!stats) {
+            // Hiç denenmemiş kelime - yüksek öncelik
+            normalWords.push({ word, priority: 5 });
+            return;
+        }
+        
+        // Son yanlış cevap verilen kelimeler
+        const recentWrong = wrongAnswers.find(w => w.wordId === wordId);
+        if (recentWrong) {
+            recentWrongWords.push({ word, priority: recentWrong.priority });
+            return;
+        }
+        
+        // Zorlanılan kelimeler (başarı oranı < 50% ve en az 2 deneme)
+        if (stats.successRate < 50 && stats.attempts >= 2) {
+            const priority = isReviewMode ? 10 : 3; // Review mode'da ekstra öncelik
+            strugglingWords.push({ word, priority, stats });
+            return;
+        }
+        
+        // Ustalık seviyesi düşük kelimeler (0-3)
+        if (stats.masteryLevel <= 3 && stats.attempts > 0) {
+            lowMasteryWords.push({ word, priority: 2, stats });
+            return;
+        }
+        
+        // Normal kelimeler
+        normalWords.push({ word, priority: 1 });
+    });
+    
+    // Öncelik sırasına göre birleştir
+    const allWordsWithPriority = [
+        ...recentWrongWords,
+        ...strugglingWords,
+        ...lowMasteryWords,
+        ...normalWords
+    ];
+    
+    // Ağırlıklı rastgele seçim
+    const selectedWords = [];
+    const usedIds = new Set();
+    
+    // Önce yüksek öncelikli kelimeleri seç
+    const highPriorityWords = allWordsWithPriority
+        .filter(w => w.priority >= 10 && !usedIds.has(w.word.id))
+        .sort((a, b) => b.priority - a.priority);
+    
+    // Yüksek öncelikli kelimelerden seç (en fazla count/2)
+    const highPriorityCount = Math.min(Math.floor(count / 2), highPriorityWords.length);
+    for (let i = 0; i < highPriorityCount && selectedWords.length < count; i++) {
+        selectedWords.push(highPriorityWords[i].word);
+        usedIds.add(highPriorityWords[i].word.id);
+    }
+    
+    // Kalan kelimeleri ağırlıklı rastgele seç
+    const remainingWords = allWordsWithPriority.filter(w => !usedIds.has(w.word.id));
+    
+    while (selectedWords.length < count && remainingWords.length > 0) {
+        // Toplam öncelik skorunu hesapla
+        const totalPriority = remainingWords.reduce((sum, w) => sum + w.priority, 0);
+        
+        // Rastgele bir sayı seç (0 - totalPriority arası)
+        let random = Math.random() * totalPriority;
+        
+        // Öncelik skoruna göre kelime seç
+        for (const item of remainingWords) {
+            random -= item.priority;
+            if (random <= 0) {
+                selectedWords.push(item.word);
+                usedIds.add(item.word.id);
+                // Seçilen kelimeyi listeden çıkar
+                const index = remainingWords.indexOf(item);
+                remainingWords.splice(index, 1);
+                break;
+            }
+        }
+    }
+    
+    // Eğer hala yeterli kelime yoksa, rastgele ekle
+    if (selectedWords.length < count) {
+        const remaining = words.filter(w => !usedIds.has(w.id));
+        const needed = count - selectedWords.length;
+        const randomWords = getRandomItems(remaining, needed);
+        selectedWords.push(...randomWords);
+    }
+    
+    // Son olarak karıştır (ama yüksek öncelikli kelimeler başta olsun)
+    const shuffled = shuffleArray(selectedWords);
+    
+    infoLog(`Akıllı kelime seçimi: ${recentWrongWords.length} son yanlış, ${strugglingWords.length} zorlanılan, ${lowMasteryWords.length} düşük ustalık, ${normalWords.length} normal`);
+    
+    return shuffled;
 }
 
 // ============================================
