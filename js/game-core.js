@@ -594,19 +594,41 @@ async function startKelimeCevirGame(subMode) {
     let filteredWords = filterByDifficulty(allWords, currentDifficulty);
     infoLog(`Filtrelenmiş kelime sayısı: ${filteredWords.length}`);
     
+    let strugglingWordIds = [];
+    let isReviewMode = false;
+    
     if (subMode === 'juz30') {
         filteredWords = filterJuz30(filteredWords);
         infoLog(`30.cüz filtresi uygulandı: ${filteredWords.length} kelime`);
     } else if (subMode === 'review') {
         // Zorlanılan kelimeleri al
-        const strugglingWordIds = getStrugglingWords();
+        strugglingWordIds = getStrugglingWords();
         if (strugglingWordIds.length > 0) {
             // Zorlanılan kelimelerin ID'lerini kullanarak gerçek kelime verilerini filtrele
             const strugglingIdsSet = new Set(strugglingWordIds.map(w => w.id));
             filteredWords = filteredWords.filter(w => strugglingIdsSet.has(w.id));
             infoLog(`Tekrar et filtresi uygulandı: ${filteredWords.length} kelime (${strugglingWordIds.length} zorlanılan kelime bulundu)`);
+            
+            // Eğer zorlanılan kelimeler yeterli değilse uyarı ver
+            if (filteredWords.length < CONFIG.QUESTIONS_PER_GAME) {
+                showCustomAlert(`⚠️ Sadece ${filteredWords.length} zorlanılan kelime bulundu. Oyun normal kelimelerle devam edecek.`, 'info');
+                // Normal kelimelerle devam et
+                filteredWords = filterByDifficulty(allWords, currentDifficulty);
+                isReviewMode = false; // Yeterli kelime yoksa review mode'u kapat
+            } else {
+                isReviewMode = true; // Yeterli zorlanılan kelime varsa review mode aktif
+            }
         } else {
+            // Zorlanılan kelime yoksa kullanıcıya bilgi ver
+            const hasPlayedBefore = Object.keys(wordStats).length > 0;
+            if (hasPlayedBefore) {
+                showCustomAlert('ℹ️ Henüz yanlış cevaplanan kelime bulunmuyor. Oyun normal kelimelerle devam edecek.', 'info');
+            } else {
+                showCustomAlert('ℹ️ İlk oyununuz! Oyunu oynadıkça yanlış cevapladığınız kelimeler bu modda tekrar edilecek.', 'info');
+            }
             infoLog('Tekrar et modu: Zorlanılan kelime bulunamadı, normal moda geçiliyor');
+            // Normal kelimelerle devam et (filteredWords zaten doğru)
+            isReviewMode = false;
         }
     }
     
@@ -616,7 +638,8 @@ async function startKelimeCevirGame(subMode) {
     }
     
     // Soruları seç (akıllı algoritma ile)
-    questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, false);
+    // Review mode'da zorlanılan kelimelere ekstra öncelik ver
+    questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, isReviewMode);
     
     // Ekranı göster
     document.getElementById('kelime-submode-selection').style.display = 'none';
