@@ -49,6 +49,19 @@
                     </div>
                 </div>
                 
+                <!-- PWA Install Banner -->
+                <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+                    <div class="pwa-install-content">
+                        <div class="pwa-install-icon">📱</div>
+                        <div class="pwa-install-text">
+                            <strong>Ana Ekrana Ekle</strong>
+                            <span>Daha hızlı erişim için uygulamayı ana ekranınıza ekleyin</span>
+                        </div>
+                        <button id="pwa-install-btn" class="pwa-install-btn">Yükle</button>
+                        <button id="pwa-install-close" class="pwa-install-close">×</button>
+                    </div>
+                </div>
+                
                 <!-- Günlük Vird -->
                 <div class="daily-goal-section">
                     <div class="daily-goal-header">
@@ -879,20 +892,78 @@
     <script src="js/onboarding.js"></script>
     <script src="js/error-handler.js"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration & PWA Install -->
     <script>
+        let deferredPrompt;
+        const pwaInstallBanner = document.getElementById('pwa-install-banner');
+        const pwaInstallBtn = document.getElementById('pwa-install-btn');
+        const pwaInstallClose = document.getElementById('pwa-install-close');
+        
+        // PWA yükleme prompt'unu yakala
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Varsayılan prompt'u engelle
+            e.preventDefault();
+            // Event'i sakla
+            deferredPrompt = e;
+            
+            // Banner'ı göster (eğer daha önce kapatılmadıysa)
+            const installBannerDismissed = localStorage.getItem('pwa-install-banner-dismissed');
+            if (!installBannerDismissed) {
+                pwaInstallBanner.style.display = 'block';
+            }
+        });
+        
+        // Yükle butonuna tıklandığında
+        if (pwaInstallBtn) {
+            pwaInstallBtn.addEventListener('click', async () => {
+                if (!deferredPrompt) {
+                    // iOS için manuel talimat göster
+                    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                        alert('iOS\'ta yüklemek için:\n1. Safari\'nin paylaş butonuna (⬆️) tıklayın\n2. "Ana Ekrana Ekle" seçeneğini seçin');
+                        return;
+                    }
+                    return;
+                }
+                
+                // Prompt'u göster
+                deferredPrompt.prompt();
+                
+                // Kullanıcının seçimini bekle
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    console.log('Kullanıcı PWA\'yı yükledi');
+                } else {
+                    console.log('Kullanıcı PWA yüklemeyi reddetti');
+                }
+                
+                // Prompt'u temizle
+                deferredPrompt = null;
+                pwaInstallBanner.style.display = 'none';
+            });
+        }
+        
+        // Kapat butonuna tıklandığında
+        if (pwaInstallClose) {
+            pwaInstallClose.addEventListener('click', () => {
+                pwaInstallBanner.style.display = 'none';
+                localStorage.setItem('pwa-install-banner-dismissed', 'true');
+            });
+        }
+        
+        // PWA zaten yüklüyse banner'ı gösterme
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            if (pwaInstallBanner) {
+                pwaInstallBanner.style.display = 'none';
+            }
+        }
+        
+        // Service Worker kaydı
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', { scope: './' })
                     .then(reg => {
                         console.log('Service Worker registered:', reg.scope);
-                        // PWA yükleme prompt'u için
-                        if (reg.waiting) {
-                            console.log('Service Worker waiting');
-                        }
-                        if (reg.installing) {
-                            console.log('Service Worker installing');
-                        }
                     })
                     .catch(err => console.error('Service Worker registration failed:', err));
             });
