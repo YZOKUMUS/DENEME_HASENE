@@ -90,6 +90,12 @@ let currentDifficulty = 'medium';
 let currentGameMode = null;
 let currentSubMode = null;
 
+// Doğru cevap pozisyon takibi (eşit dağılım için)
+let correctAnswerPositions = {
+    count: [0, 0, 0, 0], // Her pozisyonun kullanım sayısı
+    total: 0 // Toplam soru sayısı
+};
+
 // Audio yönetimi - seslerin üst üste çalmasını önlemek için
 let currentAudio = null;
 window.currentAudio = null; // Global erişim için
@@ -582,6 +588,12 @@ async function startKelimeCevirGame(subMode) {
     // Can sistemi kaldırıldı
     lives = -1;
     
+    // Doğru cevap pozisyon takibini sıfırla
+    correctAnswerPositions = {
+        count: [0, 0, 0, 0],
+        total: 0
+    };
+    
     // Verileri yükle
     const allWords = await loadKelimeData();
     if (!allWords || allWords.length === 0) {
@@ -738,7 +750,22 @@ function loadKelimeQuestion() {
         .filter((v, i, a) => a.indexOf(v) === i) // Tekrarları kaldır
         .slice(0, 3);
     
-    const options = shuffleArray([correctAnswer, ...wrongAnswers]);
+    // Eşit dağılımlı karıştırma
+    const allOptions = [correctAnswer, ...wrongAnswers];
+    const shuffled = shuffleWithEqualDistribution(
+        allOptions,
+        correctAnswer,
+        correctAnswerPositions.count
+    );
+    const options = shuffled.options;
+    const correctIndex = shuffled.correctIndex;
+    
+    // Doğru cevap pozisyonunu sakla (yanlış cevap durumunda göstermek için)
+    currentQuestionData.correctIndex = correctIndex;
+    
+    // Pozisyon sayacını güncelle
+    correctAnswerPositions.count[correctIndex]++;
+    correctAnswerPositions.total++;
     
     // Butonları güncelle
     const optionButtons = document.querySelectorAll('#kelime-cevir-screen .option-btn');
@@ -746,7 +773,7 @@ function loadKelimeQuestion() {
         btn.textContent = options[index];
         btn.classList.remove('correct', 'wrong', 'disabled');
         btn.disabled = false;
-        btn.onclick = () => checkKelimeAnswer(index, options[index] === correctAnswer);
+        btn.onclick = () => checkKelimeAnswer(index, index === correctIndex);
     });
     
     // Soru numarası
@@ -808,12 +835,17 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
         optionButtons[selectedIndex].classList.add('wrong');
         
         // Doğru cevabı göster
-        optionButtons.forEach((btn, index) => {
-            const optionText = btn.textContent;
-            if (optionText === currentQuestionData.anlam) {
-                btn.classList.add('correct');
-            }
-        });
+        if (currentQuestionData.correctIndex !== undefined) {
+            optionButtons[currentQuestionData.correctIndex].classList.add('correct');
+        } else {
+            // Fallback: eski yöntem
+            optionButtons.forEach((btn, index) => {
+                const optionText = btn.textContent;
+                if (optionText === currentQuestionData.anlam) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
         
         sessionWrong++;
         comboCount = 0;
@@ -1016,7 +1048,22 @@ function loadDinleQuestion() {
         .filter((v, i, a) => a.indexOf(v) === i)
         .slice(0, 3);
     
-    const options = shuffleArray([correctAnswer, ...wrongAnswers]);
+    // Eşit dağılımlı karıştırma
+    const allOptions = [correctAnswer, ...wrongAnswers];
+    const shuffled = shuffleWithEqualDistribution(
+        allOptions,
+        correctAnswer,
+        correctAnswerPositions.count
+    );
+    const options = shuffled.options;
+    const correctIndex = shuffled.correctIndex;
+    
+    // Doğru cevap pozisyonunu sakla (yanlış cevap durumunda göstermek için)
+    currentQuestionData.correctIndex = correctIndex;
+    
+    // Pozisyon sayacını güncelle
+    correctAnswerPositions.count[correctIndex]++;
+    correctAnswerPositions.total++;
     
     // Butonları güncelle
     const optionButtons = document.querySelectorAll('#dinle-bul-screen .option-btn');
@@ -1024,7 +1071,7 @@ function loadDinleQuestion() {
         btn.textContent = options[index];
         btn.classList.remove('correct', 'wrong', 'disabled');
         btn.disabled = false;
-        btn.onclick = () => checkDinleAnswer(index, options[index] === correctAnswer);
+        btn.onclick = () => checkDinleAnswer(index, index === correctIndex);
     });
     
     // Soru numarası
@@ -1081,11 +1128,17 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         // Yanlış cevap - sadece doğru cevabı göster, puan kaybı yok
         optionButtons[selectedIndex].classList.add('wrong');
         
-        optionButtons.forEach((btn, index) => {
-            if (btn.textContent === currentQuestionData.kelime) {
-                btn.classList.add('correct');
-            }
-        });
+        // Doğru cevabı göster
+        if (currentQuestionData.correctIndex !== undefined) {
+            optionButtons[currentQuestionData.correctIndex].classList.add('correct');
+        } else {
+            // Fallback: eski yöntem
+            optionButtons.forEach((btn, index) => {
+                if (btn.textContent === currentQuestionData.kelime) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
         
         sessionWrong++;
         comboCount = 0;
@@ -1121,6 +1174,12 @@ async function startBoslukDoldurGame() {
     sessionWrong = 0;
     comboCount = 0;
     maxCombo = 0;
+    
+    // Doğru cevap pozisyon takibini sıfırla
+    correctAnswerPositions = {
+        count: [0, 0, 0, 0],
+        total: 0
+    };
     
     const allAyet = await loadAyetData();
     if (!allAyet || allAyet.length === 0) {
@@ -1227,7 +1286,22 @@ async function loadBoslukQuestion() {
         .filter((v, i, a) => a.indexOf(v) === i)
         .slice(0, 3);
     
-    const options = shuffleArray([missingWord, ...wrongWords]);
+    // Eşit dağılımlı karıştırma
+    const allOptions = [missingWord, ...wrongWords];
+    const shuffled = shuffleWithEqualDistribution(
+        allOptions,
+        missingWord,
+        correctAnswerPositions.count
+    );
+    const options = shuffled.options;
+    const correctIndex = shuffled.correctIndex;
+    
+    // Doğru cevap pozisyonunu sakla (yanlış cevap durumunda göstermek için)
+    currentQuestionData.correctIndex = correctIndex;
+    
+    // Pozisyon sayacını güncelle
+    correctAnswerPositions.count[correctIndex]++;
+    correctAnswerPositions.total++;
     
     // Butonları güncelle
     const optionButtons = document.querySelectorAll('#bosluk-doldur-screen .option-btn');
@@ -1235,7 +1309,7 @@ async function loadBoslukQuestion() {
         btn.textContent = options[index];
         btn.classList.remove('correct', 'wrong', 'disabled');
         btn.disabled = false;
-        btn.onclick = () => checkBoslukAnswer(index, options[index] === missingWord);
+        btn.onclick = () => checkBoslukAnswer(index, index === correctIndex);
     });
     
     // Soru numarası
@@ -1322,11 +1396,17 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
     } else {
         optionButtons[selectedIndex].classList.add('wrong');
         
-        optionButtons.forEach((btn, index) => {
-            if (btn.textContent === currentQuestionData.missingWord) {
-                btn.classList.add('correct');
-            }
-        });
+        // Doğru cevabı göster
+        if (currentQuestionData.correctIndex !== undefined) {
+            optionButtons[currentQuestionData.correctIndex].classList.add('correct');
+        } else {
+            // Fallback: eski yöntem
+            optionButtons.forEach((btn, index) => {
+                if (btn.textContent === currentQuestionData.missingWord) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
         
         sessionWrong++;
         comboCount = 0;

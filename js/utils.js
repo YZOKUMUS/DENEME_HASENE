@@ -210,6 +210,69 @@ function shuffleArray(array) {
 }
 
 /**
+ * Doğru cevabı eşit dağılımla yerleştirir
+ * @param {Array} options - Tüm seçenekler (doğru + yanlış)
+ * @param {*} correctAnswer - Doğru cevap
+ * @param {Array} positionCounts - Her pozisyonun kullanım sayısı [0,0,0,0]
+ * @returns {Object} {options: Array, correctIndex: number}
+ */
+function shuffleWithEqualDistribution(options, correctAnswer, positionCounts) {
+    // Doğru cevabın mevcut pozisyonunu bul
+    const currentCorrectIndex = options.indexOf(correctAnswer);
+    
+    // En az kullanılan pozisyonları bul
+    const minCount = Math.min(...positionCounts);
+    const leastUsedPositions = positionCounts
+        .map((count, index) => ({ count, index }))
+        .filter(item => item.count === minCount)
+        .map(item => item.index);
+    
+    // Eğer doğru cevap zaten en az kullanılan pozisyonlardan birindeyse, olduğu gibi bırak
+    if (leastUsedPositions.includes(currentCorrectIndex)) {
+        // Diğer seçenekleri karıştır
+        const otherOptions = options.filter((opt, idx) => idx !== currentCorrectIndex);
+        const shuffledOthers = shuffleArray(otherOptions);
+        
+        // Doğru cevabı yerinde bırak, diğerlerini karıştır
+        const result = [...options];
+        let otherIndex = 0;
+        for (let i = 0; i < result.length; i++) {
+            if (i !== currentCorrectIndex) {
+                result[i] = shuffledOthers[otherIndex++];
+            }
+        }
+        
+        return {
+            options: result,
+            correctIndex: currentCorrectIndex
+        };
+    }
+    
+    // Doğru cevabı en az kullanılan pozisyonlardan birine taşı
+    const targetPosition = leastUsedPositions[Math.floor(Math.random() * leastUsedPositions.length)];
+    
+    // Yeni düzenleme oluştur
+    const result = [...options];
+    const temp = result[currentCorrectIndex];
+    result[currentCorrectIndex] = result[targetPosition];
+    result[targetPosition] = temp;
+    
+    // Diğer seçenekleri de karıştır (doğru cevap hariç)
+    const otherIndices = [0, 1, 2, 3].filter(i => i !== targetPosition);
+    const otherOptions = otherIndices.map(i => result[i]);
+    const shuffledOthers = shuffleArray(otherOptions);
+    
+    otherIndices.forEach((originalIndex, shuffleIndex) => {
+        result[originalIndex] = shuffledOthers[shuffleIndex];
+    });
+    
+    return {
+        options: result,
+        correctIndex: targetPosition
+    };
+}
+
+/**
  * Debounce fonksiyonu
  */
 function debounce(func, wait) {
@@ -424,5 +487,6 @@ if (typeof window !== 'undefined') {
     window.safeSetItem = safeSetItem;
     window.filterByDifficulty = filterByDifficulty;
     window.filterJuz30 = filterJuz30;
+    window.shuffleWithEqualDistribution = shuffleWithEqualDistribution;
 }
 
