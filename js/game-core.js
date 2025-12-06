@@ -1832,9 +1832,17 @@ function startGame(gameMode) {
  * Mevcut oyun ilerlemesini kaydeder (oyun bitmeden çıkıldığında)
  */
 async function saveCurrentGameProgress() {
-    if (!currentGame || sessionScore === 0 && sessionCorrect === 0) {
-        return; // Oyun yoksa veya ilerleme yoksa kaydetme
+    // Oyun yoksa veya hiç soru cevaplanmamışsa kaydetme
+    if (!currentGame || (sessionCorrect === 0 && sessionWrong === 0)) {
+        return;
     }
+    
+    infoLog('Oyun ilerlemesi kaydediliyor:', {
+        game: currentGame,
+        score: sessionScore,
+        correct: sessionCorrect,
+        wrong: sessionWrong
+    });
     
     // Global puanlara ekle
     await addToGlobalPoints(sessionScore, sessionCorrect);
@@ -1848,18 +1856,29 @@ async function saveCurrentGameProgress() {
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
     gameStats.totalWrong += sessionWrong;
-    if (currentGameMode) {
-        gameStats.gameModeCounts[currentGameMode] = (gameStats.gameModeCounts[currentGameMode] || 0) + 1;
+    
+    // currentGameMode yerine currentGame kullan
+    const gameModeKey = currentGame === 'kelime-cevir' ? 'kelime-cevir' :
+                        currentGame === 'dinle-bul' ? 'dinle-bul' :
+                        currentGame === 'bosluk-doldur' ? 'bosluk-doldur' : null;
+    
+    if (gameModeKey) {
+        gameStats.gameModeCounts[gameModeKey] = (gameStats.gameModeCounts[gameModeKey] || 0) + 1;
     }
     
     // Görev ilerlemesini güncelle
-    updateTaskProgress(currentGameMode, {
+    updateTaskProgress(gameModeKey, {
         correct: sessionCorrect,
         wrong: sessionWrong,
         points: sessionScore,
         combo: maxCombo,
         perfect: 0 // Oyun bitmeden çıkıldığı için perfect bonus yok
     });
+    
+    // İstatistikleri kaydet
+    debouncedSaveStats();
+    
+    infoLog('Oyun ilerlemesi kaydedildi');
     
     // Rozetleri ve başarımları kontrol et
     checkBadges();
