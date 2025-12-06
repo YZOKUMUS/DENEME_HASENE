@@ -1,0 +1,84 @@
+// ============================================
+// CONFIG - Yapılandırma ve Debug Ayarları
+// ============================================
+
+const CONFIG = {
+    // Debug Mode
+    DEBUG: false,
+    
+    // Logging
+    LOG_LEVEL: 'info', // 'debug', 'info', 'warn', 'error'
+    
+    // Performance
+    DEBOUNCE_DELAY: 500, // ms
+    LAZY_LOAD_DELAY: 100, // ms
+    
+    // Game Settings
+    QUESTIONS_PER_GAME: 10,
+    TIME_LIMIT_PER_QUESTION: 0, // Zaman limiti kaldırıldı
+    LIVES_COUNT: 3, // for 3lives mode
+    
+    // Points
+    POINTS_CORRECT: 10,
+    POINTS_WRONG: 0, // Yanlış cevap için puan kaybı yok
+    COMBO_BONUS: 5, // every 3 correct answers
+    PERFECT_LESSON_BONUS_PERCENT: 0.5, // 50% of session score
+    
+    // Daily Goal Defaults
+    DAILY_GOAL_DEFAULT: 2700,
+    DAILY_GOAL_LEVELS: {
+        easy: 1300,
+        normal: 2700,
+        hard: 5400,
+        serious: 6000
+    },
+    
+    // Streak
+    DAILY_GOAL_CORRECT: 5, // minimum correct answers to maintain streak
+    
+    // Storage
+    STORAGE_PREFIX: 'hasene_',
+    INDEXEDDB_NAME: 'HaseneGameDB',
+    INDEXEDDB_VERSION: 1,
+    
+    // API/Data
+    DATA_PATH: './data/',
+    
+    // Notifications
+    NOTIFICATIONS_ENABLED: true,
+    DAILY_REMINDER_TIME: '09:00',
+    TASK_REMINDER_TIME: '22:00'
+};
+
+// Debug logging function
+function debugLog(...args) {
+    if (CONFIG.DEBUG || CONFIG.LOG_LEVEL === 'debug') {
+        console.log('[DEBUG]', ...args);
+    }
+}
+
+function infoLog(...args) {
+    if (['debug', 'info'].includes(CONFIG.LOG_LEVEL)) {
+        console.log('[INFO]', ...args);
+    }
+}
+
+function warnLog(...args) {
+    if (['debug', 'info', 'warn'].includes(CONFIG.LOG_LEVEL)) {
+        console.warn('[WARN]', ...args);
+    }
+}
+
+function errorLog(...args) {
+    console.error('[ERROR]', ...args);
+}
+
+// Export for use in other files
+if (typeof window !== 'undefined') {
+    window.CONFIG = CONFIG;
+    window.debugLog = debugLog;
+    window.infoLog = infoLog;
+    window.warnLog = warnLog;
+    window.errorLog = errorLog;
+}
+

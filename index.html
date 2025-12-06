@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hasene Arapça Dersi - Kuran kelimelerini öğren, rozet topla, günlük görevleri tamamla">
+    <meta name="theme-color" content="#764ba2">
+    <title>Hasene Arapça Dersi</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Reem+Kufi:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Yükleniyor...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container" id="main-container">
+        <!-- Ana Menü -->
+        <div id="main-menu" class="main-menu">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-label">Hasene</span>
+                        <span class="stat-value" id="total-points">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">⭐ Yıldız</span>
+                        <span class="stat-value" id="star-points">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mertebe</span>
+                        <span class="stat-value" id="current-level">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">🔥 Seri</span>
+                        <span class="stat-value" id="current-streak">0</span>
+                    </div>
+                </div>
+                
+                <!-- Günlük Vird -->
+                <div class="daily-goal-section">
+                    <div class="daily-goal-header">
+                        <div class="daily-goal-title-section">
+                            <h3>🎯 Günlük Vird</h3>
+                            <div class="progress-text">
+                                <span id="daily-goal-current">0</span> / <span id="daily-goal-target">2700</span> Hasene
+                                <span id="daily-goal-percent">(0%)</span>
+                            </div>
+                        </div>
+                        <button class="settings-btn" id="daily-goal-settings-btn" aria-label="Günlük vird ayarları">⚙️</button>
+                    </div>
+                    <div class="daily-goal-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="daily-goal-progress"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zorluk Seçici -->
+            <div class="difficulty-selector">
+                <h3>Zorluk Seviyesi</h3>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">🌱 Kolay</button>
+                    <button class="difficulty-btn active" data-difficulty="medium">⚖️ Orta</button>
+                    <button class="difficulty-btn" data-difficulty="hard">🔥 Zor</button>
+                </div>
+            </div>
+
+            <!-- Oyun Modları Grid -->
+            <div class="game-modes-grid">
+                <div class="game-card" data-game="kelime-cevir">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/kelime-cevir.png" alt="Kelime Çevir" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">📚</span>
+                    </div>
+                    <h3>Kelime Çevir</h3>
+                    <p>Arapça kelimelerin Türkçe meâl karşılığını bul</p>
+                </div>
+
+                <div class="game-card" data-game="dinle-bul">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/dinle-bul.png" alt="Dinle Bul" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">🎧</span>
+                    </div>
+                    <h3>Dinle Bul</h3>
+                    <p>Kuran'da geçen Arapça kelimeyi dinle ve bul</p>
+                </div>
+
+                <div class="game-card" data-game="bosluk-doldur">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/bosluk-doldur.png" alt="Boşluk Doldur" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">✍️</span>
+                    </div>
+                    <h3>Boşluk Doldur</h3>
+                    <p>Ayetteki eksik kelimeyi tamamla</p>
+                </div>
+
+                <div class="game-card" data-game="ayet-oku">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/ayet-oku.png" alt="Ayet Oku" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">📖</span>
+                    </div>
+                    <h3>Ayet Oku</h3>
+                    <p>Ayetin Arapça'sını oku, dinle ve meâli idrak et</p>
+                </div>
+
+                <div class="game-card" data-game="dua-et">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/dua-et.png" alt="Dua Et" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">🤲</span>
+                    </div>
+                    <h3>Dua Et</h3>
+                    <p>Kuran'da geçen duaları dinle ve öğren</p>
+                </div>
+
+                <div class="game-card" data-game="hadis-oku">
+                    <div class="game-icon">
+                        <img src="assets/game-icons/hadis-oku.png" alt="Hadis Oku" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span style="display:none;">📜</span>
+                    </div>
+                    <h3>Hadis Oku</h3>
+                    <p>Hadis-i şerifleri oku ve istifade et</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kelime Çevir Oyun Ekranı -->
+        <div id="kelime-cevir-screen" class="game-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <div class="game-info">
+                    <span id="question-number">1/10</span>
+                    <span id="session-score">Hasene: 0</span>
+                </div>
+            </div>
+
+            <!-- Alt Mod Seçimi -->
+            <div id="kelime-submode-selection" class="submode-selection">
+                <h3>Oyun Modu Seçin</h3>
+                <div class="submode-buttons">
+                    <button class="submode-btn" data-submode="juz30">📖 30.cüz Ayetlerinin Kelimeleri</button>
+                    <button class="submode-btn" data-submode="review">🔄 Tekrar Et</button>
+                </div>
+            </div>
+
+            <!-- Oyun İçeriği -->
+            <div id="kelime-game-content" class="game-content" style="display:none;">
+                <div class="question-section">
+                    <div class="arabic-word-container">
+                        <div class="arabic-word" id="arabic-word">بِسْمِ</div>
+                        <div class="kelime-metadata">
+                            <span class="kelime-id" id="kelime-id"></span>
+                            <button class="play-audio-speaker-btn kelime-speaker-btn" id="kelime-play-audio-btn" title="Kelimeyi Dinle">
+                                <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <button class="option-btn" data-index="0"></button>
+                    <button class="option-btn" data-index="1"></button>
+                    <button class="option-btn" data-index="2"></button>
+                    <button class="option-btn" data-index="3"></button>
+                </div>
+
+                <div class="game-actions">
+                    <button class="hint-btn" id="hint-btn">💡 İpucu</button>
+                </div>
+
+                <div class="combo-display" id="combo-display" style="display:none;">
+                    <span>🔥 Combo: <span id="combo-count">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dinle Bul Oyun Ekranı -->
+        <div id="dinle-bul-screen" class="game-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <div class="game-info">
+                    <span id="dinle-question-number">1/10</span>
+                    <span id="dinle-session-score">Hasene: 0</span>
+                </div>
+            </div>
+
+            <div class="game-content">
+                <div class="question-section">
+                    <div class="arabic-word-container">
+                        <p class="instruction">
+                            <span class="headphone-icon">🎧</span>
+                            Dinlediğin kelimeyi seç
+                        </p>
+                        <div class="kelime-metadata">
+                            <span class="kelime-id" id="dinle-id"></span>
+                            <button class="play-audio-speaker-btn kelime-speaker-btn" id="play-audio-btn" title="Kelimeyi Dinle">
+                                <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <button class="option-btn" data-index="0"></button>
+                    <button class="option-btn" data-index="1"></button>
+                    <button class="option-btn" data-index="2"></button>
+                    <button class="option-btn" data-index="3"></button>
+                </div>
+
+                <div class="combo-display" id="dinle-combo-display" style="display:none;">
+                    <span>🔥 Combo: <span id="dinle-combo-count">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boşluk Doldur Oyun Ekranı -->
+        <div id="bosluk-doldur-screen" class="game-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <div class="game-info">
+                    <span id="bosluk-question-number">1/10</span>
+                    <span id="bosluk-session-score">Hasene: 0</span>
+                </div>
+            </div>
+
+            <div class="game-content">
+                <div class="question-section">
+                    <div class="arabic-word-container">
+                        <div class="verse-text" id="verse-text">
+                            بِسْمِ <span class="blank" id="blank-word"></span> الرَّحْمَٰنِ الرَّحِيمِ
+                        </div>
+                        <div class="kelime-metadata">
+                            <span class="kelime-id" id="bosluk-verse-id"></span>
+                            <button class="play-audio-speaker-btn kelime-speaker-btn" id="bosluk-play-audio-btn" title="Ayeti Dinle">
+                                <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                            </button>
+                        </div>
+                    </div>
+                    <div class="verse-metadata">
+                        <span class="verse-meal" id="verse-meal"></span>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <button class="option-btn" data-index="0"></button>
+                    <button class="option-btn" data-index="1"></button>
+                    <button class="option-btn" data-index="2"></button>
+                    <button class="option-btn" data-index="3"></button>
+                </div>
+
+                <div class="combo-display" id="bosluk-combo-display" style="display:none;">
+                    <span>🔥 Combo: <span id="bosluk-combo-count">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ayet Oku Ekranı -->
+        <div id="ayet-oku-screen" class="reading-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <h2>Ayet Oku</h2>
+            </div>
+
+            <div class="reading-content">
+                <div class="verse-info">
+                    <span class="verse-id verse-info-id" id="ayet-verse-id"></span>
+                    <h3 id="ayet-sure-name">Fâtiha Suresi</h3>
+                    <button class="play-audio-speaker-btn verse-info-speaker" id="ayet-play-audio-btn" title="Ayeti Dinle">
+                        <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                    </button>
+                </div>
+
+                <div class="arabic-word-container">
+                    <div class="arabic-text" id="ayet-arabic-text">
+                        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    </div>
+                </div>
+
+                <div class="translation-text" id="ayet-translation">
+                    Rahman ve Rahim olan Allah'ın adıyla:
+                </div>
+
+                <div class="reading-actions">
+                    <button class="nav-btn" id="ayet-prev-btn">← Önceki</button>
+                    <button class="nav-btn" id="ayet-next-btn">Sonraki →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dua Et Ekranı -->
+        <div id="dua-et-screen" class="reading-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <h2>Dua Et</h2>
+            </div>
+
+            <div class="reading-content">
+                <div class="verse-info">
+                    <span class="verse-id verse-info-id" id="dua-verse-id"></span>
+                    <h3 id="dua-verse">2:127</h3>
+                    <button class="play-audio-speaker-btn verse-info-speaker" id="dua-play-audio-btn" title="Duayı Dinle">
+                        <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                    </button>
+                </div>
+
+                <div class="arabic-word-container">
+                    <div class="arabic-text" id="dua-arabic-text">
+                        رَبَّنَا تَقَبَّلۡ مِنَّآۖ إِنَّكَ أَنتَ ٱلسَّمِيعُ ٱلۡعَلِيمُ
+                    </div>
+                </div>
+
+                <div class="translation-text" id="dua-translation">
+                    İbrahim ve İsmail, Kabenin temellerini yükseltiyordu: 'Rabbimiz! Yaptığımızı kabul buyur. Şüphesiz ki, Sen hem işitir hem bilirsin'
+                </div>
+
+                <div class="reading-actions">
+                    <button class="nav-btn" id="dua-prev-btn">← Önceki</button>
+                    <button class="nav-btn" id="dua-next-btn">Sonraki →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hadis Oku Ekranı -->
+        <div id="hadis-oku-screen" class="reading-screen" style="display:none;">
+            <div class="game-header">
+                <button class="back-btn" onclick="goToMainMenu(true)">← Geri</button>
+                <h2>Hadis Oku</h2>
+            </div>
+
+            <div class="reading-content">
+                <div class="hadis-info">
+                    <div class="hadis-category" id="hadis-category">İMAN VE İSLAM HAKKINDA</div>
+                    <div class="hadis-chapter" id="hadis-chapter">İman ve İslam'ın Fazileti</div>
+                    <div class="hadis-header" id="hadis-header">Ubade İbnus-Samit el-Ensari</div>
+                </div>
+
+                <div class="hadis-text" id="hadis-text">
+                    Hz. Peygamber (sav) şöyle buyurdular: "Kim Allah'tan başka ilah olmadığına Allah'ın bir ve şeriksiz olduğuna ve Muhammed'in onun kulu ve Resulü (elçisi) olduğuna, keza Hz. İsa'nın da Allah'ın kulu ve elçisi olup, Hz. Meryem'e attığı bir kelimesi ve kendinden bir ruh olduğuna, keza cennet ve cehennemin hak olduğuna şehadet ederse, her ne amel üzere olursa olsun Allah onu cennetine koyacaktır."
+                </div>
+
+                <div class="hadis-ref" id="hadis-ref">
+                    Buhari, Enbiya 47; Müslim, İman 46, (28); Tirmizi, İman 17, (2640)
+                </div>
+
+                <div class="reading-actions">
+                    <button class="nav-btn" id="hadis-prev-btn">← Önceki</button>
+                    <button class="nav-btn" id="hadis-next-btn">Sonraki →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn" data-page="main-menu">
+            <span>🏠</span>
+            <span>Ana Menü</span>
+        </button>
+        <button class="nav-btn" data-page="stats">
+            <span>📊</span>
+            <span>İstatistikler</span>
+        </button>
+        <button class="nav-btn" data-page="badges">
+            <span>🏆</span>
+            <span>Muvaffakiyetler</span>
+        </button>
+        <button class="nav-btn" data-page="calendar">
+            <span>📅</span>
+            <span>Takvim</span>
+        </button>
+        <button class="nav-btn" data-page="tasks" id="tasks-nav-btn">
+            <span>📋</span>
+            <span>Vazifeler</span>
+            <span class="tasks-counter" id="tasks-counter">0/0</span>
+            <span class="badge-notification" id="tasks-badge" style="display:none;">!</span>
+        </button>
+    </nav>
+
+    <!-- Modals -->
+    
+    <!-- Onboarding Modal -->
+    <div id="onboarding-modal" class="modal" style="display:none;">
+        <div class="modal-content onboarding-content">
+            <div class="onboarding-slide" data-slide="0">
+                <div class="onboarding-icon">🕌</div>
+                <h2>Hoş Geldiniz!</h2>
+                <p><strong>Hasene Arapça Dersi</strong>'ne hoş geldiniz!</p>
+                <p>Kuran-ı Kerim kelimelerini eğlenceli bir şekilde öğrenerek hem bilginizi artırın hem de <strong>Hasene</strong> kazanın.</p>
+                <div class="onboarding-feature-list">
+                    <div class="feature-item">📚 6 Farklı Oyun Modu</div>
+                    <div class="feature-item">💰 Hasene Puan Sistemi</div>
+                    <div class="feature-item">🏆 Rozet ve Başarım Sistemi</div>
+                    <div class="feature-item">📅 Günlük ve Haftalık Görevler</div>
+                </div>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="1" style="display:none;">
+                <div class="onboarding-icon">🎯</div>
+                <h2>Hedef Kitlemiz</h2>
+                <p><strong>Hasene Arapça Dersi</strong> kimler için?</p>
+                <div class="onboarding-feature-list">
+                    <div class="feature-item">📖 Kuran-ı Kerim'i daha iyi anlamak isteyenler</div>
+                    <div class="feature-item">🎓 Arapça öğrenmeye başlayanlar</div>
+                    <div class="feature-item">💡 Kelime hazinesini genişletmek isteyenler</div>
+                    <div class="feature-item">⏰ Kısa sürelerde etkili öğrenme arayanlar</div>
+                    <div class="feature-item">🔥 Düzenli çalışma alışkanlığı kazanmak isteyenler</div>
+                </div>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="2" style="display:none;">
+                <div class="onboarding-icon">📚</div>
+                <h2>Oyun Modları</h2>
+                <p>6 farklı mod ile Arapça öğrenin:</p>
+                <div class="onboarding-game-modes">
+                    <div class="game-mode-item">
+                        <strong>📖 Kelime Çevir:</strong> Arapça kelimelerin Türkçe meâl karşılığını bul
+                    </div>
+                    <div class="game-mode-item">
+                        <strong>🎧 Dinle Bul:</strong> Kuran'da geçen Arapça kelimeyi dinle ve bul
+                    </div>
+                    <div class="game-mode-item">
+                        <strong>✍️ Boşluk Doldur:</strong> Ayetteki eksik kelimeyi tamamla
+                    </div>
+                    <div class="game-mode-item">
+                        <strong>📿 Ayet Oku:</strong> Ayetin Arapça'sını oku, dinle ve meâli idrak et
+                    </div>
+                    <div class="game-mode-item">
+                        <strong>🤲 Dua Et:</strong> Duaları oku, dinle ve anlamlarını öğren
+                    </div>
+                    <div class="game-mode-item">
+                        <strong>💬 Hadis Oku:</strong> Hadis-i şerifleri oku ve anlamlarını keşfet
+                    </div>
+                </div>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="3" style="display:none;">
+                <div class="onboarding-icon">💰</div>
+                <h2>Ödül Sistemi</h2>
+                <p><strong>Hasene Puanları:</strong></p>
+                <div class="onboarding-rewards">
+                    <div class="reward-item">
+                        <span class="reward-icon">✅</span>
+                        <div>
+                            <strong>Doğru Cevap:</strong> +10 Hasene
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <span class="reward-icon">💡</span>
+                        <div>
+                            <strong>Yanlış Cevap:</strong> Puan kaybı yok, öğrenmeye devam!
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <span class="reward-icon">🔥</span>
+                        <div>
+                            <strong>Combo Bonusu:</strong> Her 3 doğru cevapta +5 Hasene
+                        </div>
+                    </div>
+                    <div class="reward-item">
+                        <span class="reward-icon">⭐</span>
+                        <div>
+                            <strong>Mükemmel Ders:</strong> Tüm sorular doğru → %50 bonus Hasene
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Yıldız ve Mertebe:</strong></p>
+                <p>Hasene kazandıkça yıldız toplayın ve mertebe atlayın. Her mertebe yeni başarımların kapısını açar!</p>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="4" style="display:none;">
+                <div class="onboarding-icon">📅</div>
+                <h2>Görevler ve Seri</h2>
+                <p><strong>Günlük Görevler:</strong></p>
+                <div class="onboarding-feature-list">
+                    <div class="feature-item">✅ Belirli sayıda doğru cevap ver</div>
+                    <div class="feature-item">✅ Farklı oyun modlarını dene</div>
+                    <div class="feature-item">✅ Combo yap ve bonus kazan</div>
+                    <div class="feature-item">✅ Günlük ödül: +2,500 Hasene</div>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Haftalık Görevler:</strong></p>
+                <p>Haftalık hedefleri tamamlayarak <strong>+5,000 Hasene</strong> bonus kazanın!</p>
+                <p style="margin-top: 1rem;"><strong>🔥 Seri (Streak):</strong></p>
+                <p>Her gün oynayarak serinizi koruyun. Uzun seriler özel başarımların anahtarı!</p>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="5" style="display:none;">
+                <div class="onboarding-icon">🏆</div>
+                <h2>Rozetler ve Başarımlar</h2>
+                <p><strong>26 Farklı Rozet:</strong></p>
+                <div class="onboarding-feature-list">
+                    <div class="feature-item">🥉 Bronz, 🥈 Gümüş, 🥇 Altın, 💎 Elmas rozetler</div>
+                    <div class="feature-item">📊 İstatistik bazlı rozetler</div>
+                    <div class="feature-item">🔥 Seri bazlı rozetler</div>
+                    <div class="feature-item">⭐ Mertebe bazlı rozetler</div>
+                </div>
+                <p style="margin-top: 1rem;"><strong>Başarımlar:</strong></p>
+                <p>Her başarım için özel rozetler kazanın ve koleksiyonunuzu genişletin!</p>
+                <p style="margin-top: 1rem;"><strong>İlerleme Takibi:</strong></p>
+                <p>Her rozet için ilerleme çubuğu ile ne kadar yakın olduğunuzu görün.</p>
+            </div>
+            
+            <div class="onboarding-slide" data-slide="6" style="display:none;">
+                <div class="onboarding-icon">🎯</div>
+                <h2>Başlayalım!</h2>
+                <p><strong>Artık hazırsınız!</strong></p>
+                <div class="onboarding-tips">
+                    <p>💡 <strong>İpucu:</strong> Günlük virdinizi tamamlamayı unutmayın!</p>
+                    <p>💡 <strong>İpucu:</strong> Farklı zorluk seviyelerini deneyin!</p>
+                    <p>💡 <strong>İpucu:</strong> Serinizi korumak için her gün oynayın!</p>
+                </div>
+                <p style="margin-top: 1.5rem; font-size: 1.1rem; color: var(--accent-primary);">
+                    <strong>İyi dersler! 🌟</strong>
+                </p>
+            </div>
+            
+            <div class="onboarding-controls">
+                <button class="onboarding-prev" id="onboarding-prev" style="display:none;">← Geri</button>
+                <button class="onboarding-next" id="onboarding-next">İleri →</button>
+                <button class="onboarding-skip" id="onboarding-skip">Atla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistikler Modal -->
+    <div id="stats-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 İstatistikler</h2>
+                <button class="modal-close" onclick="closeModal('stats-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-section">
+                    <h3>Bugünkü Amel</h3>
+                    <div class="stat-row">
+                        <span>Toplam Sahih:</span>
+                        <span id="stats-daily-correct">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Hatalı:</span>
+                        <span id="stats-daily-wrong">0</span>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <h3>Toplam İstatistikler</h3>
+                    <div class="stat-row">
+                        <span>Toplam Hasene:</span>
+                        <span id="stats-total-points">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Toplam Sahih:</span>
+                        <span id="stats-total-correct">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Toplam Hatalı:</span>
+                        <span id="stats-total-wrong">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Başarı Oranı:</span>
+                        <span id="stats-accuracy">0%</span>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <h3>Oyun Türü İstatistikleri</h3>
+                    <div class="stat-row">
+                        <span>Kelime Çevir:</span>
+                        <span id="stats-kelime-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Dinle Bul:</span>
+                        <span id="stats-dinle-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Boşluk Doldur:</span>
+                        <span id="stats-bosluk-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Ayet Oku:</span>
+                        <span id="stats-ayet-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Dua Et:</span>
+                        <span id="stats-dua-count">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Hadis Oku:</span>
+                        <span id="stats-hadis-count">0</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="showDetailedStats()">Detaylı İstatistikler</button>
+                    <button class="btn-secondary" onclick="showDataStatus()">Veri Durumu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Muvaffakiyetler Modal -->
+    <div id="badges-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏆 Muvaffakiyetler</h2>
+                <button class="modal-close" onclick="closeModal('badges-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="badges-section">
+                    <h3>Rozetler</h3>
+                    <div class="badges-grid" id="badges-grid">
+                        <!-- Rozetler buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+
+                <div class="achievements-section">
+                    <h3>Başarımlar</h3>
+                    <div class="achievements-grid" id="achievements-grid">
+                        <!-- Başarımlar buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Takvim Modal -->
+    <div id="calendar-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📅 Takvim</h2>
+                <button class="modal-close" onclick="closeModal('calendar-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <h3 id="calendar-month-year">Aralık 2024</h3>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <div class="calendar-weekday">Pzt</div>
+                        <div class="calendar-weekday">Sal</div>
+                        <div class="calendar-weekday">Çar</div>
+                        <div class="calendar-weekday">Per</div>
+                        <div class="calendar-weekday">Cum</div>
+                        <div class="calendar-weekday">Cmt</div>
+                        <div class="calendar-weekday">Paz</div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- Takvim buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+
+                <div class="streak-info">
+                    <h3>Seri Bilgileri</h3>
+                    <div class="stat-row">
+                        <span>Mevcut Seri:</span>
+                        <span id="calendar-current-streak">0 gün</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>En İyi Seri:</span>
+                        <span id="calendar-best-streak">0 gün</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Toplam Oyun Günü:</span>
+                        <span id="calendar-total-days">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Günlük Vazifeler Modal -->
+    <div id="tasks-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Vazifeler</h2>
+                <button class="modal-close" onclick="closeModal('tasks-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="tasks-section">
+                    <h3>Günlük Görevler</h3>
+                    <div class="tasks-list" id="daily-tasks-list">
+                        <!-- Günlük görevler buraya dinamik olarak eklenecek -->
+                    </div>
+                    <button class="btn-primary" id="claim-daily-reward" onclick="claimDailyRewards()" disabled>Günlük Ödülü Al (+2,500 Hasene)</button>
+                </div>
+
+                <div class="tasks-section">
+                    <h3>Haftalık Görevler</h3>
+                    <div class="tasks-list" id="weekly-tasks-list">
+                        <!-- Haftalık görevler buraya dinamik olarak eklenecek -->
+                    </div>
+                    <button class="btn-primary" id="claim-weekly-reward" onclick="claimWeeklyRewards()" disabled>Haftalık Ödülü Al (+5,000 Hasene)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Günlük Vird Ayarları Modal -->
+    <div id="daily-goal-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 Günlük Vird Ayarları</h2>
+                <button class="modal-close" onclick="closeModal('daily-goal-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="goal-levels">
+                    <button class="goal-level-btn" data-level="easy">😊 Rahat (1,300 Hasene)</button>
+                    <button class="goal-level-btn" data-level="normal">⚖️ Normal (2,700 Hasene)</button>
+                    <button class="goal-level-btn" data-level="hard">🔥 Zor (5,400 Hasene)</button>
+                    <button class="goal-level-btn" data-level="serious">💪 Ciddi (6,000 Hasene)</button>
+                </div>
+                <div class="custom-goal">
+                    <label>Özel Hedef (100-10,000):</label>
+                    <input type="number" id="custom-goal-input" min="100" max="10000" value="2700">
+                    <button class="btn-primary" onclick="setCustomGoal()">Ayarla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oyun Sonu Modal -->
+    <div id="game-result-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Oyun Bitti!</h2>
+            </div>
+            <div class="modal-body">
+                <div class="result-stats">
+                    <div class="result-item">
+                        <span>✅ Doğru:</span>
+                        <span id="result-correct">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>❌ Yanlış:</span>
+                        <span id="result-wrong">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span>💰 Kazanılan Hasene:</span>
+                        <span id="result-xp">0</span>
+                    </div>
+                    <div class="result-item perfect-lesson" id="perfect-lesson-bonus" style="display:none;">
+                        <span>⭐ Mükemmel Ders Bonusu:</span>
+                        <span id="perfect-bonus">0</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="restartGame()">Tekrar Oyna</button>
+                    <button class="btn-secondary" onclick="goToMainMenu()">Ana Menüye Dön</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seviye Atlama Modal -->
+    <div id="level-up-modal" class="modal" style="display:none;">
+        <div class="modal-content level-up-content">
+            <h2>🎉 Seviye Atladınız!</h2>
+            <div class="level-display">
+                <span class="old-level" id="old-level">1</span>
+                <span>→</span>
+                <span class="new-level" id="new-level">2</span>
+            </div>
+            <p class="level-name" id="level-name">Müterakki</p>
+            <button class="btn-primary" onclick="closeModal('level-up-modal')">Harika!</button>
+        </div>
+    </div>
+
+    <!-- Başarım Kazanma Modal -->
+    <div id="achievement-modal" class="modal" style="display:none;">
+        <div class="modal-content achievement-content">
+            <h2>🏆 Başarım Kazandınız!</h2>
+            <img id="achievement-icon" src="" alt="Başarım" class="achievement-icon-image">
+            <h3 id="achievement-title">Başarım Adı</h3>
+            <p id="achievement-desc">Başarım açıklaması</p>
+            <button class="btn-primary" onclick="closeModal('achievement-modal')">Harika!</button>
+        </div>
+    </div>
+
+    <!-- Detaylı İstatistikler Modal -->
+    <div id="detailed-stats-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Detaylı İstatistikler</h2>
+                <button class="modal-close" onclick="closeModal('detailed-stats-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-tabs">
+                    <button class="tab-btn active" data-tab="daily">Günlük</button>
+                    <button class="tab-btn" data-tab="weekly">Haftalık</button>
+                    <button class="tab-btn" data-tab="monthly">Aylık</button>
+                    <button class="tab-btn" data-tab="words">Kelimeler</button>
+                </div>
+
+                <div class="tab-content active" id="daily-stats-tab">
+                    <h3>Son 7 Gün</h3>
+                    <div id="daily-stats-content"></div>
+                </div>
+
+                <div class="tab-content" id="weekly-stats-tab" style="display:none;">
+                    <h3>Son 4 Hafta</h3>
+                    <div id="weekly-stats-content"></div>
+                </div>
+
+                <div class="tab-content" id="monthly-stats-tab" style="display:none;">
+                    <h3>Son 3 Ay</h3>
+                    <div id="monthly-stats-content"></div>
+                </div>
+
+                <div class="tab-content" id="words-stats-tab" style="display:none;">
+                    <h3>Kelime İstatistikleri</h3>
+                    <div id="words-stats-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Veri Durumu Modal -->
+    <div id="data-status-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💾 Veri Durumu</h2>
+                <button class="modal-close" onclick="closeModal('data-status-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="data-status-section">
+                    <h3>IndexedDB Durumu</h3>
+                    <p id="indexeddb-status">Kontrol ediliyor...</p>
+                </div>
+
+                <div class="data-status-section">
+                    <h3>localStorage Durumu</h3>
+                    <p id="localstorage-status">Kontrol ediliyor...</p>
+                </div>
+
+                <div class="data-status-section">
+                    <h3>Günlük Görevler</h3>
+                    <div id="daily-tasks-status"></div>
+                </div>
+
+                <div class="data-status-section">
+                    <h3>Haftalık Görevler</h3>
+                    <div id="weekly-tasks-status"></div>
+                </div>
+
+                <div class="data-status-section">
+                    <h3>Streak Durumu</h3>
+                    <div id="streak-status"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-danger" onclick="resetAllStats()">Tüm Verileri Sıfırla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/indexeddb-cache.js"></script>
+    <script src="js/data-loader.js"></script>
+    <script src="js/badge-visualization.js"></script>
+    <script src="js/game-core.js"></script>
+    <script src="js/detailed-stats.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/onboarding.js"></script>
+    <script src="js/error-handler.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
+

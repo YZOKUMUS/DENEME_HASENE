@@ -1,0 +1,2705 @@
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+:root {
+    /* Primary Colors */
+    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-secondary: #fff;
+    --text-primary: #1a1a2e;
+    --text-secondary: #64748b;
+
+    /* Accent Colors */
+    --accent-primary: #667eea;
+    --accent-secondary: #764ba2;
+    --accent-success: #10b981;
+    --accent-warning: #f59e0b;
+    --accent-error: #ef4444;
+    --accent-gold: #fbbf24;
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 30px;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 10px 35px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   GLOBAL RESET
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+/* Mobil için font boyutu ayarı */
+@media (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    html {
+        font-size: 13px;
+    }
+}
+
+body {
+    font-family: 'Nunito', 'Segoe UI', 'Roboto', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+}
+
+/* Arapça Font - KFGQPC Uthmanic Script HAFS */
+@font-face {
+    font-family: 'KFGQPC Uthmanic Script HAFS';
+    src: url('assets/fonts/KFGQPC Uthmanic Script HAFS Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Tüm Arapça metinler için font tanımı */
+.arabic-text,
+.arabic-word,
+.verse-text,
+[id*="arabic"],
+[id*="ayet-arabic"],
+[id*="dua-arabic"],
+[id*="verse-text"],
+[id*="arabic-word"] {
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif !important;
+    direction: rtl;
+    font-feature-settings: normal;
+    -webkit-font-feature-settings: normal;
+    -moz-font-feature-settings: normal;
+    unicode-bidi: bidi-override;
+}
+
+.arabic-word {
+    text-align: center;
+}
+
+.verse-text {
+    text-align: right;
+}
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    transition: opacity var(--transition-slow);
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-screen p {
+    margin-top: var(--spacing-lg);
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 75px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-content {
+    max-width: 600px;
+    width: 100%;
+    padding: 0 var(--spacing-md);
+}
+
+.header-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent-secondary);
+    text-align: center;
+}
+
+/* ============================================
+   CONTAINER
+   ============================================ */
+.container {
+    max-width: 600px;
+    margin: 10px auto 90px auto;
+    padding: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    min-height: calc(100vh - 165px);
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* ============================================
+   MAIN MENU
+   ============================================ */
+.main-menu {
+    animation: fadeIn var(--transition-normal);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hero Section */
+.hero-section {
+    margin-bottom: var(--spacing-sm);
+}
+
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius-sm);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent-secondary);
+}
+
+/* Daily Goal Section */
+.daily-goal-section {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.daily-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.daily-goal-title-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex: 1;
+}
+
+.daily-goal-header h3 {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.settings-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    transition: transform var(--transition-fast);
+}
+
+.settings-btn:hover {
+    transform: rotate(90deg);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 2px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-success) 0%, var(--accent-primary) 100%);
+    border-radius: var(--radius-xl);
+    transition: width var(--transition-normal);
+    width: 0%;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+/* Streak Display */
+.streak-display {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.streak-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.streak-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.streak-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-warning);
+}
+
+/* Difficulty Selector */
+.difficulty-selector {
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.difficulty-selector h3 {
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+}
+
+.difficulty-btn {
+    flex: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.difficulty-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.difficulty-btn.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+/* Game Modes Grid */
+.game-modes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.game-card {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+.game-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.game-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.game-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.game-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+.game-card p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+/* ============================================
+   GAME SCREENS
+   ============================================ */
+.game-screen {
+    animation: fadeIn var(--transition-normal);
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.back-btn {
+    background: var(--accent-secondary);
+    color: #fff;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.back-btn:hover {
+    background: var(--accent-primary);
+    transform: translateX(-3px);
+}
+
+.game-info {
+    display: flex;
+    gap: var(--spacing-md);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Submode Selection */
+.submode-selection {
+    text-align: center;
+    padding: var(--spacing-md);
+}
+
+.submode-selection h3 {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.submode-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.submode-btn {
+    padding: var(--spacing-md);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.submode-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+/* Game Content */
+.game-content {
+    padding: var(--spacing-md);
+}
+
+.question-section {
+    text-align: center;
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius-sm);
+    position: relative;
+}
+
+/* Dinle Bul oyunu - Kelime Çevir ile aynı yapı kullanılıyor */
+
+.arabic-word-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    position: relative;
+    padding: var(--spacing-sm);
+    min-height: 120px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius-md);
+}
+
+.arabic-word,
+.verse-text {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1.4;
+    text-align: center;
+    direction: rtl;
+    width: 100%;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Kelime Çevir metadata (ID ve hoparlör) - Alt köşelere yerleştirildi */
+.kelime-metadata {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    height: auto;
+}
+
+.kelime-id {
+    font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    color: var(--text-secondary);
+    font-style: italic;
+    flex-shrink: 0;
+    line-height: 1.2;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: var(--spacing-xs);
+}
+
+.kelime-speaker-btn {
+    flex-shrink: 0;
+    padding: var(--spacing-xs);
+    margin: 0;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+
+.kelime-speaker-btn .speaker-icon {
+    width: clamp(20px, 4vw, 24px);
+    height: clamp(20px, 4vw, 24px);
+}
+
+.play-audio-speaker-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-normal);
+    flex-shrink: 0;
+}
+
+.play-audio-speaker-btn:hover {
+    transform: scale(1.1);
+}
+
+.play-audio-speaker-btn:active {
+    transform: scale(0.95);
+}
+
+.speaker-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+/* Boşluk Doldur modu için küçük hoparlör ikonu */
+#bosluk-doldur-screen .play-audio-speaker-btn .speaker-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.sure-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.verse-text {
+    font-size: clamp(1.1rem, 4vw, 1.6rem); /* Responsive font: min 1.1rem, max 1.6rem */
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+}
+
+.blank {
+    display: inline-block;
+    min-width: 60px;
+    max-width: 150px;
+    height: 1.5rem;
+    border-bottom: 2px solid #000;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    margin: 0 var(--spacing-xs);
+    text-align: center;
+    color: transparent;
+    font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    background: transparent;
+    position: relative;
+}
+
+.blank::before {
+    content: '';
+    display: none;
+}
+
+.verse-container {
+    position: relative;
+    margin-bottom: var(--spacing-sm);
+}
+
+.verse-metadata {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid #e5e7eb;
+}
+
+.verse-meal {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    flex: 1;
+    text-align: left;
+}
+
+.verse-id {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-left: var(--spacing-sm);
+}
+
+.options-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.option-btn {
+    padding: var(--spacing-md);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-height: 50px;
+}
+
+/* Dinle Bul oyunu için Arapça font */
+#dinle-bul-screen .option-btn {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif !important;
+    font-weight: 300;
+    direction: rtl;
+    text-align: center;
+}
+
+/* Boşluk Doldur oyunu için Arapça font */
+#bosluk-doldur-screen .option-btn {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif !important;
+    font-weight: 300;
+    direction: rtl;
+    text-align: center;
+}
+
+.option-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.option-btn.correct {
+    background: var(--accent-success);
+    color: #fff;
+    border-color: var(--accent-success);
+    animation: correctPulse 0.5s ease;
+}
+
+.option-btn.wrong {
+    background: var(--accent-error);
+    color: #fff;
+    border-color: var(--accent-error);
+    animation: shake 0.5s ease;
+}
+
+@keyframes correctPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.option-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.game-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.hint-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--accent-warning);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.hint-btn:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+}
+
+.hint-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lives-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent-error);
+}
+
+.combo-display {
+    text-align: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-warning);
+    margin-bottom: var(--spacing-sm);
+}
+
+.play-audio-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    margin: var(--spacing-sm) auto;
+    display: block;
+}
+
+.play-audio-btn:hover {
+    background: var(--accent-secondary);
+    transform: scale(1.05);
+}
+
+.instruction {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+}
+
+.headphone-icon {
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    filter: brightness(0.7) contrast(1.2);
+    opacity: 0.9;
+}
+
+/* ============================================
+   READING SCREENS
+   ============================================ */
+.reading-screen {
+    animation: fadeIn var(--transition-normal);
+}
+
+.reading-content {
+    padding: var(--spacing-lg);
+}
+
+.verse-info {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius-md);
+    min-height: 50px;
+}
+
+.hadis-info {
+    position: relative;
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: var(--radius-md);
+}
+
+.verse-info h3 {
+    margin: 0;
+    padding: 0;
+    font-size: 1.2rem;
+    text-align: center;
+    display: none; /* Sure adı kaldırıldı */
+}
+
+.verse-info-id {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: var(--spacing-xs);
+    z-index: 10;
+    line-height: 1.2;
+}
+
+.verse-info-speaker {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: var(--spacing-xs);
+    z-index: 10;
+}
+
+.verse-info-speaker .speaker-icon {
+    width: clamp(20px, 4vw, 24px);
+    height: clamp(20px, 4vw, 24px);
+}
+
+.verse-info h3,
+.hadis-category {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.verse-info p,
+.hadis-chapter {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.arabic-text {
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif !important;
+    font-size: 2.5rem;
+    line-height: 2.5;
+    text-align: center;
+    direction: rtl;
+    padding: var(--spacing-xl);
+    background: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    flex: 1;
+}
+
+/* Reading ekranlarında arabic-text container içinde */
+.reading-content .arabic-word-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    position: relative;
+}
+
+.translation-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: #f9fafb;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--accent-primary);
+}
+
+.hadis-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: #f9fafb;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--accent-secondary);
+}
+
+.hadis-header {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: var(--spacing-sm);
+}
+
+.hadis-ref {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-md);
+    background: #f3f4f6;
+    border-radius: var(--radius-md);
+}
+
+.reading-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+}
+
+.nav-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--accent-secondary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.nav-btn:hover {
+    background: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   BOTTOM NAVIGATION
+   ============================================ */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    padding: var(--spacing-sm) 0;
+}
+
+.bottom-nav .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    transition: all var(--transition-fast);
+    position: relative;
+    min-width: 60px;
+}
+
+.bottom-nav .nav-btn span:first-child {
+    font-size: 1.5rem;
+}
+
+.bottom-nav .nav-btn span:nth-child(2) {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.bottom-nav .nav-btn.active {
+    color: var(--accent-primary);
+}
+
+.bottom-nav .nav-btn.active span:nth-child(2) {
+    color: var(--accent-primary);
+}
+
+.badge-notification {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--accent-error);
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.tasks-counter {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: var(--accent-primary);
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: center;
+    display: none;
+    z-index: 10;
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn var(--transition-normal);
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: var(--radius-lg);
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* iOS için smooth scrolling */
+    overscroll-behavior: contain; /* Overscroll davranışını kontrol et */
+    touch-action: pan-y; /* Dikey kaydırmaya izin ver */
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideIn var(--transition-bounce);
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    /* Mobil için scrollbar gizle ama kaydırma çalışsın */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary) transparent;
+}
+
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary-dark);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: #f3f4f6;
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+    /* Mobilde kaydırma için minimum yükseklik */
+    min-height: 0;
+}
+
+/* Modal içindeki grid ve listeler için kaydırma desteği */
+.badges-grid,
+.achievements-grid,
+.calendar-grid,
+.tasks-list {
+    /* Mobilde kaydırma için */
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.stats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.stats-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.modal-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.btn-primary {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.btn-primary:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: #e5e7eb;
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--accent-error);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    width: 100%;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* Badges Grid */
+.badges-grid,
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.badge-item,
+.achievement-item {
+    text-align: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e5e7eb;
+    transition: all var(--transition-normal);
+}
+
+.badge-item.unlocked,
+.achievement-item.unlocked {
+    border: 2px solid var(--accent-gold);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4), 
+                0 0 20px rgba(251, 191, 36, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
+    transform: scale(1.02);
+    transition: all var(--transition-normal);
+}
+
+.badge-item.unlocked::before,
+.achievement-item.unlocked::before {
+    content: '✨';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.2rem;
+    animation: sparkle 2s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes sparkle {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.3) rotate(180deg);
+        opacity: 0.7;
+    }
+}
+
+.badge-item.unlocked:hover,
+.achievement-item.unlocked:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(251, 191, 36, 0.5), 
+                0 0 25px rgba(251, 191, 36, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Kilitli rozetler için daha soluk görünüm */
+.badge-item:not(.unlocked),
+.achievement-item:not(.unlocked) {
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    opacity: 0.7;
+}
+
+.badge-item img,
+.badge-item .badge-image,
+.achievement-item img,
+.achievement-item .achievement-image,
+.achievement-item .achievement-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--spacing-xs);
+    display: block;
+    object-fit: contain;
+    transition: opacity var(--transition-normal), filter var(--transition-normal);
+}
+
+/* Kilitli rozetler için daha soluk görünüm */
+.badge-item:not(.unlocked) .badge-image,
+.achievement-item:not(.unlocked) .achievement-image {
+    opacity: 0.6;
+    filter: grayscale(50%) brightness(0.9);
+}
+
+/* Kazanılmış rozetler tam canlı ve parlak */
+.badge-item.unlocked .badge-image,
+.achievement-item.unlocked .achievement-image {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    animation: imageGlow 2s ease-in-out infinite;
+}
+
+@keyframes imageGlow {
+    0%, 100% { 
+        filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+    }
+    50% { 
+        filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.9));
+    }
+}
+
+/* Kilitli rozetler için daha canlı görünüm */
+.badge-item:not(.unlocked) .badge-image {
+    opacity: 0.85;
+    filter: grayscale(30%);
+}
+
+/* Kazanılmış rozetler tam canlı */
+.badge-item.unlocked .badge-image {
+    opacity: 1;
+    filter: none;
+}
+
+.badge-item .badge-image,
+.achievement-item .achievement-image {
+    max-width: 100%;
+    height: auto;
+}
+
+.badge-item .badge-name,
+.achievement-item .achievement-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: var(--spacing-xs);
+}
+
+.badge-item .badge-count {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.badges-section,
+.achievements-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.badges-section h3,
+.achievements-section h3 {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.calendar-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.streak-info {
+    margin-top: var(--spacing-md);
+}
+
+.streak-info h3 {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.badge-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: var(--spacing-xs);
+}
+
+.badge-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    border-radius: 3px;
+    transition: width var(--transition-normal);
+}
+
+.badge-progress-text {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    text-align: center;
+}
+
+/* Calendar */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    border: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+    transition: all var(--transition-fast);
+}
+
+.calendar-day.played {
+    background: var(--accent-success);
+    color: #fff;
+    border-color: var(--accent-success);
+}
+
+.calendar-day.streak {
+    background: var(--accent-warning);
+    color: #fff;
+    border-color: var(--accent-warning);
+}
+
+.calendar-day.future {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.calendar-day.empty {
+    visibility: hidden;
+}
+
+.calendar-header {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.calendar-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: var(--spacing-xs);
+}
+
+/* Tasks */
+.tasks-list {
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.task-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0;
+    border-left: 3px solid #e5e7eb;
+    transition: all var(--transition-fast);
+}
+
+.task-item.completed {
+    border-left-color: var(--accent-success);
+    background: #f0fdf4;
+}
+
+.task-item .task-info {
+    width: 100%;
+}
+
+.task-item .task-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    gap: var(--spacing-sm);
+}
+
+.task-item .task-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.task-item .task-progress-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.task-item .task-progress {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.task-item .task-check {
+    font-size: 1.2rem;
+    color: var(--accent-success);
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.task-item .task-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: var(--spacing-xs);
+}
+
+.task-item .task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* Onboarding */
+.onboarding-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.onboarding-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-md);
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.onboarding-slide {
+    text-align: left;
+}
+
+.onboarding-slide h2 {
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--accent-secondary);
+    text-align: center;
+}
+
+.onboarding-slide p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+    text-align: left;
+}
+
+.onboarding-slide p strong {
+    color: var(--accent-primary);
+    font-weight: 700;
+}
+
+.onboarding-feature-list {
+    margin: var(--spacing-md) 0;
+    text-align: left;
+}
+
+.feature-item {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.onboarding-game-modes {
+    margin: var(--spacing-md) 0;
+    text-align: left;
+}
+
+.game-mode-item {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.game-mode-item strong {
+    color: var(--accent-primary);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.onboarding-rewards {
+    margin: var(--spacing-md) 0;
+    text-align: left;
+}
+
+.reward-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+}
+
+.reward-icon {
+    font-size: 1.5rem;
+    margin-right: var(--spacing-sm);
+    min-width: 30px;
+}
+
+.onboarding-tips {
+    margin: var(--spacing-md) 0;
+    text-align: left;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--accent-gold);
+}
+
+.onboarding-tips p {
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.onboarding-tips p:last-child {
+    margin-bottom: 0;
+}
+
+.onboarding-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+}
+
+.onboarding-prev,
+.onboarding-next,
+.onboarding-skip {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.onboarding-next,
+.onboarding-skip {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.onboarding-prev {
+    background: #e5e7eb;
+    color: var(--text-primary);
+}
+
+.onboarding-next:hover,
+.onboarding-skip:hover {
+    background: var(--accent-secondary);
+}
+
+.onboarding-prev:hover {
+    background: #d1d5db;
+}
+
+/* Level Up */
+.level-up-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.level-up-content h2 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--accent-secondary);
+}
+
+.level-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-lg);
+    font-size: 3rem;
+    font-weight: 800;
+    margin: var(--spacing-xl) 0;
+}
+
+.old-level {
+    color: var(--text-secondary);
+}
+
+.new-level {
+    color: var(--accent-primary);
+    animation: levelUp 0.6s ease;
+}
+
+@keyframes levelUp {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.level-name {
+    font-size: 1.5rem;
+    color: var(--accent-secondary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Achievement */
+.achievement-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.achievement-content h2 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--accent-secondary);
+}
+
+.achievement-icon {
+    font-size: 5rem;
+    margin: var(--spacing-xl) 0;
+    animation: achievementPulse 1s ease infinite;
+}
+
+.achievement-icon-image {
+    width: 120px;
+    height: 120px;
+    margin: var(--spacing-xl) auto;
+    display: block;
+    object-fit: contain;
+    animation: achievementPulse 1s ease infinite;
+}
+
+@keyframes achievementPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.achievement-content h3 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.achievement-content p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Result Modal */
+.result-stats {
+    margin-bottom: var(--spacing-xl);
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background: #f9fafb;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.result-item span:first-child {
+    color: var(--text-secondary);
+}
+
+.result-item span:last-child {
+    color: var(--accent-primary);
+}
+
+.perfect-lesson {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid var(--accent-gold);
+}
+
+/* Goal Levels */
+.goal-levels {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.goal-level-btn {
+    padding: var(--spacing-lg);
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.goal-level-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.goal-level-btn.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+.custom-goal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.custom-goal label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.custom-goal input {
+    padding: var(--spacing-md);
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+}
+
+/* Detailed Stats */
+.stats-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tab-btn.active {
+    color: var(--accent-primary);
+    border-bottom-color: var(--accent-primary);
+}
+
+.tab-content {
+    padding: var(--spacing-lg) 0;
+}
+
+.tab-content h3 {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+/* Data Status */
+.data-status-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: #f9fafb;
+    border-radius: var(--radius-md);
+}
+
+.data-status-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.data-status-section p {
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+/* Mobil için responsive ayarlar */
+@media (max-width: 600px) {
+    /* Header ve Nav yükseklikleri */
+    .header {
+        height: 60px;
+    }
+
+    .header-title {
+        font-size: 1.1rem;
+    }
+
+    .header-content {
+        padding: 0 var(--spacing-sm);
+    }
+
+    .bottom-nav {
+        height: 70px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .bottom-nav .nav-btn {
+        padding: var(--spacing-xs);
+        font-size: 0.7rem;
+    }
+
+    .bottom-nav .nav-btn span:first-child {
+        font-size: 1.2rem;
+    }
+
+    .tasks-counter {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+        min-width: 28px;
+        top: -1px;
+        right: -1px;
+    }
+
+    /* Container */
+    .container {
+        margin: 10px 5px 70px 5px;
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        min-height: calc(100vh - 130px);
+    }
+
+    /* Stats Bar - Mobilde 5 öğe yan yana */
+    .stats-bar {
+        flex-wrap: nowrap;
+        gap: 2px;
+        padding: var(--spacing-xs) 2px;
+    }
+
+    .stat-item {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    /* Günlük Vird */
+    .daily-goal-section {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .daily-goal-header h3 {
+        font-size: 0.8rem;
+    }
+
+    .progress-bar {
+        height: 8px;
+    }
+
+    .progress-text {
+        font-size: 0.65rem;
+    }
+
+    /* Zorluk Seçici */
+    .difficulty-selector {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .difficulty-selector h3 {
+        font-size: 0.8rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .difficulty-btn {
+        padding: var(--spacing-xs);
+        font-size: 0.75rem;
+    }
+
+    /* Oyun Kartları */
+    .game-modes-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .game-card {
+        padding: var(--spacing-sm);
+    }
+
+    .game-icon {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .game-icon img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .game-card h3 {
+        font-size: 0.85rem;
+        margin-bottom: 2px;
+    }
+
+    .game-card p {
+        font-size: 0.7rem;
+    }
+
+    /* Oyun İçi Ekranlar */
+    .game-header {
+        margin-bottom: var(--spacing-sm);
+        padding-bottom: var(--spacing-xs);
+    }
+
+    .back-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.85rem;
+    }
+
+    .game-info {
+        font-size: 0.8rem;
+        gap: var(--spacing-sm);
+    }
+
+    .question-section {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    /* Dinle Bul oyunu - Kelime Çevir ile aynı yapı kullanılıyor */
+
+    .arabic-word-container {
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+        padding: var(--spacing-xs);
+        min-height: 100px;
+    }
+
+    .arabic-word {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        line-height: 1.3;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .kelime-metadata {
+        padding: 0;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    
+    .kelime-id {
+        font-size: clamp(0.45rem, 1.5vw, 0.55rem);
+        line-height: 1.2;
+        left: 0;
+        bottom: 0;
+        padding: var(--spacing-xs);
+    }
+    
+    .kelime-speaker-btn {
+        padding: var(--spacing-xs);
+        right: 0;
+        bottom: 0;
+    }
+    
+    .kelime-speaker-btn .speaker-icon {
+        width: clamp(18px, 4vw, 20px);
+        height: clamp(18px, 4vw, 20px);
+    }
+
+    .speaker-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    /* Boşluk Doldur modu için mobilde daha küçük hoparlör ikonu */
+    #bosluk-doldur-screen .play-audio-speaker-btn .speaker-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .verse-text {
+        font-size: clamp(0.95rem, 3.5vw, 1.3rem); /* Mobilde daha küçük: min 0.95rem, max 1.3rem */
+        line-height: 1.6;
+        margin-bottom: var(--spacing-xs);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        padding: 0 var(--spacing-xs);
+    }
+    
+    .verse-container {
+        padding: var(--spacing-sm);
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .verse-meal {
+        font-size: 0.6rem;
+    }
+    
+    .verse-id {
+        font-size: 0.55rem;
+    }
+    
+    .blank {
+        min-width: 50px;
+        max-width: 120px;
+        font-size: clamp(0.9rem, 3vw, 1.1rem);
+    }
+    
+    .verse-info {
+        padding: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+        min-height: 45px;
+    }
+    
+    .verse-info h3 {
+        font-size: 1rem;
+    }
+    
+    .verse-info-id {
+        left: 0;
+        bottom: 0;
+        font-size: clamp(0.45rem, 1.5vw, 0.55rem);
+        padding: var(--spacing-xs);
+    }
+    
+    .verse-info-speaker {
+        right: 0;
+        bottom: 0;
+        padding: var(--spacing-xs);
+    }
+    
+    .verse-info-speaker .speaker-icon {
+        width: clamp(18px, 4vw, 20px);
+        height: clamp(18px, 4vw, 20px);
+    }
+    
+    /* Ayet Oku ve Dua Et - Arapça metinler için mobil responsive */
+    .reading-content .arabic-text {
+        font-size: clamp(1.2rem, 5vw, 2.5rem);
+        line-height: clamp(1.8, 5vw, 2.5);
+        padding: var(--spacing-sm) var(--spacing-xs);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* Ayet Oku ve Dua Et - Türkçe çeviriler için mobil responsive */
+    .reading-content .translation-text {
+        font-size: clamp(0.85rem, 3vw, 1.1rem);
+        line-height: clamp(1.4, 3.5vw, 1.8);
+        padding: var(--spacing-sm);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* Hadis Oku - Hadis metinleri için mobil responsive */
+    .reading-content .hadis-text {
+        font-size: clamp(0.85rem, 3vw, 1.1rem);
+        line-height: clamp(1.4, 3.5vw, 1.8);
+        padding: var(--spacing-sm);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* Hadis Oku - Hadis başlıkları için mobil responsive */
+    .hadis-category {
+        font-size: clamp(0.95rem, 3.5vw, 1.3rem);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .hadis-chapter {
+        font-size: clamp(0.8rem, 2.8vw, 1rem);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .hadis-header {
+        font-size: clamp(0.7rem, 2.3vw, 0.9rem);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Reading content container için mobil ayarları */
+    .reading-content {
+        padding: var(--spacing-sm);
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .reading-content .arabic-word-container {
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-xs);
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .hadis-info {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .options-section {
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .option-btn {
+        padding: var(--spacing-sm);
+        font-size: 0.85rem;
+        min-height: 45px;
+    }
+    
+    /* Dinle Bul oyunu için mobil Arapça font */
+    #dinle-bul-screen .option-btn {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        font-weight: 300;
+    }
+    
+    /* Boşluk Doldur oyunu için mobil Arapça font */
+    #bosluk-doldur-screen .option-btn {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        font-weight: 300;
+    }
+
+    .submode-selection {
+        padding: var(--spacing-sm);
+    }
+
+    .submode-selection h3 {
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .submode-btn {
+        padding: var(--spacing-sm);
+        font-size: 0.85rem;
+    }
+
+    .submode-buttons {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+
+    /* Modal */
+    .modal-content {
+        max-width: 98%;
+        margin: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        max-height: calc(100vh - 20px); /* Mobilde daha fazla alan kullan */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch; /* iOS için smooth scrolling */
+        overscroll-behavior: contain; /* Overscroll davranışını kontrol et */
+        touch-action: pan-y; /* Dikey kaydırmaya izin ver */
+    }
+
+    .modal-header {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .modal-header h2 {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: var(--spacing-sm);
+    }
+
+    /* Badges ve Achievements */
+    .badges-grid,
+    .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-xs);
+    }
+
+    .badge-item,
+    .achievement-item {
+        padding: var(--spacing-xs);
+    }
+
+    .badge-item img,
+    .achievement-item img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .badge-item .badge-name,
+    .achievement-item .achievement-name {
+        font-size: 0.7rem;
+    }
+
+    /* Takvim */
+    .calendar-grid {
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .calendar-day {
+        font-size: 0.7rem;
+        padding: 2px;
+    }
+
+    /* Görevler */
+    .task-item {
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .task-item .task-name {
+        font-size: 0.8rem;
+    }
+
+    .task-item .task-progress-text {
+        font-size: 0.75rem;
+    }
+
+    .goal-levels {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+
+    /* Onboarding mobil */
+    .onboarding-content {
+        padding: var(--spacing-md);
+        max-height: calc(100vh - 20px);
+    }
+
+    .onboarding-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .onboarding-slide h2 {
+        font-size: 1.3rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .onboarding-slide p {
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .feature-item,
+    .game-mode-item,
+    .reward-item {
+        font-size: 0.85rem;
+        padding: var(--spacing-xs);
+    }
+
+    .onboarding-tips {
+        padding: var(--spacing-sm);
+    }
+
+    .onboarding-tips p {
+        font-size: 0.85rem;
+    }
+}
+
+/* Çok küçük ekranlar (320px-360px) */
+@media (max-width: 360px) {
+    .header {
+        height: 55px;
+    }
+
+    .header-title {
+        font-size: 1rem;
+    }
+
+    .bottom-nav {
+        height: 65px;
+    }
+
+    .container {
+        margin: 10px 3px 65px 3px;
+        padding: var(--spacing-xs);
+        min-height: calc(100vh - 120px);
+    }
+
+    .stats-bar {
+        padding: 4px 2px;
+        gap: 1px;
+    }
+
+    .stat-item {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    /* Onboarding mobil */
+    .onboarding-content {
+        padding: var(--spacing-sm);
+        max-height: calc(100vh - 20px);
+    }
+
+    .onboarding-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .onboarding-slide h2 {
+        font-size: 1.2rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .onboarding-slide p {
+        font-size: 0.85rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .feature-item,
+    .game-mode-item,
+    .reward-item {
+        font-size: 0.8rem;
+        padding: var(--spacing-xs);
+    }
+
+    .onboarding-tips {
+        padding: var(--spacing-xs);
+    }
+
+    .onboarding-tips p {
+        font-size: 0.8rem;
+    }
+
+    .stat-value {
+        font-size: 0.8rem;
+    }
+
+    .badges-grid,
+    .achievements-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .game-modes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 901px) {
+    .game-modes-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus styles */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Screen reader only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
