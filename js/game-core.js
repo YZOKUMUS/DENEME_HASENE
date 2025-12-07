@@ -3295,23 +3295,32 @@ function showBadgesModal() {
             const badgeItem = document.createElement('div');
             badgeItem.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
             
-            // İlerleme çubuğu - sadece ilerleme varsa ve %100'den azsa göster
-            const progressBar = (progress > 0 && progress < 100) ? `
-                <div class="badge-progress-bar">
-                    <div class="badge-progress-fill" style="width: ${progress}%"></div>
-                </div>
-                <div class="badge-progress-text">${progress}%</div>
-            ` : '';
-            
-            badgeItem.innerHTML = `
-                <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
-                <div class="badge-name">${badge.name}</div>
-                <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badge.description}</div>
-                ${progressBar}
-                ${isUnlocked ? '<div style="color: var(--accent-success); font-size: 0.75rem; margin-top: 0.25rem;">✓ Kazanıldı</div>' : ''}
-            `;
+            // Kazanılan rozetler için minimal görünüm (sadece ikon ve isim)
+            if (isUnlocked) {
+                badgeItem.innerHTML = `
+                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
+                    <div class="badge-name">${badge.name}</div>
+                `;
+            } else {
+                // Kilitli rozetler için tam bilgi (açıklama ve ilerleme)
+                const progressBar = (progress > 0 && progress < 100) ? `
+                    <div class="badge-progress-bar">
+                        <div class="badge-progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="badge-progress-text">${progress}%</div>
+                ` : '';
+                
+                badgeItem.innerHTML = `
+                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badge.description}</div>
+                    ${progressBar}
+                `;
+            }
             badgesGrid.appendChild(badgeItem);
             
             // Rozet görseli yüklendiğinde fallback icon'u gizle
@@ -3467,12 +3476,21 @@ function showBadgesModal() {
             
             const achievementItem = document.createElement('div');
             achievementItem.className = `achievement-item ${isUnlocked ? 'unlocked' : ''}`;
-            // Sadece badges klasöründeki PNG rozetlerini kullan, fallback icon yok
-            achievementItem.innerHTML = `
-                <img src="assets/badges/${badgeImage}" alt="${achievement.name}" class="achievement-image">
-                <div class="achievement-name">${achievement.name}</div>
-                <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${achievement.description}</div>
-            `;
+            
+            // Kazanılan başarımlar için minimal görünüm (sadece ikon ve isim)
+            if (isUnlocked) {
+                achievementItem.innerHTML = `
+                    <img src="assets/badges/${badgeImage}" alt="${achievement.name}" class="achievement-image">
+                    <div class="achievement-name">${achievement.name}</div>
+                `;
+            } else {
+                // Kilitli başarımlar için tam bilgi (açıklama)
+                achievementItem.innerHTML = `
+                    <img src="assets/badges/${badgeImage}" alt="${achievement.name}" class="achievement-image">
+                    <div class="achievement-name">${achievement.name}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${achievement.description}</div>
+                `;
+            }
             achievementsGrid.appendChild(achievementItem);
         });
     }
