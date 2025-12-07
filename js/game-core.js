@@ -1981,9 +1981,8 @@ async function saveCurrentGameProgress() {
     
     infoLog('Oyun ilerlemesi kaydedildi');
     
-    // Rozetleri ve başarımları kontrol et
-    checkBadges();
-    checkAchievements();
+    // Rozetleri ve başarımları kontrol et (addToGlobalPoints içinde zaten çağrılıyor)
+    // Not: addToGlobalPoints() zaten checkBadges() ve checkAchievements() çağırıyor
     
     // İstatistikleri kaydet
     saveStats();
@@ -2037,9 +2036,9 @@ async function endGame() {
         perfect: perfectBonus > 0 ? 1 : 0
     });
     
-    // Rozetleri ve başarımları kontrol et (addToGlobalPoints içinde zaten çağrılıyor ama tekrar kontrol için)
-    checkBadges();
-    checkAchievements();
+    // Rozetleri ve başarımları kontrol et (addToGlobalPoints içinde zaten çağrılıyor)
+    // Not: addToGlobalPoints() zaten checkBadges() ve checkAchievements() çağırıyor
+    // Burada tekrar çağırmaya gerek yok, performans için kaldırıldı
     
     // Sonuç modalını göster
     showCustomConfirm(sessionCorrect, sessionWrong, sessionScore, perfectBonus);
