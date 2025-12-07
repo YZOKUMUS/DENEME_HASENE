@@ -97,23 +97,10 @@ let correctAnswerPositions = {
     total: 0 // Toplam soru sayısı
 };
 
-// Audio yönetimi - seslerin üst üste çalmasını önlemek için
-let currentAudio = null;
-window.currentAudio = null; // Global erişim için
+// Audio yönetimi - audio-manager.js modülü kullanılıyor
+// currentAudio değişkeni ve stopCurrentAudio fonksiyonu audio-manager.js'de tanımlı
 
-/**
- * Çalan sesi durdurur
- */
-function stopCurrentAudio() {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-        window.currentAudio = null;
-    }
-}
-
-window.stopCurrentAudio = stopCurrentAudio;
+// stopCurrentAudio fonksiyonu audio-manager.js modülünde tanımlı
 
 // Global erişim için window'a ekle
 window.currentGame = currentGame;
@@ -742,51 +729,24 @@ function loadKelimeQuestion() {
         kelimeIdEl.style.display = 'none';
     }
     
-    // Ses çal butonu
+    // Ses çal butonu - Audio Manager kullan
     const playAudioBtn = document.getElementById('kelime-play-audio-btn');
-    if (playAudioBtn && currentQuestionData.ses_dosyasi) {
-        playAudioBtn.onclick = () => {
-            // Önceki sesi durdur
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-            }
-            
-            // Yeni ses oluştur ve çal
-            currentAudio = new Audio(currentQuestionData.ses_dosyasi);
-            window.currentAudio = currentAudio;
-            playAudioBtn.disabled = true;
-            playAudioBtn.style.opacity = '0.6';
-            
-            currentAudio.play().catch(err => {
-                console.error('Ses çalınamadı:', err);
-                showErrorMessage('Ses dosyası yüklenemedi!');
-                playAudioBtn.disabled = false;
-                playAudioBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            });
-            
-            // Ses bitince butonu tekrar aktif et
-            currentAudio.onended = () => {
-                playAudioBtn.disabled = false;
-                playAudioBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-            
-            // Hata durumunda butonu tekrar aktif et
-            currentAudio.onerror = () => {
-                playAudioBtn.disabled = false;
-                playAudioBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-        };
+    if (playAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(playAudioBtn, currentQuestionData.ses_dosyasi);
     } else if (playAudioBtn) {
-        // Ses dosyası yoksa butonu devre dışı bırak
-        playAudioBtn.style.opacity = '0.5';
-        playAudioBtn.disabled = true;
+        // Fallback: Eski yöntem (audio-manager yüklenmemişse)
+        if (currentQuestionData.ses_dosyasi) {
+            playAudioBtn.onclick = () => {
+                if (typeof playAudio === 'function') {
+                    playAudio(currentQuestionData.ses_dosyasi, playAudioBtn);
+                }
+            };
+            playAudioBtn.disabled = false;
+            playAudioBtn.style.opacity = '1';
+        } else {
+            playAudioBtn.style.opacity = '0.5';
+            playAudioBtn.disabled = true;
+        }
     }
     
     // Seçenekleri oluştur
@@ -1033,65 +993,32 @@ function loadDinleQuestion() {
         dinleIdEl.style.display = 'none';
     }
     
-    // Ses çal (otomatik)
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
+    // Ses çal (otomatik) - Audio Manager kullan
+    if (typeof stopCurrentAudio === 'function') {
+        stopCurrentAudio();
     }
-    currentAudio = new Audio(currentQuestionData.ses_dosyasi);
-    window.currentAudio = currentAudio;
-    currentAudio.play().catch(err => {
-        warnLog('Ses çalınamadı:', err);
-        currentAudio = null;
-        window.currentAudio = null;
-    });
+    if (typeof playAudio === 'function' && currentQuestionData.ses_dosyasi) {
+        playAudio(currentQuestionData.ses_dosyasi);
+    }
     
-    // Ses bitince temizle
-    currentAudio.onended = () => {
-        currentAudio = null;
-        window.currentAudio = null;
-    };
-    
-    // Ses çal butonunu güncelle
+    // Ses çal butonunu güncelle - Audio Manager kullan
     const playBtn = document.getElementById('play-audio-btn');
-    if (playBtn) {
-        playBtn.onclick = () => {
-            // Önceki sesi durdur
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-            }
-            
-            // Yeni ses oluştur ve çal
-            currentAudio = new Audio(currentQuestionData.ses_dosyasi);
-            window.currentAudio = currentAudio;
+    if (playBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(playBtn, currentQuestionData.ses_dosyasi);
+    } else if (playBtn) {
+        // Fallback: Eski yöntem (audio-manager yüklenmemişse)
+        if (currentQuestionData.ses_dosyasi) {
+            playBtn.onclick = () => {
+                if (typeof playAudio === 'function') {
+                    playAudio(currentQuestionData.ses_dosyasi, playBtn);
+                }
+            };
+            playBtn.disabled = false;
+            playBtn.style.opacity = '1';
+        } else {
+            playBtn.style.opacity = '0.5';
             playBtn.disabled = true;
-            playBtn.style.opacity = '0.6';
-            
-            currentAudio.play().catch(err => {
-                warnLog('Ses çalınamadı:', err);
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            });
-            
-            // Ses bitince butonu tekrar aktif et
-            currentAudio.onended = () => {
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-            
-            // Hata durumunda butonu tekrar aktif et
-            currentAudio.onerror = () => {
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-        };
+        }
     }
     
     // Seçenekleri oluştur
@@ -1364,47 +1291,24 @@ async function loadBoslukQuestion() {
         verseMealEl.textContent = currentQuestionData.meal;
     }
     
-    // Ses çal butonu
+    // Ses çal butonu - Audio Manager kullan
     const playBtn = document.getElementById('bosluk-play-audio-btn');
-    if (playBtn && currentQuestionData.ayet_ses_dosyasi) {
-        playBtn.onclick = () => {
-            // Önceki sesi durdur
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-            }
-            
-            // Yeni ses oluştur ve çal
-            currentAudio = new Audio(currentQuestionData.ayet_ses_dosyasi);
-            window.currentAudio = currentAudio;
+    if (playBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(playBtn, currentQuestionData.ayet_ses_dosyasi);
+    } else if (playBtn) {
+        // Fallback: Eski yöntem
+        if (currentQuestionData.ayet_ses_dosyasi) {
+            playBtn.onclick = () => {
+                if (typeof playAudio === 'function') {
+                    playAudio(currentQuestionData.ayet_ses_dosyasi, playBtn);
+                }
+            };
+            playBtn.disabled = false;
+            playBtn.style.opacity = '1';
+        } else {
+            playBtn.style.opacity = '0.5';
             playBtn.disabled = true;
-            playBtn.style.opacity = '0.6';
-            
-            currentAudio.play().catch(err => {
-                console.error('Ses çalınamadı:', err);
-                showErrorMessage('Ses dosyası çalınamadı.');
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            });
-            
-            // Ses bitince butonu tekrar aktif et
-            currentAudio.onended = () => {
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-            
-            // Hata durumunda butonu tekrar aktif et
-            currentAudio.onerror = () => {
-                playBtn.disabled = false;
-                playBtn.style.opacity = '1';
-                currentAudio = null;
-                window.currentAudio = null;
-            };
-        };
+        }
     }
     
     // Seçenekleri oluştur (doğru kelime + 3 yanlış)
@@ -1530,12 +1434,12 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             loadBoslukQuestion();
         };
         
-        if (currentAudio && !currentAudio.paused && !currentAudio.ended) {
+        if (window.currentAudio && !window.currentAudio.paused && !window.currentAudio.ended) {
             // Audio çalıyorsa, bitmesini bekle
             // Mevcut onended handler'ını sakla
-            const originalOnEnded = currentAudio.onended;
+            const originalOnEnded = window.currentAudio.onended;
             // Yeni handler ekle (hem eski handler'ı çağır hem de sonraki soruya geç)
-            currentAudio.onended = () => {
+            window.currentAudio.onended = () => {
                 if (originalOnEnded) {
                     try {
                         originalOnEnded();
@@ -1575,17 +1479,17 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             loadBoslukQuestion();
         };
         
-        if (currentAudio && !currentAudio.paused && !currentAudio.ended) {
+        if (window.currentAudio && !window.currentAudio.paused && !window.currentAudio.ended) {
             // Audio çalıyorsa, bitmesini bekle
             // Mevcut onended handler'ını sakla
-            const originalOnEnded = currentAudio.onended;
+            const originalOnEnded = window.currentAudio.onended;
             // Yeni handler ekle (hem eski handler'ı çağır hem de sonraki soruya geç)
-            currentAudio.onended = () => {
+            window.currentAudio.onended = () => {
                 if (originalOnEnded) {
                     try {
                         originalOnEnded();
                     } catch (e) {
-                        console.error('Original onended handler error:', e);
+                        errorLog('Original onended handler error:', e);
                     }
                 }
                 setTimeout(moveToNextQuestion, 500);
@@ -1667,52 +1571,21 @@ function displayAyet(ayet, allAyet) {
         }
     }
     
-    // Ses çal butonu (Arapça metnin yanında)
+    // Ses çal butonu - Audio Manager kullan
     const playAudioBtn = document.getElementById('ayet-play-audio-btn');
-    if (playAudioBtn) {
+    if (playAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(playAudioBtn, ayet.ayet_ses_dosyasi);
+    } else if (playAudioBtn) {
+        // Fallback: Eski yöntem
         if (ayet.ayet_ses_dosyasi) {
             playAudioBtn.onclick = () => {
-                // Önceki sesi durdur
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
+                if (typeof playAudio === 'function') {
+                    playAudio(ayet.ayet_ses_dosyasi, playAudioBtn);
                 }
-                
-                // Yeni ses oluştur ve çal
-                currentAudio = new Audio(ayet.ayet_ses_dosyasi);
-                window.currentAudio = currentAudio;
-                playAudioBtn.disabled = true;
-                playAudioBtn.style.opacity = '0.6';
-                
-                currentAudio.play().catch(err => {
-                    console.error('Ses çalınamadı:', err);
-                    showErrorMessage('Ses dosyası çalınamadı.');
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                });
-                
-                // Ses bitince butonu tekrar aktif et
-                currentAudio.onended = () => {
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                };
-                
-                // Hata durumunda butonu tekrar aktif et
-                currentAudio.onerror = () => {
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                };
             };
             playAudioBtn.disabled = false;
             playAudioBtn.style.opacity = '1';
         } else {
-            // Ses dosyası yoksa butonu devre dışı bırak
             playAudioBtn.disabled = true;
             playAudioBtn.style.opacity = '0.5';
         }
@@ -1795,55 +1668,66 @@ function displayDua(dua, allDua) {
         }
     }
     
-    // Ses çal butonu (Arapça metnin yanında)
+    // Ses çal butonu - Audio Manager kullan
     const playAudioBtn = document.getElementById('dua-play-audio-btn');
-    if (playAudioBtn) {
+    if (playAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(playAudioBtn, dua.ses_url, {
+            onEnded: () => {
+                // Ses bittiğinde özel işlemler (gerekirse)
+            },
+            onError: () => {
+                // Hata durumunda özel işlemler (gerekirse)
+            }
+        });
+        // Dua için özel başlangıç zamanı varsa ayarla
+        if (dua.start && typeof window.currentAudio !== 'undefined' && window.currentAudio) {
+            // Not: Bu durumda playAudio çağrıldıktan sonra currentTime ayarlanmalı
+            // Bu özellik audio-manager.js'e eklenebilir
+        }
+    } else if (playAudioBtn) {
+        // Fallback: Eski yöntem
         if (dua.ses_url) {
             playAudioBtn.onclick = () => {
-                // Önceki sesi durdur
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio.currentTime = 0;
+                if (typeof playAudio === 'function') {
+                    playAudio(dua.ses_url, playAudioBtn);
+                    // Dua için özel başlangıç zamanı
+                    if (dua.start && window.currentAudio) {
+                        window.currentAudio.currentTime = dua.start;
+                    }
+                } else {
+                    // Fallback fallback: Manuel audio handling
+                    if (window.currentAudio) {
+                        window.currentAudio.pause();
+                        window.currentAudio.currentTime = 0;
+                    }
+                    window.currentAudio = new Audio(dua.ses_url);
+                    if (dua.start) {
+                        window.currentAudio.currentTime = dua.start;
+                    }
+                    playAudioBtn.disabled = true;
+                    playAudioBtn.style.opacity = '0.6';
+                    window.currentAudio.play().catch(err => {
+                        errorLog('Ses çalınamadı:', err);
+                        showErrorMessage('Ses dosyası çalınamadı.');
+                        playAudioBtn.disabled = false;
+                        playAudioBtn.style.opacity = '1';
+                        window.currentAudio = null;
+                    });
+                    window.currentAudio.onended = () => {
+                        playAudioBtn.disabled = false;
+                        playAudioBtn.style.opacity = '1';
+                        window.currentAudio = null;
+                    };
+                    window.currentAudio.onerror = () => {
+                        playAudioBtn.disabled = false;
+                        playAudioBtn.style.opacity = '1';
+                        window.currentAudio = null;
+                    };
                 }
-                
-                // Yeni ses oluştur ve çal
-                currentAudio = new Audio(dua.ses_url);
-                window.currentAudio = currentAudio;
-                if (dua.start) {
-                    currentAudio.currentTime = dua.start;
-                }
-                playAudioBtn.disabled = true;
-                playAudioBtn.style.opacity = '0.6';
-                
-                currentAudio.play().catch(err => {
-                    console.error('Ses çalınamadı:', err);
-                    showErrorMessage('Ses dosyası çalınamadı.');
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                });
-                
-                // Ses bitince butonu tekrar aktif et
-                currentAudio.onended = () => {
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                };
-                
-                // Hata durumunda butonu tekrar aktif et
-                currentAudio.onerror = () => {
-                    playAudioBtn.disabled = false;
-                    playAudioBtn.style.opacity = '1';
-                    currentAudio = null;
-                    window.currentAudio = null;
-                };
             };
             playAudioBtn.disabled = false;
             playAudioBtn.style.opacity = '1';
         } else {
-            // Ses dosyası yoksa butonu devre dışı bırak
             playAudioBtn.disabled = true;
             playAudioBtn.style.opacity = '0.5';
         }
@@ -2710,83 +2594,37 @@ function updateDailyProgress(correctAnswers) {
 /**
  * SM-2 Spaced Repetition Algoritması ile kelime istatistiklerini günceller
  */
-function updateWordStats(wordId, isCorrect) {
-    const today = getLocalDateString();
-    
-    if (!wordStats[wordId]) {
-        // Yeni kelime - başlangıç değerleri
-        wordStats[wordId] = {
-            attempts: 0,
-            correct: 0,
-            wrong: 0,
-            successRate: 0,
-            masteryLevel: 0,
-            lastCorrect: null,
-            lastWrong: null,
-            // Spaced Repetition alanları
-            easeFactor: 2.5, // SM-2 başlangıç değeri
-            interval: 0, // Gün cinsinden tekrar aralığı
-            nextReviewDate: null, // Sonraki tekrar tarihi
-            lastReview: null // Son tekrar tarihi
-        };
-    }
-    
-    const stats = wordStats[wordId];
-    const previousAttempts = stats.attempts;
-    stats.attempts++;
-    stats.lastReview = today;
-    
-    if (isCorrect) {
-        stats.correct++;
-        stats.lastCorrect = today;
-        
-        // SM-2 Algoritması: Doğru cevap durumu
-        if (previousAttempts === 0) {
-            // İlk öğrenme
-            stats.interval = 1; // 1 gün sonra tekrar
-        } else if (previousAttempts === 1 && stats.correct === 2) {
-            // İkinci doğru cevap
-            stats.interval = 6; // 6 gün sonra tekrar
+// updateWordStats artık word-stats-manager.js modülünde
+// Fallback: Eğer modül yüklenmemişse
+if (typeof updateWordStats === 'undefined') {
+    function updateWordStats(wordId, isCorrect) {
+        // Basit fallback implementasyonu
+        const today = getLocalDateString();
+        if (!wordStats[wordId]) {
+            wordStats[wordId] = {
+                attempts: 0,
+                correct: 0,
+                wrong: 0,
+                successRate: 0,
+                masteryLevel: 0,
+                lastCorrect: null,
+                lastWrong: null
+            };
+        }
+        const stats = wordStats[wordId];
+        stats.attempts++;
+        if (isCorrect) {
+            stats.correct++;
+            stats.lastCorrect = today;
         } else {
-            // Sonraki doğru cevaplar
-            stats.interval = Math.max(1, Math.floor(stats.interval * stats.easeFactor));
+            stats.wrong++;
+            stats.lastWrong = today;
         }
-        
-        // Ease Factor güncellemesi (SM-2)
-        // Başarı oranına göre ease factor'ü ayarla
-        const currentSuccessRate = (stats.correct / stats.attempts) * 100;
-        
-        if (currentSuccessRate >= 90) {
-            // Çok başarılı → Ease factor artır (kolaylaştır)
-            stats.easeFactor = Math.min(2.5, stats.easeFactor + 0.15);
-        } else if (currentSuccessRate >= 70) {
-            // Başarılı → Ease factor hafif artır
-            stats.easeFactor = Math.min(2.5, stats.easeFactor + 0.05);
-        } else if (currentSuccessRate < 50) {
-            // Başarısız → Ease factor azalt (zorlaştır)
-            stats.easeFactor = Math.max(1.3, stats.easeFactor - 0.15);
-        }
-        // 50-70 arası: ease factor değişmez
-        
-    } else {
-        // Yanlış cevap
-        stats.wrong++;
-        stats.lastWrong = today;
-        
-        // SM-2 Algoritması: Yanlış cevap durumu
-        // Yanlış cevap verilince interval sıfırlanır ve ease factor azalır
-        stats.interval = 1; // 1 gün sonra tekrar (sıfırla)
-        stats.easeFactor = Math.max(1.3, stats.easeFactor - 0.20); // Zorlaştır
+        stats.successRate = (stats.correct / stats.attempts) * 100;
+        stats.masteryLevel = Math.min(10, Math.floor(stats.successRate / 10));
+        debouncedSaveStats();
     }
-    
-    // Sonraki tekrar tarihini hesapla
-    stats.nextReviewDate = addDays(today, stats.interval);
-    
-    // Başarı oranı ve ustalık seviyesi
-    stats.successRate = (stats.correct / stats.attempts) * 100;
-    stats.masteryLevel = Math.min(10, Math.floor(stats.successRate / 10));
-    
-    debouncedSaveStats();
+    window.updateWordStats = updateWordStats;
 }
 
 /**
@@ -2903,22 +2741,21 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     safeSetItem(monthlyKey, monthlyData);
 }
 
-/**
- * Zorlanılan kelimeleri döndürür
- */
-function getStrugglingWords() {
-    const allWords = Object.keys(wordStats)
-        .filter(wordId => {
-            const stats = wordStats[wordId];
-            return stats.successRate < 50 && stats.attempts >= 2;
-        })
-        .map(wordId => {
-            // Kelime verisini bul
-            // Bu basitleştirilmiş bir versiyon, gerçek implementasyonda kelime verisini yüklemek gerekir
-            return { id: wordId, ...wordStats[wordId] };
-        });
-    
-    return allWords;
+// getStrugglingWords ve selectIntelligentWords artık word-stats-manager.js modülünde
+// Fallback: Eğer modül yüklenmemişse
+if (typeof getStrugglingWords === 'undefined') {
+    function getStrugglingWords() {
+        const allWords = Object.keys(wordStats)
+            .filter(wordId => {
+                const stats = wordStats[wordId];
+                return stats.successRate < 50 && stats.attempts >= 2;
+            })
+            .map(wordId => {
+                return { id: wordId, ...wordStats[wordId] };
+            });
+        return allWords;
+    }
+    window.getStrugglingWords = getStrugglingWords;
 }
 
 /**
