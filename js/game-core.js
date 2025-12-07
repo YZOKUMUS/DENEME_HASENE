@@ -2168,7 +2168,7 @@ function checkDailyTasks() {
 }
 
 /**
- * Mevcut görevleri template ile senkronize eder (ad ve açıklama güncellemeleri için)
+ * Mevcut görevleri template ile senkronize eder (ad, açıklama ve target güncellemeleri için)
  */
 function syncTasksWithTemplate() {
     if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) return;
@@ -2184,6 +2184,18 @@ function syncTasksWithTemplate() {
         if (template) {
             task.name = template.name;
             task.description = template.description;
+            // Target değerini güncelle (eğer değiştiyse)
+            if (template.target !== undefined && task.target !== template.target) {
+                // Eğer görev tamamlanmamışsa target'ı güncelle
+                if (!task.completed) {
+                    task.target = template.target;
+                    // Progress'i yeni target'a göre ayarla (orantılı olarak)
+                    if (task.target > 0 && task.progress > task.target) {
+                        // Eğer progress yeni target'tan fazlaysa, target'a eşitle
+                        task.progress = Math.min(task.progress, task.target);
+                    }
+                }
+            }
         }
     });
     
@@ -2193,6 +2205,18 @@ function syncTasksWithTemplate() {
             if (template) {
                 task.name = template.name;
                 task.description = template.description;
+                // Target değerini güncelle (eğer değiştiyse)
+                if (template.target !== undefined && task.target !== template.target) {
+                    // Eğer görev tamamlanmamışsa target'ı güncelle
+                    if (!task.completed) {
+                        task.target = template.target;
+                        // Progress'i yeni target'a göre ayarla (orantılı olarak)
+                        if (task.target > 0 && task.progress > task.target) {
+                            // Eğer progress yeni target'tan fazlaysa, target'a eşitle
+                            task.progress = Math.min(task.progress, task.target);
+                        }
+                    }
+                }
             }
         });
     }
@@ -2245,9 +2269,45 @@ function checkWeeklyTasks() {
         };
         
         saveStats();
+    } else {
+        // Aynı hafta, mevcut görevleri template ile senkronize et
+        syncWeeklyTasksWithTemplate();
+        saveStats(); // Değişiklikleri kaydet
     }
     
     updateTasksDisplay();
+}
+
+/**
+ * Haftalık görevleri template ile senkronize eder (ad, açıklama ve target güncellemeleri için)
+ */
+function syncWeeklyTasksWithTemplate() {
+    if (!weeklyTasks.tasks || weeklyTasks.tasks.length === 0) return;
+    
+    // Template'den görevleri al
+    const templateMap = new Map();
+    WEEKLY_TASKS_TEMPLATE.forEach(t => templateMap.set(t.id, t));
+    
+    // Mevcut görevleri güncelle
+    weeklyTasks.tasks.forEach(task => {
+        const template = templateMap.get(task.id);
+        if (template) {
+            task.name = template.name;
+            task.description = template.description;
+            // Target değerini güncelle (eğer değiştiyse)
+            if (template.target !== undefined && task.target !== template.target) {
+                // Eğer görev tamamlanmamışsa target'ı güncelle
+                if (!task.completed) {
+                    task.target = template.target;
+                    // Progress'i yeni target'a göre ayarla (orantılı olarak)
+                    if (task.target > 0 && task.progress > task.target) {
+                        // Eğer progress yeni target'tan fazlaysa, target'a eşitle
+                        task.progress = Math.min(task.progress, task.target);
+                    }
+                }
+            }
+        }
+    });
 }
 
 /**

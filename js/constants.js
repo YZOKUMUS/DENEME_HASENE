@@ -161,6 +161,7 @@ const ACHIEVEMENTS = [
 ];
 
 // Günlük Görevler Template
+// Analiz: 15 dk/gün = ~2 oyun = ~15 doğru = ~300 puan
 const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_10_correct',
@@ -171,10 +172,10 @@ const DAILY_TASKS_TEMPLATE = [
         reward: 0
     },
     {
-        id: 'daily_50_correct',
-        name: '50 Doğru Cevap',
-        description: '✅ 50 sahih cevap ver',
-        target: 50,
+        id: 'daily_20_correct',
+        name: '20 Doğru Cevap',
+        description: '✅ 20 sahih cevap ver',
+        target: 20,
         type: 'correct',
         reward: 0
     },
@@ -187,10 +188,10 @@ const DAILY_TASKS_TEMPLATE = [
         reward: 0
     },
     {
-        id: 'daily_500_hasene',
-        name: '500 Hasene',
-        description: '⭐ 500 Hasene kazan',
-        target: 500,
+        id: 'daily_300_hasene',
+        name: '300 Hasene',
+        description: '⭐ 300 Hasene kazan',
+        target: 300,
         type: 'hasene',
         reward: 0
     },
@@ -253,20 +254,21 @@ const DAILY_TASKS_TEMPLATE = [
 ];
 
 // Fazilet Vazifeleri (Bonus)
+// Analiz: 15 dk/gün için zorlu bonus görevler
 const DAILY_BONUS_TASKS_TEMPLATE = [
     {
-        id: 'daily_20_correct',
-        name: '20 Doğru Cevap',
-        description: '✅ 20 sahih cevap ver',
-        target: 20,
+        id: 'daily_30_correct',
+        name: '30 Doğru Cevap',
+        description: '✅ 30 sahih cevap ver',
+        target: 30,
         type: 'correct',
         reward: 0
     },
     {
-        id: 'daily_1000_hasene',
-        name: '1000 Hasene',
-        description: '⭐ 1,000 Hasene kazan',
-        target: 1000,
+        id: 'daily_500_hasene',
+        name: '500 Hasene',
+        description: '⭐ 500 Hasene kazan',
+        target: 500,
         type: 'hasene',
         reward: 0
     },
@@ -289,20 +291,22 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
 ];
 
 // Haftalık Görevler Template
+// Analiz: 15 dk/gün × 7 gün = ~14 oyun = ~105 doğru = ~2,100 puan
+// Hedef: Bir haftada tamamlanabilir görevler
 const WEEKLY_TASKS_TEMPLATE = [
     {
-        id: 'weekly_100_correct',
-        name: '100 Doğru Cevap',
-        description: '✅ 100 sahih cevap ver',
-        target: 100,
+        id: 'weekly_150_correct',
+        name: '150 Doğru Cevap',
+        description: '✅ 150 sahih cevap ver',
+        target: 150,
         type: 'correct',
         reward: 0
     },
     {
-        id: 'weekly_5000_hasene',
-        name: '5000 Hasene',
-        description: '⭐ 5,000 Hasene kazan',
-        target: 5000,
+        id: 'weekly_2500_hasene',
+        name: '2500 Hasene',
+        description: '⭐ 2,500 Hasene kazan',
+        target: 2500,
         type: 'hasene',
         reward: 0
     },
@@ -323,10 +327,10 @@ const WEEKLY_TASKS_TEMPLATE = [
         reward: 0
     },
     {
-        id: 'weekly_50_combo',
-        name: '50x Combo',
-        description: '🔥 Arka arkaya 50 doğru cevap ver',
-        target: 50,
+        id: 'weekly_30_combo',
+        name: '30x Combo',
+        description: '🔥 Arka arkaya 30 doğru cevap ver',
+        target: 30,
         type: 'combo',
         reward: 0
     },
