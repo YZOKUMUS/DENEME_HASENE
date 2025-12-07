@@ -3862,6 +3862,7 @@ async function resetAllStats() {
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
     // Günlük, haftalık, aylık istatistikleri temizle (hasene_daily_*, hasene_weekly_*, hasene_monthly_*)
+    // TÜM geçmiş verileri temizle (sadece son 30 gün değil, hepsi)
     Object.keys(localStorage).forEach(key => {
         if (key.startsWith('hasene_daily_') || 
             key.startsWith('hasene_weekly_') || 
@@ -3869,6 +3870,9 @@ async function resetAllStats() {
             localStorage.removeItem(key);
         }
     });
+    
+    // Favori kelimeleri de temizle
+    localStorage.removeItem('hasene_favoriteWords');
     
     // IndexedDB temizle
     await clearIndexedDB();
@@ -3980,6 +3984,16 @@ async function resetAllStats() {
     unlockedAchievements = [];
     unlockedBadges = [];
     perfectLessonsCount = 0;
+    
+    // Favori kelimeleri de sıfırla (eğer favorites-manager.js yüklüyse)
+    if (typeof window.loadFavorites === 'function' && typeof window.removeFromFavorites === 'function') {
+        // Tüm favorileri temizlemek için loadFavorites çağır ve sonra temizle
+        window.loadFavorites();
+        const favoriteWords = window.getFavoriteWords ? window.getFavoriteWords() : [];
+        favoriteWords.forEach(wordId => {
+            window.removeFromFavorites(wordId);
+        });
+    }
     gameStats = {
         totalCorrect: 0,
         totalWrong: 0,
