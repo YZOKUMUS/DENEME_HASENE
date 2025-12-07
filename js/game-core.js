@@ -89,6 +89,7 @@ let currentGame = null;
 let currentDifficulty = 'medium';
 let currentGameMode = null;
 let currentSubMode = null;
+let allWordsData = null; // Tüm kelime verileri (yanlış cevaplar için)
 
 // Doğru cevap pozisyon takibi (eşit dağılım için)
 let correctAnswerPositions = {
@@ -601,6 +602,9 @@ async function startKelimeCevirGame(subMode) {
         return;
     }
     
+    // Tüm kelime verilerini sakla (yanlış cevaplar için)
+    allWordsData = allWords;
+    
     // Filtrele - Zorluk seviyesine göre
     infoLog(`Kelime Çevir oyunu başlatılıyor - Zorluk: ${currentDifficulty}`);
     let filteredWords = filterByDifficulty(allWords, currentDifficulty);
@@ -609,7 +613,10 @@ async function startKelimeCevirGame(subMode) {
     let strugglingWordIds = [];
     let isReviewMode = false;
     
-    if (subMode === 'juz30') {
+    if (subMode === 'classic') {
+        // Klasik oyun: Sadece zorluk seviyesine göre filtreleme (ekstra filtre yok)
+        infoLog(`Klasik oyun modu: ${filteredWords.length} kelime`);
+    } else if (subMode === 'juz30') {
         filteredWords = filterJuz30(filteredWords);
         infoLog(`30.cüz filtresi uygulandı: ${filteredWords.length} kelime`);
     } else if (subMode === 'review') {
@@ -743,12 +750,16 @@ function loadKelimeQuestion() {
     
     // Seçenekleri oluştur
     const correctAnswer = currentQuestionData.anlam;
-    const allWords = questions;
-    const wrongAnswers = allWords
-        .filter(w => w.id !== currentQuestionData.id)
+    // Tüm kelimelerden yanlış cevapları al ve rastgele seç
+    // Önce tüm kelime verilerinden, yoksa questions'dan
+    const sourceData = allWordsData || questions;
+    const uniqueWrongMeanings = sourceData
+        .filter(w => w.id !== currentQuestionData.id && w.anlam !== correctAnswer)
         .map(w => w.anlam)
-        .filter((v, i, a) => a.indexOf(v) === i) // Tekrarları kaldır
-        .slice(0, 3);
+        .filter((v, i, a) => a.indexOf(v) === i); // Tekrarları kaldır
+    
+    // Rastgele 3 yanlış cevap seç
+    const wrongAnswers = getRandomItems(uniqueWrongMeanings, 3);
     
     // Eşit dağılımlı karıştırma
     const allOptions = [correctAnswer, ...wrongAnswers];
@@ -808,8 +819,8 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
         comboCount++;
         if (comboCount > maxCombo) maxCombo = comboCount;
         
-        // Puan ekle
-        let points = CONFIG.POINTS_CORRECT;
+        // Puan ekle - Kelimenin difficulty değerine göre
+        let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
         if (comboCount % 3 === 0) {
             points += CONFIG.COMBO_BONUS;
         }
@@ -942,6 +953,9 @@ async function startDinleBulGame() {
         return;
     }
     
+    // Tüm kelime verilerini sakla (yanlış cevaplar için)
+    allWordsData = allWords;
+    
     // Filtrele - Zorluk seviyesine göre
     infoLog(`Dinle Bul oyunu başlatılıyor - Zorluk: ${currentDifficulty}`);
     let filteredWords = filterByDifficulty(allWords, currentDifficulty);
@@ -1041,12 +1055,16 @@ function loadDinleQuestion() {
     
     // Seçenekleri oluştur
     const correctAnswer = currentQuestionData.kelime;
-    const allWords = questions;
-    const wrongAnswers = allWords
-        .filter(w => w.id !== currentQuestionData.id)
+    // Tüm kelimelerden yanlış cevapları al ve rastgele seç
+    // Önce tüm kelime verilerinden, yoksa questions'dan
+    const sourceData = allWordsData || questions;
+    const uniqueWrongWords = sourceData
+        .filter(w => w.id !== currentQuestionData.id && w.kelime !== correctAnswer)
         .map(w => w.kelime)
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .slice(0, 3);
+        .filter((v, i, a) => a.indexOf(v) === i); // Tekrarları kaldır
+    
+    // Rastgele 3 yanlış cevap seç
+    const wrongAnswers = getRandomItems(uniqueWrongWords, 3);
     
     // Eşit dağılımlı karıştırma
     const allOptions = [correctAnswer, ...wrongAnswers];
@@ -1098,7 +1116,8 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         comboCount++;
         if (comboCount > maxCombo) maxCombo = comboCount;
         
-        let points = CONFIG.POINTS_CORRECT;
+        // Puan ekle - Kelimenin difficulty değerine göre
+        let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
         if (comboCount % 3 === 0) {
             points += CONFIG.COMBO_BONUS;
         }
@@ -1187,8 +1206,66 @@ async function startBoslukDoldurGame() {
         return;
     }
     
+    // Zorluk seviyesine göre filtrele (meal metnindeki kelime sayısına göre)
+    infoLog(`Boşluk Doldur oyunu başlatılıyor - Zorluk: ${currentDifficulty}`);
+    let filteredAyet = allAyet;
+    
+    // Ayetleri meal metnindeki kelime sayısına göre filtrele
+    filteredAyet = allAyet.filter(ayet => {
+        if (!ayet.meal) return true; // Meal yoksa dahil et
+        
+        // Meal metnindeki kelime sayısını hesapla
+        const mealWords = ayet.meal.trim().split(/\s+/).filter(w => w.length > 0);
+        const wordCount = mealWords.length;
+        
+        // Zorluk seviyesine göre filtrele (kelime sayısına göre)
+        if (currentDifficulty === 'easy') {
+            // Kolay: 1-6 kelime (kısa mealler)
+            return wordCount >= 1 && wordCount <= 6;
+        } else if (currentDifficulty === 'medium') {
+            // Orta: 7-12 kelime (orta uzunlukta mealler)
+            return wordCount >= 7 && wordCount <= 12;
+        } else if (currentDifficulty === 'hard') {
+            // Zor: 13+ kelime (uzun mealler)
+            return wordCount >= 13;
+        }
+        return true;
+    });
+    
+    infoLog(`Filtrelenmiş ayet sayısı: ${filteredAyet.length} / ${allAyet.length}`);
+    
+    // Debug: Zorluk filtresi çalışıyor mu kontrol et
+    if (CONFIG.DEBUG) {
+        console.log(`🔍 Zorluk Filtresi Testi:`);
+        console.log(`- Seçilen zorluk: ${currentDifficulty}`);
+        console.log(`- Toplam ayet: ${allAyet.length}`);
+        console.log(`- Filtrelenmiş ayet: ${filteredAyet.length}`);
+        console.log(`- Filtreleme oranı: ${((filteredAyet.length / allAyet.length) * 100).toFixed(2)}%`);
+        
+        // İlk birkaç filtrelenmiş ayetin kelime sayısını göster
+        if (filteredAyet.length > 0) {
+            const sampleAyet = filteredAyet.slice(0, 3);
+            sampleAyet.forEach((ayet, idx) => {
+                if (ayet.meal) {
+                    const wordCount = ayet.meal.trim().split(/\s+/).filter(w => w.length > 0).length;
+                    console.log(`  Örnek ${idx + 1}: "${ayet.meal.substring(0, 50)}..." - Kelime sayısı: ${wordCount}`);
+                }
+            });
+        }
+    }
+    
+    if (filteredAyet.length < CONFIG.QUESTIONS_PER_GAME) {
+        showErrorMessage(`Yeterli ayet bulunamadı! (${filteredAyet.length} ayet bulundu, ${CONFIG.QUESTIONS_PER_GAME} gerekiyor)`);
+        return;
+    }
+    
     // Ayetlerden rastgele seç
-    questions = getRandomItems(allAyet, CONFIG.QUESTIONS_PER_GAME);
+    questions = getRandomItems(filteredAyet, CONFIG.QUESTIONS_PER_GAME);
+    
+    // Kullanıcıya bilgi ver (her zaman göster)
+    const difficultyName = currentDifficulty === 'easy' ? 'Kolay' : currentDifficulty === 'medium' ? 'Orta' : 'Zor';
+    const filterRatio = ((filteredAyet.length / allAyet.length) * 100).toFixed(1);
+    showSuccessMessage(`✅ ${difficultyName} zorluk seviyesi aktif: ${filteredAyet.length} ayet (${filterRatio}%)`);
     
     loadBoslukQuestion();
 }
@@ -1280,11 +1357,14 @@ async function loadBoslukQuestion() {
     
     // Seçenekleri oluştur (doğru kelime + 3 yanlış)
     const allAyet = questions;
-    const wrongWords = allAyet
+    const uniqueWrongWords = allAyet
         .filter(a => a.ayet_kimligi !== currentQuestionData.ayet_kimligi)
         .flatMap(a => a.ayet_metni.split(' '))
         .filter((v, i, a) => a.indexOf(v) === i)
-        .slice(0, 3);
+        .filter(word => word !== missingWord); // Doğru cevabı çıkar
+    
+    // Rastgele 3 yanlış cevap seç
+    const wrongWords = getRandomItems(uniqueWrongWords, 3);
     
     // Eşit dağılımlı karıştırma
     const allOptions = [missingWord, ...wrongWords];
@@ -1348,7 +1428,28 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             blankWordEl.style.fontWeight = '600';
         }
         
+        // Puan hesapla - Zorluk seviyesine göre (meal kelime sayısına göre)
         let points = CONFIG.POINTS_CORRECT;
+        
+        // Meal metnindeki kelime sayısına göre puan çarpanı
+        if (currentQuestionData.meal) {
+            const mealWords = currentQuestionData.meal.trim().split(/\s+/).filter(w => w.length > 0);
+            const wordCount = mealWords.length;
+            
+            // Zorluk seviyesine göre puan çarpanı
+            if (wordCount >= 1 && wordCount <= 6) {
+                // Kolay: 1.0x (10 puan)
+                points = CONFIG.POINTS_CORRECT;
+            } else if (wordCount >= 7 && wordCount <= 12) {
+                // Orta: 1.5x (15 puan)
+                points = Math.round(CONFIG.POINTS_CORRECT * 1.5);
+            } else if (wordCount >= 13) {
+                // Zor: 2.0x (20 puan)
+                points = CONFIG.POINTS_CORRECT * 2;
+            }
+        }
+        
+        // Combo bonusu
         if (comboCount % 3 === 0) {
             points += CONFIG.COMBO_BONUS;
         }
