@@ -38,23 +38,21 @@ self.addEventListener('install', (event) => {
         Promise.all([
             // App dosyalarını cache'le
             caches.open(CACHE_NAME).then((cache) => {
-                console.log('App cache açıldı');
                 return cache.addAll(urlsToCache);
             }),
             // JSON dosyalarını cache'le (background'da, hata olsa bile devam et)
             caches.open(DATA_CACHE_NAME).then((cache) => {
-                console.log('Data cache açıldı');
                 // Her dosyayı ayrı ayrı ekle, biri başarısız olsa bile diğerleri yüklensin
                 return Promise.allSettled(
                     dataUrlsToCache.map(url => 
-                        cache.add(url).catch(err => {
-                            console.warn(`${url} cache'lenemedi:`, err);
+                        cache.add(url).catch(() => {
+                            // Sessizce devam et
                         })
                     )
                 );
             })
-        ]).catch((error) => {
-            console.error('Cache hatası:', error);
+        ]).catch(() => {
+            // Sessizce devam et
         })
     );
     // Yeni Service Worker'ı hemen aktif et
@@ -69,7 +67,6 @@ self.addEventListener('activate', (event) => {
                 cacheNames.map((cacheName) => {
                     // Yeni cache isimlerini koru, eski olanları sil
                     if (cacheName !== CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
-                        console.log('Eski cache siliniyor:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })

@@ -352,9 +352,6 @@ function showErrorMessage(message) {
 function playSound(soundName) {
     // Ses efektleri için placeholder
     // Gerçek implementasyon ses dosyaları eklendiğinde yapılacak
-    if (CONFIG && CONFIG.DEBUG) {
-        console.log('Playing sound:', soundName);
-    }
 }
 
 /**

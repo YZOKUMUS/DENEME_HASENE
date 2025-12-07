@@ -931,11 +931,7 @@
                 // Kullanıcının seçimini bekle
                 const { outcome } = await deferredPrompt.userChoice;
                 
-                if (outcome === 'accepted') {
-                    console.log('Kullanıcı PWA\'yı yükledi');
-                } else {
-                    console.log('Kullanıcı PWA yüklemeyi reddetti');
-                }
+                // Kullanıcı seçimi işlendi
                 
                 // Prompt'u temizle
                 deferredPrompt = null;
@@ -962,10 +958,11 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', { scope: './' })
-                    .then(reg => {
-                        console.log('Service Worker registered:', reg.scope);
-                    })
-                    .catch(err => console.error('Service Worker registration failed:', err));
+                    .catch(err => {
+                        if (CONFIG && CONFIG.DEBUG) {
+                            console.error('Service Worker registration failed:', err);
+                        }
+                    });
             });
         }
     </script>
