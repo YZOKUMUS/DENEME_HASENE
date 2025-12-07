@@ -2001,8 +2001,10 @@ async function saveCurrentGameProgress() {
 
 async function endGame() {
     // Perfect Lesson bonusu kontrolü
+    // Tüm sorular doğru cevaplanmış olmalı (hiç yanlış cevap yok ve tüm sorular cevaplanmış)
     let perfectBonus = 0;
-    if (sessionWrong === 0 && sessionCorrect >= 3 && sessionScore > 0) {
+    const totalQuestions = questions.length;
+    if (sessionWrong === 0 && sessionCorrect === totalQuestions && sessionScore > 0 && totalQuestions >= 3) {
         perfectBonus = Math.floor(sessionScore * CONFIG.PERFECT_LESSON_BONUS_PERCENT);
         sessionScore += perfectBonus;
         // Mükemmel ders sayısını artır
@@ -2113,6 +2115,7 @@ function checkDailyTasks() {
     } else {
         // Aynı gün, mevcut görevleri template ile senkronize et (ad ve açıklama güncellemeleri için)
         syncTasksWithTemplate();
+        saveStats(); // Değişiklikleri kaydet
     }
     
     updateTasksDisplay();
@@ -2400,7 +2403,7 @@ function updateTasksDisplay() {
             taskItem.innerHTML = `
                 <div class="task-info">
                     <div class="task-name-row">
-                        <span class="task-name">${task.name}</span>
+                        <span class="task-name">${task.description || task.name}</span>
                         ${task.completed ? '<span class="task-check">✓</span>' : `<span class="task-progress-text">${task.progress}/${task.target}</span>`}
                     </div>
                     ${!task.completed ? `
@@ -2437,7 +2440,7 @@ function updateTasksDisplay() {
             taskItem.innerHTML = `
                 <div class="task-info">
                     <div class="task-name-row">
-                        <span class="task-name">${task.name}</span>
+                        <span class="task-name">${task.description || task.name}</span>
                         ${task.completed ? '<span class="task-check">✓</span>' : `<span class="task-progress-text">${task.progress}/${task.target}</span>`}
                     </div>
                     ${!task.completed ? `

@@ -165,7 +165,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_10_correct',
         name: '10 Doğru Cevap',
-        description: '10 sahih cevap ver',
+        description: '✅ 10 sahih cevap ver',
         target: 10,
         type: 'correct',
         reward: 0
@@ -173,7 +173,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_50_correct',
         name: '50 Doğru Cevap',
-        description: '50 sahih cevap ver',
+        description: '✅ 50 sahih cevap ver',
         target: 50,
         type: 'correct',
         reward: 0
@@ -181,7 +181,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_100_hasene',
         name: '100 Hasene',
-        description: '100 Hasene kazan',
+        description: '⭐ 100 Hasene kazan',
         target: 100,
         type: 'hasene',
         reward: 0
@@ -189,7 +189,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_500_hasene',
         name: '500 Hasene',
-        description: '500 Hasene kazan',
+        description: '⭐ 500 Hasene kazan',
         target: 500,
         type: 'hasene',
         reward: 0
@@ -197,7 +197,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_3_modes',
         name: '3 Oyun Modu',
-        description: '3 farklı oyun modu oyna',
+        description: '🎮 3 farklı oyun modu oyna',
         target: 3,
         type: 'game_modes',
         reward: 0
@@ -205,7 +205,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_3_difficulties',
         name: 'Tüm Zorluk Seviyeleri',
-        description: 'Kolay, Orta ve Zor seviyelerinde oyun oyna',
+        description: '📊 Kolay, Orta ve Zor seviyelerinde oyun oyna',
         target: 3,
         type: 'difficulties',
         reward: 0
@@ -213,7 +213,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_5_combo',
         name: '5x Combo',
-        description: '5x muvazebet yap',
+        description: '🔥 Arka arkaya 5 doğru cevap ver',
         target: 5,
         type: 'combo',
         reward: 0
@@ -221,7 +221,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_streak',
         name: 'Seri Koru',
-        description: 'Günlük serini koru',
+        description: '🔥 Günlük serini koru',
         target: 1,
         type: 'streak',
         reward: 0
@@ -229,7 +229,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_ayet_oku',
         name: 'Ayet Oku',
-        description: 'Ayet Oku modunu oyna',
+        description: '📖 Ayet okuması yap',
         target: 1,
         type: 'ayet_oku',
         reward: 0
@@ -237,7 +237,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_dua_et',
         name: 'Dua Et',
-        description: 'Dua Et modunu oyna',
+        description: '🤲 Bugünkü duanı et',
         target: 1,
         type: 'dua_et',
         reward: 0
@@ -245,7 +245,7 @@ const DAILY_TASKS_TEMPLATE = [
     {
         id: 'daily_hadis_oku',
         name: 'Hadis Oku',
-        description: 'Hadis Oku modunu oyna',
+        description: '📚 Hadis okuması yap',
         target: 1,
         type: 'hadis_oku',
         reward: 0
@@ -257,7 +257,7 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
     {
         id: 'daily_20_correct',
         name: '20 Doğru Cevap',
-        description: '20 sahih cevap ver',
+        description: '✅ 20 sahih cevap ver',
         target: 20,
         type: 'correct',
         reward: 0
@@ -265,7 +265,7 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
     {
         id: 'daily_1000_hasene',
         name: '1000 Hasene',
-        description: '1,000 Hasene kazan',
+        description: '⭐ 1,000 Hasene kazan',
         target: 1000,
         type: 'hasene',
         reward: 0
@@ -273,7 +273,7 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
     {
         id: 'daily_all_modes',
         name: 'Tüm Oyun Modları',
-        description: 'Tüm 6 oyun modunu oyna',
+        description: '🎮 Tüm 6 oyun modunu oyna',
         target: 6,
         type: 'game_modes',
         reward: 0
@@ -281,7 +281,7 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
     {
         id: 'daily_10_combo',
         name: '10x Combo',
-        description: '10x muvazebet yap',
+        description: '🔥 Arka arkaya 10 doğru cevap ver',
         target: 10,
         type: 'combo',
         reward: 0
@@ -293,7 +293,7 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_100_correct',
         name: '100 Doğru Cevap',
-        description: '100 sahih cevap ver',
+        description: '✅ 100 sahih cevap ver',
         target: 100,
         type: 'correct',
         reward: 0
@@ -301,7 +301,7 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_5000_hasene',
         name: '5000 Hasene',
-        description: '5,000 Hasene kazan',
+        description: '⭐ 5,000 Hasene kazan',
         target: 5000,
         type: 'hasene',
         reward: 0
@@ -309,7 +309,7 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_7_streak',
         name: '7 Gün Seri',
-        description: '7 gün üst üste talebe et',
+        description: '🔥 7 gün üst üste talebe et',
         target: 7,
         type: 'streak',
         reward: 0
@@ -317,7 +317,7 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_all_modes',
         name: 'Tüm Oyun Modları',
-        description: 'Tüm 6 oyun modunu oyna',
+        description: '🎮 Tüm 6 oyun modunu oyna',
         target: 6,
         type: 'game_modes',
         reward: 0
@@ -325,7 +325,7 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_50_combo',
         name: '50x Combo',
-        description: '50x muvazebet yap',
+        description: '🔥 Arka arkaya 50 doğru cevap ver',
         target: 50,
         type: 'combo',
         reward: 0
@@ -333,8 +333,8 @@ const WEEKLY_TASKS_TEMPLATE = [
     {
         id: 'weekly_5_perfect',
         name: 'Perfect Lesson',
-        description: '5 mükemmel ders yap',
-        target: 5,
+        description: '💎 Tüm soruları doğru cevaplayarak 3 ders tamamla',
+        target: 3,
         type: 'perfect_lessons',
         reward: 0
     }
