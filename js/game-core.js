@@ -1287,9 +1287,10 @@ async function startBoslukDoldurGame() {
         if (filteredAyet.length > 0) {
             const sampleAyet = filteredAyet.slice(0, 3);
             sampleAyet.forEach((ayet, idx) => {
-                if (ayet.meal) {
+                if (ayet && ayet.meal && typeof ayet.meal === 'string') {
                     const wordCount = ayet.meal.trim().split(/\s+/).filter(w => w.length > 0).length;
-                    console.log(`  Örnek ${idx + 1}: "${ayet.meal.substring(0, 50)}..." - Kelime sayısı: ${wordCount}`);
+                    const mealPreview = ayet.meal.length > 50 ? ayet.meal.substring(0, 50) + '...' : ayet.meal;
+                    console.log(`  Örnek ${idx + 1}: "${mealPreview}" - Kelime sayısı: ${wordCount}`);
                 }
             });
         }
@@ -1324,7 +1325,17 @@ async function loadBoslukQuestion() {
     
     // Ayet metnini al ve bir kelimeyi boşlukla değiştir
     const ayetText = currentQuestionData.ayet_metni;
-    const words = ayetText.split(' ');
+    if (!ayetText || typeof ayetText !== 'string') {
+        errorLog('Ayet metni bulunamadı veya geçersiz!');
+        endGame();
+        return;
+    }
+    const words = ayetText.split(' ').filter(w => w.trim().length > 0);
+    if (words.length === 0) {
+        errorLog('Ayet metninde kelime bulunamadı!');
+        endGame();
+        return;
+    }
     const randomIndex = Math.floor(Math.random() * words.length);
     const missingWord = words[randomIndex];
     words[randomIndex] = '_____';
@@ -1399,10 +1410,13 @@ async function loadBoslukQuestion() {
     // Seçenekleri oluştur (doğru kelime + 3 yanlış)
     const allAyet = questions;
     const uniqueWrongWords = allAyet
-        .filter(a => a.ayet_kimligi !== currentQuestionData.ayet_kimligi)
-        .flatMap(a => a.ayet_metni.split(' '))
+        .filter(a => a && a.ayet_kimligi !== currentQuestionData.ayet_kimligi && a.ayet_metni)
+        .flatMap(a => {
+            const words = a.ayet_metni.split(' ').filter(w => w.trim().length > 0);
+            return words;
+        })
         .filter((v, i, a) => a.indexOf(v) === i)
-        .filter(word => word !== missingWord); // Doğru cevabı çıkar
+        .filter(word => word && word.trim().length > 0 && word !== missingWord); // Doğru cevabı çıkar
     
     // Rastgele 3 yanlış cevap seç
     const wrongWords = getRandomItems(uniqueWrongWords, 3);
@@ -2503,7 +2517,7 @@ function updateTasksDisplay() {
             dailyTasksList.innerHTML = '<div style="text-align: center; padding: var(--spacing-md); color: var(--text-secondary);">Görevler yükleniyor...</div>';
         } else {
             allDailyTasks.forEach(task => {
-            const progressPercent = Math.min(100, Math.round((task.progress / task.target) * 100));
+            const progressPercent = task.target > 0 ? Math.min(100, Math.round((task.progress / task.target) * 100)) : 0;
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
             taskItem.innerHTML = `
@@ -2540,7 +2554,7 @@ function updateTasksDisplay() {
             weeklyTasksList.innerHTML = '<div style="text-align: center; padding: var(--spacing-md); color: var(--text-secondary);">Görevler yükleniyor...</div>';
         } else {
             weeklyTasksArray.forEach(task => {
-            const progressPercent = Math.min(100, Math.round((task.progress / task.target) * 100));
+            const progressPercent = task.target > 0 ? Math.min(100, Math.round((task.progress / task.target) * 100)) : 0;
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
             taskItem.innerHTML = `
