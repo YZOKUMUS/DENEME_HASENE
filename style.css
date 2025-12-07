@@ -587,6 +587,48 @@ body {
     padding: 0;
     margin: 0;
     height: auto;
+    gap: var(--spacing-xs);
+}
+
+.kelime-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
+
+.hint-icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-normal);
+    color: var(--accent-warning);
+    width: clamp(24px, 4vw, 28px);
+    height: clamp(24px, 4vw, 28px);
+    flex-shrink: 0;
+}
+
+.hint-icon-btn:hover {
+    color: #d97706;
+    transform: scale(1.1);
+}
+
+.hint-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.hint-icon-btn .hint-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .kelime-id {
@@ -605,6 +647,17 @@ body {
     flex-shrink: 0;
     padding: var(--spacing-xs);
     margin: 0;
+    position: relative;
+}
+
+/* Dinle Bul ve Boşluk Doldur oyunlarında hoparlör butonu sağ alt köşede */
+#dinle-bul-screen .kelime-metadata,
+#bosluk-doldur-screen .kelime-metadata {
+    justify-content: flex-end;
+}
+
+#dinle-bul-screen .kelime-speaker-btn,
+#bosluk-doldur-screen .kelime-speaker-btn {
     position: absolute;
     right: 0;
     bottom: 0;
@@ -722,6 +775,14 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
+}
+
+/* Tüm oyunlar için 1x4 düzen (alt alta) */
+#kelime-cevir-screen .options-section,
+#dinle-bul-screen .options-section,
+#bosluk-doldur-screen .options-section {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
 }
 
 .option-btn {
