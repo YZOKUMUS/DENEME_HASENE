@@ -55,6 +55,8 @@ function loadTabContent(tab) {
         loadMonthlyStats();
     } else if (tab === 'words') {
         loadWordsStats();
+    } else if (tab === 'favorites') {
+        loadFavoritesStats();
     }
 }
 
@@ -679,18 +681,134 @@ async function loadWordsStats() {
 }
 
 /**
- * Kelime istatistik öğesi HTML'i oluşturur
+ * Favori kelimeleri yükler
  */
-function createWordStatItem(word) {
+async function loadFavoritesStats() {
+    const content = document.getElementById('favorites-stats-content');
+    if (!content) return;
+    
+    content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Yükleniyor...</div>';
+
+    // Favori kelimeleri al
+    if (typeof getFavoriteWords === 'undefined' || typeof loadFavorites === 'undefined') {
+        content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Favori kelimeler modülü yüklenemedi.</div>';
+        return;
+    }
+
+    if (typeof loadFavorites === 'function') {
+        loadFavorites();
+    }
+
+    const favoriteWordIds = getFavoriteWords();
+    
+    if (favoriteWordIds.length === 0) {
+        content.innerHTML = `
+            <div class="words-stats-empty">
+                <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">⭐</div>
+                <p>Henüz favori kelime eklenmemiş.</p>
+                <p style="margin-top: var(--spacing-sm); font-size: 0.9rem; color: var(--text-secondary);">
+                    Kelime istatistikleri sayfasından kelimeleri favorilere ekleyebilirsiniz.
+                </p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Kelime verilerini yükle
+    const allWords = await loadKelimeData();
+    const wordsMap = new Map();
+    if (allWords && Array.isArray(allWords)) {
+        allWords.forEach(word => {
+            wordsMap.set(word.id, word);
+        });
+    }
+    
+    // Favori kelimeleri istatistiklerle birleştir
+    const wordStatsData = safeGetItem('hasene_wordStats', {});
+    const favoriteWordsWithStats = favoriteWordIds
+        .map(wordId => {
+            const wordData = wordsMap.get(wordId);
+            const stats = wordStatsData[wordId] || {
+                attempts: 0,
+                correct: 0,
+                wrong: 0,
+                successRate: 0,
+                masteryLevel: 0
+            };
+            return {
+                id: wordId,
+                ...stats,
+                kelime: wordData?.kelime || wordId,
+                anlam: wordData?.anlam || 'Bilinmiyor',
+                sure_adi: wordData?.sure_adi || '',
+                difficulty: wordData?.difficulty || 0
+            };
+        })
+        .filter(w => w.kelime !== 'Bilinmiyor');
+    
+    if (favoriteWordsWithStats.length === 0) {
+        content.innerHTML = `
+            <div class="words-stats-empty">
+                <p>Favori kelimeler bulunamadı.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // HTML oluştur
+    let html = '<div class="words-stats-container">';
+    html += `<div style="margin-bottom: var(--spacing-md); padding: var(--spacing-sm); background: var(--bg-secondary); border-radius: var(--radius-md);">
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: var(--spacing-xs);">
+            <strong>${favoriteWordsWithStats.length}</strong> favori kelime
+        </p>
+        <button class="btn-primary" onclick="startFavoritesGame()" style="width: 100%; margin-top: var(--spacing-xs);">
+            🎮 Favori Kelimelerden Oyna
+        </button>
+    </div>`;
+    
+    html += '<div class="words-stats-list">';
+    favoriteWordsWithStats.forEach(word => {
+        html += createWordStatItem(word, true); // true = favori sayfasında göster
+    });
+    html += '</div>';
+    html += '</div>';
+    
+    content.innerHTML = html;
+}
+
+/**
+ * Kelime istatistik öğesi HTML'i oluşturur
+ * @param {Object} word - Kelime objesi
+ * @param {boolean} showInFavorites - Favori sayfasında mı gösteriliyor?
+ */
+function createWordStatItem(word, showInFavorites = false) {
     const successColor = word.successRate >= 80 ? 'var(--accent-success)' :
                         word.successRate >= 50 ? 'var(--accent-warning)' :
                         'var(--accent-error)';
+    
+    // Favori durumunu kontrol et
+    const isFav = typeof isFavorite === 'function' ? isFavorite(word.id) : false;
     
     return `
         <div class="word-stat-item">
             <div class="word-stat-header">
                 <div class="word-arabic">${word.kelime}</div>
-                <div class="word-id">${word.id}</div>
+                <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+                    <div class="word-id">${word.id}</div>
+                    ${!showInFavorites ? `
+                        <button class="favorite-btn ${isFav ? 'favorited' : ''}" 
+                                onclick="toggleFavorite('${word.id}', this)" 
+                                title="${isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}">
+                            ${isFav ? '⭐' : '☆'}
+                        </button>
+                    ` : `
+                        <button class="favorite-btn favorited" 
+                                onclick="toggleFavorite('${word.id}', this)" 
+                                title="Favorilerden çıkar">
+                            ⭐
+                        </button>
+                    `}
+                </div>
             </div>
             <div class="word-meaning">${word.anlam}</div>
             ${word.sure_adi ? `<div class="word-sure">${word.sure_adi}</div>` : ''}
@@ -739,9 +857,32 @@ function createWordStatItem(word) {
     `;
 }
 
+/**
+ * Eğer detaylı istatistikler modalı açıksa, aktif tab'ı yeniler
+ */
+function refreshDetailedStatsIfOpen() {
+    const modal = document.getElementById('detailed-stats-modal');
+    if (!modal || modal.style.display === 'none') {
+        return; // Modal açık değil
+    }
+    
+    // Aktif tab'ı bul
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab && typeof loadTabContent === 'function') {
+        const tab = activeTab.dataset.tab;
+        // Tab içeriğini yenile
+        loadTabContent(tab);
+    }
+}
+
 // Export
 if (typeof window !== 'undefined') {
     window.showDetailedStatsModal = showDetailedStatsModal;
+    window.loadTabContent = loadTabContent;
+    window.toggleFavorite = toggleFavorite;
+    window.startFavoritesGame = startFavoritesGame;
+    window.loadFavoritesStats = loadFavoritesStats;
+    window.refreshDetailedStatsIfOpen = refreshDetailedStatsIfOpen;
 }
 
 

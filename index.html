@@ -167,6 +167,7 @@
                     <button class="submode-btn" data-submode="classic">🎯 Klasik Oyun</button>
                     <button class="submode-btn" data-submode="juz30">📖 30.cüz Ayetlerinin Kelimeleri</button>
                     <button class="submode-btn" data-submode="review">🔄 Yanlış cevaplanan kelimeleri tekrar et</button>
+                    <button class="submode-btn" data-submode="favorites">⭐ Favori kelimelerden oyna</button>
                 </div>
             </div>
 
@@ -816,6 +817,7 @@
                     <button class="tab-btn" data-tab="weekly">Haftalık</button>
                     <button class="tab-btn" data-tab="monthly">Aylık</button>
                     <button class="tab-btn" data-tab="words">Kelimeler</button>
+                    <button class="tab-btn" data-tab="favorites">⭐ Favoriler</button>
                 </div>
 
                 <div class="tab-content active" id="daily-stats-tab">
@@ -836,6 +838,11 @@
                 <div class="tab-content" id="words-stats-tab" style="display:none;">
                     <h3>Kelime İstatistikleri</h3>
                     <div id="words-stats-content"></div>
+                </div>
+
+                <div class="tab-content" id="favorites-stats-tab" style="display:none;">
+                    <h3>⭐ Favori Kelimeler</h3>
+                    <div id="favorites-stats-content"></div>
                 </div>
             </div>
         </div>
@@ -892,6 +899,7 @@
     <script src="js/audio-manager.js"></script>
     <script src="js/points-manager.js"></script>
     <script src="js/word-stats-manager.js"></script>
+    <script src="js/favorites-manager.js"></script>
     <!-- Ana oyun mantığı -->
     <script src="js/badge-visualization.js"></script>
     <script src="js/game-core.js"></script>
