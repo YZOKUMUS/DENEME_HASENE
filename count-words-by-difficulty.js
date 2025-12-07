@@ -2,9 +2,11 @@
 const fs = require('fs');
 const path = require('path');
 
+console.log('📂 JSON dosyası okunuyor...');
 // JSON dosyasını oku
 const jsonPath = path.join(__dirname, 'data', 'kelimebul.json');
 const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+console.log(`✅ ${data.length} kelime yüklendi\n`);
 
 console.log('📊 ALT MOD VE ZORLUK SEVİYESİNE GÖRE KELİME SAYILARI\n');
 console.log(`Toplam kelime sayısı: ${data.length}\n`);
