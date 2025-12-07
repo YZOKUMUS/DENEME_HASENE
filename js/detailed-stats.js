@@ -65,9 +65,14 @@ function loadDailyStats() {
     const content = document.getElementById('daily-stats-content');
     if (!content) return;
     
-    // Son 7 günün verilerini göster
-    let html = '<div class="stats-list">';
+    const today = getLocalDateString();
+    const dailyStats = [];
+    let totalCorrect = 0;
+    let totalWrong = 0;
+    let totalPoints = 0;
+    let daysPlayed = 0;
     
+    // Son 7 günün verilerini topla
     for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -77,22 +82,123 @@ function loadDailyStats() {
         const dailyData = safeGetItem(`hasene_daily_${dateStr}`, {
             correct: 0,
             wrong: 0,
-            points: 0
+            points: 0,
+            gamesPlayed: 0,
+            perfectLessons: 0,
+            maxCombo: 0,
+            gameModes: {}
         });
         
+        const isToday = dateStr === today;
+        const accuracy = (dailyData.correct + dailyData.wrong) > 0 
+            ? Math.round((dailyData.correct / (dailyData.correct + dailyData.wrong)) * 100) 
+            : 0;
+        
+        if (dailyData.correct > 0 || dailyData.wrong > 0) {
+            daysPlayed++;
+        }
+        
+        totalCorrect += dailyData.correct || 0;
+        totalWrong += dailyData.wrong || 0;
+        totalPoints += dailyData.points || 0;
+        
+        dailyStats.push({
+            date: dateStr,
+            dateObj: date,
+            ...dailyData,
+            accuracy,
+            isToday
+        });
+    }
+    
+    // Tarih formatını düzenle (gün adı + tarih)
+    const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    
+    let html = '<div class="daily-stats-container">';
+    
+    // Özet istatistikler
+    html += `
+        <div class="stats-summary">
+            <div class="summary-item">
+                <div class="summary-label">Toplam Hasene</div>
+                <div class="summary-value">${formatNumber(totalPoints)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Doğru Cevap</div>
+                <div class="summary-value">${formatNumber(totalCorrect)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Oynanan Gün</div>
+                <div class="summary-value">${daysPlayed}/7</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Ortalama Doğruluk</div>
+                <div class="summary-value">${totalCorrect + totalWrong > 0 ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0}%</div>
+            </div>
+        </div>
+    `;
+    
+    // Günlük detaylar
+    html += '<div class="daily-stats-list">';
+    dailyStats.forEach(stat => {
+        const dayName = dayNames[stat.dateObj.getDay()];
+        const day = stat.dateObj.getDate();
+        const month = monthNames[stat.dateObj.getMonth()];
+        const displayDate = `${dayName}, ${day} ${month}`;
+        
         html += `
-            <div class="daily-stat-item">
-                <div class="stat-date">${dateStr}</div>
+            <div class="daily-stat-item ${stat.isToday ? 'today' : ''}">
+                <div class="stat-header">
+                    <div class="stat-date">
+                        ${stat.isToday ? '<span class="today-badge">Bugün</span>' : ''}
+                        <span class="date-text">${displayDate}</span>
+                    </div>
+                    ${stat.accuracy > 0 ? `<div class="stat-accuracy">${stat.accuracy}% doğruluk</div>` : ''}
+                </div>
                 <div class="stat-details">
-                    <span>✅ ${dailyData.correct || 0}</span>
-                    <span>❌ ${dailyData.wrong || 0}</span>
-                    <span>💰 ${formatNumber(dailyData.points || 0)}</span>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">✅</span>
+                        <span class="stat-label">Doğru</span>
+                        <span class="stat-value">${stat.correct || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">❌</span>
+                        <span class="stat-label">Yanlış</span>
+                        <span class="stat-value">${stat.wrong || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">💰</span>
+                        <span class="stat-label">Hasene</span>
+                        <span class="stat-value">${formatNumber(stat.points || 0)}</span>
+                    </div>
+                    ${stat.gamesPlayed > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🎮</span>
+                            <span class="stat-label">Oyun</span>
+                            <span class="stat-value">${stat.gamesPlayed}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.perfectLessons > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">💎</span>
+                            <span class="stat-label">Mükemmel</span>
+                            <span class="stat-value">${stat.perfectLessons}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.maxCombo > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🔥</span>
+                            <span class="stat-label">Max Combo</span>
+                            <span class="stat-value">${stat.maxCombo}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
-    }
+    });
+    html += '</div></div>';
     
-    html += '</div>';
     content.innerHTML = html;
 }
 
@@ -103,33 +209,146 @@ function loadWeeklyStats() {
     const content = document.getElementById('weekly-stats-content');
     if (!content) return;
     
-    let html = '<div class="stats-list">';
+    const today = new Date();
+    const weeklyStats = [];
+    let totalHasene = 0;
+    let totalCorrect = 0;
+    let totalWrong = 0;
+    let totalDaysPlayed = 0;
     
     // Son 4 hafta
     for (let i = 3; i >= 0; i--) {
         const weekStart = new Date();
         weekStart.setDate(weekStart.getDate() - (i * 7));
         const weekStartStr = getWeekStartDateString(weekStart);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const weekEndStr = getLocalDateString(weekEnd);
         
         const weeklyData = safeGetItem(`hasene_weekly_${weekStartStr}`, {
             hasene: 0,
             correct: 0,
-            wrong: 0
+            wrong: 0,
+            daysPlayed: 0,
+            gamesPlayed: 0,
+            perfectLessons: 0,
+            maxCombo: 0,
+            streakDays: 0
         });
         
+        const isCurrentWeek = weekStart <= today && weekEnd >= today;
+        const accuracy = (weeklyData.correct + weeklyData.wrong) > 0 
+            ? Math.round((weeklyData.correct / (weeklyData.correct + weeklyData.wrong)) * 100) 
+            : 0;
+        
+        totalHasene += weeklyData.hasene || 0;
+        totalCorrect += weeklyData.correct || 0;
+        totalWrong += weeklyData.wrong || 0;
+        totalDaysPlayed += weeklyData.daysPlayed || 0;
+        
+        weeklyStats.push({
+            weekStart: weekStartStr,
+            weekEnd: weekEndStr,
+            weekStartObj: weekStart,
+            weekEndObj: weekEnd,
+            ...weeklyData,
+            accuracy,
+            isCurrentWeek
+        });
+    }
+    
+    const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    
+    let html = '<div class="weekly-stats-container">';
+    
+    // Özet istatistikler
+    html += `
+        <div class="stats-summary">
+            <div class="summary-item">
+                <div class="summary-label">Toplam Hasene</div>
+                <div class="summary-value">${formatNumber(totalHasene)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Doğru Cevap</div>
+                <div class="summary-value">${formatNumber(totalCorrect)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Oynanan Gün</div>
+                <div class="summary-value">${totalDaysPlayed}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Ortalama Doğruluk</div>
+                <div class="summary-value">${totalCorrect + totalWrong > 0 ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0}%</div>
+            </div>
+        </div>
+    `;
+    
+    // Haftalık detaylar
+    html += '<div class="weekly-stats-list">';
+    weeklyStats.forEach(stat => {
+        const startDay = stat.weekStartObj.getDate();
+        const startMonth = monthNames[stat.weekStartObj.getMonth()];
+        const endDay = stat.weekEndObj.getDate();
+        const endMonth = monthNames[stat.weekEndObj.getMonth()];
+        const displayDate = `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
+        
         html += `
-            <div class="weekly-stat-item">
-                <div class="stat-date">Hafta: ${weekStartStr}</div>
+            <div class="weekly-stat-item ${stat.isCurrentWeek ? 'current-week' : ''}">
+                <div class="stat-header">
+                    <div class="stat-date">
+                        ${stat.isCurrentWeek ? '<span class="current-badge">Bu Hafta</span>' : ''}
+                        <span class="date-text">${displayDate}</span>
+                    </div>
+                    ${stat.accuracy > 0 ? `<div class="stat-accuracy">${stat.accuracy}% doğruluk</div>` : ''}
+                </div>
                 <div class="stat-details">
-                    <span>💰 ${formatNumber(weeklyData.hasene || 0)}</span>
-                    <span>✅ ${weeklyData.correct || 0}</span>
-                    <span>❌ ${weeklyData.wrong || 0}</span>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">💰</span>
+                        <span class="stat-label">Hasene</span>
+                        <span class="stat-value">${formatNumber(stat.hasene || 0)}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">✅</span>
+                        <span class="stat-label">Doğru</span>
+                        <span class="stat-value">${stat.correct || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">❌</span>
+                        <span class="stat-label">Yanlış</span>
+                        <span class="stat-value">${stat.wrong || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">📅</span>
+                        <span class="stat-label">Oynanan Gün</span>
+                        <span class="stat-value">${stat.daysPlayed || 0}/7</span>
+                    </div>
+                    ${stat.gamesPlayed > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🎮</span>
+                            <span class="stat-label">Oyun</span>
+                            <span class="stat-value">${stat.gamesPlayed}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.perfectLessons > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">💎</span>
+                            <span class="stat-label">Mükemmel</span>
+                            <span class="stat-value">${stat.perfectLessons}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.streakDays > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🔥</span>
+                            <span class="stat-label">Seri Gün</span>
+                            <span class="stat-value">${stat.streakDays}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
-    }
+    });
+    html += '</div></div>';
     
-    html += '</div>';
     content.innerHTML = html;
 }
 
@@ -140,7 +359,12 @@ function loadMonthlyStats() {
     const content = document.getElementById('monthly-stats-content');
     if (!content) return;
     
-    let html = '<div class="stats-list">';
+    const today = new Date();
+    const monthlyStats = [];
+    let totalHasene = 0;
+    let totalCorrect = 0;
+    let totalWrong = 0;
+    let totalDaysPlayed = 0;
     
     // Son 3 ay
     for (let i = 2; i >= 0; i--) {
@@ -151,69 +375,368 @@ function loadMonthlyStats() {
         const monthlyData = safeGetItem(`hasene_monthly_${monthStr}`, {
             hasene: 0,
             correct: 0,
-            wrong: 0
+            wrong: 0,
+            daysPlayed: 0,
+            gamesPlayed: 0,
+            perfectLessons: 0,
+            maxCombo: 0,
+            streakDays: 0,
+            bestStreak: 0
         });
         
+        const isCurrentMonth = month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear();
+        const accuracy = (monthlyData.correct + monthlyData.wrong) > 0 
+            ? Math.round((monthlyData.correct / (monthlyData.correct + monthlyData.wrong)) * 100) 
+            : 0;
+        
+        // Ayın toplam gün sayısı
+        const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+        
+        totalHasene += monthlyData.hasene || 0;
+        totalCorrect += monthlyData.correct || 0;
+        totalWrong += monthlyData.wrong || 0;
+        totalDaysPlayed += monthlyData.daysPlayed || 0;
+        
+        monthlyStats.push({
+            month: monthStr,
+            monthObj: month,
+            daysInMonth,
+            ...monthlyData,
+            accuracy,
+            isCurrentMonth
+        });
+    }
+    
+    const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    
+    let html = '<div class="monthly-stats-container">';
+    
+    // Özet istatistikler
+    html += `
+        <div class="stats-summary">
+            <div class="summary-item">
+                <div class="summary-label">Toplam Hasene</div>
+                <div class="summary-value">${formatNumber(totalHasene)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Doğru Cevap</div>
+                <div class="summary-value">${formatNumber(totalCorrect)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Oynanan Gün</div>
+                <div class="summary-value">${totalDaysPlayed}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Ortalama Doğruluk</div>
+                <div class="summary-value">${totalCorrect + totalWrong > 0 ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0}%</div>
+            </div>
+        </div>
+    `;
+    
+    // Aylık detaylar
+    html += '<div class="monthly-stats-list">';
+    monthlyStats.forEach(stat => {
+        const monthName = monthNames[stat.monthObj.getMonth()];
+        const year = stat.monthObj.getFullYear();
+        const displayDate = `${monthName} ${year}`;
+        
         html += `
-            <div class="monthly-stat-item">
-                <div class="stat-date">${monthStr}</div>
+            <div class="monthly-stat-item ${stat.isCurrentMonth ? 'current-month' : ''}">
+                <div class="stat-header">
+                    <div class="stat-date">
+                        ${stat.isCurrentMonth ? '<span class="current-badge">Bu Ay</span>' : ''}
+                        <span class="date-text">${displayDate}</span>
+                    </div>
+                    ${stat.accuracy > 0 ? `<div class="stat-accuracy">${stat.accuracy}% doğruluk</div>` : ''}
+                </div>
                 <div class="stat-details">
-                    <span>💰 ${formatNumber(monthlyData.hasene || 0)}</span>
-                    <span>✅ ${monthlyData.correct || 0}</span>
-                    <span>❌ ${monthlyData.wrong || 0}</span>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">💰</span>
+                        <span class="stat-label">Hasene</span>
+                        <span class="stat-value">${formatNumber(stat.hasene || 0)}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">✅</span>
+                        <span class="stat-label">Doğru</span>
+                        <span class="stat-value">${stat.correct || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">❌</span>
+                        <span class="stat-label">Yanlış</span>
+                        <span class="stat-value">${stat.wrong || 0}</span>
+                    </div>
+                    <div class="stat-detail-item">
+                        <span class="stat-icon">📅</span>
+                        <span class="stat-label">Oynanan Gün</span>
+                        <span class="stat-value">${stat.daysPlayed || 0}/${stat.daysInMonth}</span>
+                    </div>
+                    ${stat.gamesPlayed > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🎮</span>
+                            <span class="stat-label">Oyun</span>
+                            <span class="stat-value">${stat.gamesPlayed}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.perfectLessons > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">💎</span>
+                            <span class="stat-label">Mükemmel</span>
+                            <span class="stat-value">${stat.perfectLessons}</span>
+                        </div>
+                    ` : ''}
+                    ${stat.bestStreak > 0 ? `
+                        <div class="stat-detail-item">
+                            <span class="stat-icon">🔥</span>
+                            <span class="stat-label">En İyi Seri</span>
+                            <span class="stat-value">${stat.bestStreak} gün</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
-    }
+    });
+    html += '</div></div>';
     
-    html += '</div>';
     content.innerHTML = html;
 }
 
 /**
  * Kelime istatistiklerini yükler
  */
-function loadWordsStats() {
+async function loadWordsStats() {
     const content = document.getElementById('words-stats-content');
     if (!content) return;
     
-    const wordStatsData = safeGetItem('hasene_wordStats', {});
-    const words = Object.keys(wordStatsData);
+    // Yükleniyor mesajı göster
+    content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Yükleniyor...</div>';
     
-    if (words.length === 0) {
-        content.innerHTML = '<p>Henüz kelime istatistiği yok.</p>';
-        return;
-    }
-    
-    // En zorlanılan kelimeleri sırala
-    const strugglingWords = words
-        .map(wordId => ({
-            id: wordId,
-            ...wordStatsData[wordId]
-        }))
-        .filter(w => w.attempts >= 2)
-        .sort((a, b) => a.successRate - b.successRate)
-        .slice(0, 10);
-    
-    let html = '<div class="words-stats-list">';
-    html += '<h4>En Zorlanılan Kelimeler</h4>';
-    
-    strugglingWords.forEach(word => {
+    try {
+        // Kelime verilerini yükle
+        const loadKelimeDataFunc = window.loadKelimeData || loadKelimeData;
+        const allWords = await loadKelimeDataFunc();
+        const wordStatsData = safeGetItem('hasene_wordStats', {});
+        const words = Object.keys(wordStatsData);
+        
+        if (words.length === 0) {
+            content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
+            return;
+        }
+        
+        // Kelime verilerini ID'ye göre map'le
+        const wordsMap = new Map();
+        if (allWords && Array.isArray(allWords)) {
+            allWords.forEach(word => {
+                wordsMap.set(word.id, word);
+            });
+        }
+        
+        // Tüm kelimeleri istatistiklerle birleştir
+        const wordsWithStats = words
+            .map(wordId => {
+                const stats = wordStatsData[wordId];
+                const wordData = wordsMap.get(wordId);
+                return {
+                    id: wordId,
+                    ...stats,
+                    kelime: wordData?.kelime || wordId,
+                    anlam: wordData?.anlam || 'Bilinmiyor',
+                    sure_adi: wordData?.sure_adi || '',
+                    difficulty: wordData?.difficulty || 0
+                };
+            })
+            .filter(w => w.attempts > 0);
+        
+        // En zorlanılan kelimeler (başarı oranı düşük)
+        // Koşul: En az 2 deneme olmalı
+        const strugglingWords = [...wordsWithStats]
+            .filter(w => w.attempts >= 2)
+            .sort((a, b) => a.successRate - b.successRate)
+            .slice(0, 20);
+        
+        // En iyi bilinen kelimeler (başarı oranı yüksek)
+        // Koşul: En az 3 deneme VE %80+ başarı oranı
+        const masteredWords = [...wordsWithStats]
+            .filter(w => w.attempts >= 3 && w.successRate >= 80)
+            .sort((a, b) => b.successRate - a.successRate)
+            .slice(0, 20);
+        
+        // En çok denenen kelimeler
+        // Koşul: Herhangi bir deneme (1+ deneme yeterli)
+        const mostAttempted = [...wordsWithStats]
+            .sort((a, b) => b.attempts - a.attempts)
+            .slice(0, 20);
+        
+        // Son yanlış cevaplanan kelimeler
+        // Koşul: En az 1 yanlış cevap verilmiş olmalı
+        const recentWrong = [...wordsWithStats]
+            .filter(w => w.lastWrong)
+            .sort((a, b) => {
+                if (!a.lastWrong) return 1;
+                if (!b.lastWrong) return -1;
+                return new Date(b.lastWrong) - new Date(a.lastWrong);
+            })
+            .slice(0, 20);
+        
+        // HTML oluştur
+        let html = '<div class="words-stats-container">';
+        
+        // Filtre butonları
         html += `
-            <div class="word-stat-item">
-                <div class="word-id">${word.id}</div>
-                <div class="word-stats">
-                    <span>Deneme: ${word.attempts}</span>
-                    <span>Doğru: ${word.correct}</span>
-                    <span>Yanlış: ${word.wrong}</span>
-                    <span>Başarı: ${Math.round(word.successRate)}%</span>
-                </div>
+            <div class="words-stats-filters">
+                <button class="word-filter-btn active" data-filter="struggling">🔴 Zorlanılan</button>
+                <button class="word-filter-btn" data-filter="mastered">✅ İyi Bilinen</button>
+                <button class="word-filter-btn" data-filter="attempted">📊 Çok Denenen</button>
+                <button class="word-filter-btn" data-filter="recent">🕐 Son Yanlışlar</button>
             </div>
         `;
-    });
+        
+        // Zorlanılan kelimeler
+        html += '<div class="words-stats-section" id="struggling-words">';
+        html += '<h4>🔴 En Zorlanılan Kelimeler</h4>';
+        if (strugglingWords.length === 0) {
+            html += '<div class="words-stats-empty">Henüz zorlanılan kelime yok. En az 2 deneme yapılan kelimeler burada görünecek.</div>';
+        } else {
+            html += '<div class="words-stats-list">';
+            strugglingWords.forEach(word => {
+                html += createWordStatItem(word);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        
+        // İyi bilinen kelimeler
+        html += '<div class="words-stats-section" id="mastered-words" style="display:none;">';
+        html += '<h4>✅ En İyi Bilinen Kelimeler</h4>';
+        if (masteredWords.length === 0) {
+            html += '<div class="words-stats-empty">Henüz iyi bilinen kelime yok. En az 3 deneme ve %80+ başarı oranı gerekiyor.</div>';
+        } else {
+            html += '<div class="words-stats-list">';
+            masteredWords.forEach(word => {
+                html += createWordStatItem(word);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        
+        // Çok denenen kelimeler
+        html += '<div class="words-stats-section" id="attempted-words" style="display:none;">';
+        html += '<h4>📊 En Çok Denenen Kelimeler</h4>';
+        if (mostAttempted.length === 0) {
+            html += '<div class="words-stats-empty">Henüz deneme yapılan kelime yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
+        } else {
+            html += '<div class="words-stats-list">';
+            mostAttempted.forEach(word => {
+                html += createWordStatItem(word);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        
+        // Son yanlışlar
+        html += '<div class="words-stats-section" id="recent-words" style="display:none;">';
+        html += '<h4>🕐 Son Yanlış Cevaplanan Kelimeler</h4>';
+        if (recentWrong.length === 0) {
+            html += '<div class="words-stats-empty">Henüz yanlış cevap verilen kelime yok. Yanlış cevap verdiğiniz kelimeler burada görünecek.</div>';
+        } else {
+            html += '<div class="words-stats-list">';
+            recentWrong.forEach(word => {
+                html += createWordStatItem(word);
+            });
+            html += '</div>';
+        }
+        html += '</div>';
+        
+        html += '</div>';
+        content.innerHTML = html;
+        
+        // Filtre butonlarına event listener ekle
+        document.querySelectorAll('.word-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Tüm butonları pasif yap
+                document.querySelectorAll('.word-filter-btn').forEach(b => b.classList.remove('active'));
+                // Tüm bölümleri gizle
+                document.querySelectorAll('.words-stats-section').forEach(s => s.style.display = 'none');
+                
+                // Seçili butonu aktif yap
+                btn.classList.add('active');
+                // İlgili bölümü göster
+                const filter = btn.dataset.filter;
+                const sectionId = filter === 'struggling' ? 'struggling-words' :
+                                 filter === 'mastered' ? 'mastered-words' :
+                                 filter === 'attempted' ? 'attempted-words' :
+                                 'recent-words';
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.style.display = 'block';
+                }
+            });
+        });
+        
+    } catch (error) {
+        errorLog('Kelime istatistikleri yükleme hatası:', error);
+        content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--accent-error);">Kelime istatistikleri yüklenirken bir hata oluştu.</div>';
+    }
+}
+
+/**
+ * Kelime istatistik öğesi HTML'i oluşturur
+ */
+function createWordStatItem(word) {
+    const successColor = word.successRate >= 80 ? 'var(--accent-success)' :
+                        word.successRate >= 50 ? 'var(--accent-warning)' :
+                        'var(--accent-error)';
     
-    html += '</div>';
-    content.innerHTML = html;
+    return `
+        <div class="word-stat-item">
+            <div class="word-stat-header">
+                <div class="word-arabic">${word.kelime}</div>
+                <div class="word-id">${word.id}</div>
+            </div>
+            <div class="word-meaning">${word.anlam}</div>
+            ${word.sure_adi ? `<div class="word-sure">${word.sure_adi}</div>` : ''}
+            <div class="word-stats-details">
+                <div class="word-stat-bar">
+                    <div class="word-stat-label">Başarı Oranı</div>
+                    <div class="word-stat-progress">
+                        <div class="word-stat-progress-fill" style="width: ${word.successRate}%; background: ${successColor};"></div>
+                        <span class="word-stat-percent">${Math.round(word.successRate)}%</span>
+                    </div>
+                </div>
+                <div class="word-stat-numbers">
+                    <span class="word-stat-number">
+                        <strong>${word.attempts}</strong> Deneme
+                    </span>
+                    <span class="word-stat-number">
+                        <strong style="color: var(--accent-success);">${word.correct}</strong> Doğru
+                    </span>
+                    <span class="word-stat-number">
+                        <strong style="color: var(--accent-error);">${word.wrong}</strong> Yanlış
+                    </span>
+                    <span class="word-stat-number">
+                        <strong>${word.masteryLevel}/10</strong> Ustalık
+                    </span>
+                </div>
+                ${word.lastWrong ? `<div class="word-last-wrong">Son yanlış: ${word.lastWrong}</div>` : ''}
+                ${word.lastCorrect ? `<div class="word-last-correct">Son doğru: ${word.lastCorrect}</div>` : ''}
+                ${word.nextReviewDate ? `
+                    <div class="word-next-review">
+                        ${(() => {
+                            const today = getLocalDateString();
+                            const daysDiff = getDaysDifference(today, word.nextReviewDate);
+                            if (daysDiff < 0) {
+                                return `<span style="color: var(--accent-error);">⏰ ${Math.abs(daysDiff)} gün gecikmiş</span>`;
+                            } else if (daysDiff === 0) {
+                                return '<span style="color: var(--accent-warning);">⏰ Bugün tekrar</span>';
+                            } else {
+                                return `<span style="color: var(--text-secondary);">⏰ ${daysDiff} gün sonra</span>`;
+                            }
+                        })()}
+                    </div>
+                ` : ''}
+                ${word.interval ? `<div class="word-interval" style="font-size: 0.65rem; color: var(--text-secondary);">Tekrar aralığı: ${word.interval} gün</div>` : ''}
+            </div>
+        </div>
+    `;
 }
 
 // Export

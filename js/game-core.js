@@ -228,6 +228,47 @@ async function loadStats() {
         }
 
         wordStats = safeGetItem('hasene_wordStats', {});
+        
+        // Eski wordStats formatını yeni spaced repetition formatına migrate et
+        const todayForMigration = getLocalDateString();
+        Object.keys(wordStats).forEach(wordId => {
+            const stats = wordStats[wordId];
+            
+            // Eğer spaced repetition alanları yoksa, ekle
+            if (stats.easeFactor === undefined) {
+                stats.easeFactor = 2.5; // SM-2 başlangıç değeri
+            }
+            if (stats.interval === undefined) {
+                // Eski verilere göre interval hesapla
+                if (stats.attempts === 0) {
+                    stats.interval = 0;
+                } else if (stats.attempts === 1) {
+                    stats.interval = 1; // İlk öğrenme
+                } else if (stats.attempts === 2 && stats.correct === 2) {
+                    stats.interval = 6; // İkinci doğru cevap
+                } else {
+                    // Tahmini interval (başarı oranına göre)
+                    const estimatedInterval = Math.max(1, Math.floor(stats.attempts * stats.easeFactor));
+                    stats.interval = estimatedInterval;
+                }
+            }
+            if (stats.nextReviewDate === undefined) {
+                // Son yanlış cevap varsa, 1 gün sonra tekrar
+                if (stats.lastWrong) {
+                    stats.nextReviewDate = addDays(todayForMigration, 1);
+                } else if (stats.lastCorrect) {
+                    // Son doğru cevap varsa, interval kadar sonra
+                    stats.nextReviewDate = addDays(todayForMigration, stats.interval || 1);
+                } else {
+                    // Hiç veri yoksa, bugün tekrar et
+                    stats.nextReviewDate = todayForMigration;
+                }
+            }
+            if (stats.lastReview === undefined) {
+                // Son tekrar tarihi yoksa, son doğru veya yanlış tarihini kullan
+                stats.lastReview = stats.lastCorrect || stats.lastWrong || todayForMigration;
+            }
+        });
         // Eski format desteği: array of strings -> array of objects
         const savedAchievements = safeGetItem('unlockedAchievements', []);
         const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
@@ -1954,6 +1995,9 @@ async function saveCurrentGameProgress() {
     localStorage.setItem('dailyCorrect', (dailyCorrect + sessionCorrect).toString());
     localStorage.setItem('dailyWrong', (dailyWrong + sessionWrong).toString());
     
+    // Detaylı istatistikleri kaydet (günlük, haftalık, aylık)
+    saveDetailedStats(sessionScore, sessionCorrect, sessionWrong, maxCombo, 0);
+    
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
     gameStats.totalWrong += sessionWrong;
@@ -2019,6 +2063,9 @@ async function endGame() {
     const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0');
     localStorage.setItem('dailyCorrect', (dailyCorrect + sessionCorrect).toString());
     localStorage.setItem('dailyWrong', (dailyWrong + sessionWrong).toString());
+    
+    // Detaylı istatistikleri kaydet (günlük, haftalık, aylık)
+    saveDetailedStats(sessionScore, sessionCorrect, sessionWrong, maxCombo, perfectBonus > 0 ? 1 : 0);
     
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
@@ -2586,8 +2633,14 @@ function updateDailyProgress(correctAnswers) {
 /**
  * Kelime istatistiğini günceller
  */
+/**
+ * SM-2 Spaced Repetition Algoritması ile kelime istatistiklerini günceller
+ */
 function updateWordStats(wordId, isCorrect) {
+    const today = getLocalDateString();
+    
     if (!wordStats[wordId]) {
+        // Yeni kelime - başlangıç değerleri
         wordStats[wordId] = {
             attempts: 0,
             correct: 0,
@@ -2595,25 +2648,185 @@ function updateWordStats(wordId, isCorrect) {
             successRate: 0,
             masteryLevel: 0,
             lastCorrect: null,
-            lastWrong: null
+            lastWrong: null,
+            // Spaced Repetition alanları
+            easeFactor: 2.5, // SM-2 başlangıç değeri
+            interval: 0, // Gün cinsinden tekrar aralığı
+            nextReviewDate: null, // Sonraki tekrar tarihi
+            lastReview: null // Son tekrar tarihi
         };
     }
     
     const stats = wordStats[wordId];
+    const previousAttempts = stats.attempts;
     stats.attempts++;
+    stats.lastReview = today;
     
     if (isCorrect) {
         stats.correct++;
-        stats.lastCorrect = getLocalDateString();
+        stats.lastCorrect = today;
+        
+        // SM-2 Algoritması: Doğru cevap durumu
+        if (previousAttempts === 0) {
+            // İlk öğrenme
+            stats.interval = 1; // 1 gün sonra tekrar
+        } else if (previousAttempts === 1 && stats.correct === 2) {
+            // İkinci doğru cevap
+            stats.interval = 6; // 6 gün sonra tekrar
+        } else {
+            // Sonraki doğru cevaplar
+            stats.interval = Math.max(1, Math.floor(stats.interval * stats.easeFactor));
+        }
+        
+        // Ease Factor güncellemesi (SM-2)
+        // Başarı oranına göre ease factor'ü ayarla
+        const currentSuccessRate = (stats.correct / stats.attempts) * 100;
+        
+        if (currentSuccessRate >= 90) {
+            // Çok başarılı → Ease factor artır (kolaylaştır)
+            stats.easeFactor = Math.min(2.5, stats.easeFactor + 0.15);
+        } else if (currentSuccessRate >= 70) {
+            // Başarılı → Ease factor hafif artır
+            stats.easeFactor = Math.min(2.5, stats.easeFactor + 0.05);
+        } else if (currentSuccessRate < 50) {
+            // Başarısız → Ease factor azalt (zorlaştır)
+            stats.easeFactor = Math.max(1.3, stats.easeFactor - 0.15);
+        }
+        // 50-70 arası: ease factor değişmez
+        
     } else {
+        // Yanlış cevap
         stats.wrong++;
-        stats.lastWrong = getLocalDateString();
+        stats.lastWrong = today;
+        
+        // SM-2 Algoritması: Yanlış cevap durumu
+        // Yanlış cevap verilince interval sıfırlanır ve ease factor azalır
+        stats.interval = 1; // 1 gün sonra tekrar (sıfırla)
+        stats.easeFactor = Math.max(1.3, stats.easeFactor - 0.20); // Zorlaştır
     }
     
+    // Sonraki tekrar tarihini hesapla
+    stats.nextReviewDate = addDays(today, stats.interval);
+    
+    // Başarı oranı ve ustalık seviyesi
     stats.successRate = (stats.correct / stats.attempts) * 100;
     stats.masteryLevel = Math.min(10, Math.floor(stats.successRate / 10));
     
     debouncedSaveStats();
+}
+
+/**
+ * Detaylı istatistikleri kaydeder (günlük, haftalık, aylık)
+ */
+function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
+    const today = getLocalDateString();
+    const todayDate = new Date();
+    
+    // Günlük istatistikler
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = safeGetItem(dailyKey, {
+        correct: 0,
+        wrong: 0,
+        points: 0,
+        gamesPlayed: 0,
+        perfectLessons: 0,
+        maxCombo: 0,
+        gameModes: {}
+    });
+    
+    dailyData.correct = (dailyData.correct || 0) + correct;
+    dailyData.wrong = (dailyData.wrong || 0) + wrong;
+    dailyData.points = (dailyData.points || 0) + points;
+    dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    dailyData.perfectLessons = (dailyData.perfectLessons || 0) + perfectLessons;
+    if (maxCombo > (dailyData.maxCombo || 0)) {
+        dailyData.maxCombo = maxCombo;
+    }
+    if (currentGameMode) {
+        dailyData.gameModes[currentGameMode] = (dailyData.gameModes[currentGameMode] || 0) + 1;
+    }
+    
+    safeSetItem(dailyKey, dailyData);
+    
+    // Haftalık istatistikler
+    const weekStartStr = getWeekStartDateString(todayDate);
+    const weeklyKey = `hasene_weekly_${weekStartStr}`;
+    const weeklyData = safeGetItem(weeklyKey, {
+        hasene: 0,
+        correct: 0,
+        wrong: 0,
+        daysPlayed: 0,
+        gamesPlayed: 0,
+        perfectLessons: 0,
+        maxCombo: 0,
+        streakDays: 0,
+        playedDates: []
+    });
+    
+    weeklyData.hasene = (weeklyData.hasene || 0) + points;
+    weeklyData.correct = (weeklyData.correct || 0) + correct;
+    weeklyData.wrong = (weeklyData.wrong || 0) + wrong;
+    weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
+    weeklyData.perfectLessons = (weeklyData.perfectLessons || 0) + perfectLessons;
+    if (maxCombo > (weeklyData.maxCombo || 0)) {
+        weeklyData.maxCombo = maxCombo;
+    }
+    
+    // Bugün oynandı mı kontrol et
+    const playedDates = weeklyData.playedDates || [];
+    if (!playedDates.includes(today)) {
+        playedDates.push(today);
+        weeklyData.daysPlayed = (weeklyData.daysPlayed || 0) + 1;
+        weeklyData.playedDates = playedDates;
+    }
+    
+    // Streak kontrolü
+    if (streakData.currentStreak > 0) {
+        weeklyData.streakDays = Math.max(weeklyData.streakDays || 0, streakData.currentStreak);
+    }
+    
+    safeSetItem(weeklyKey, weeklyData);
+    
+    // Aylık istatistikler
+    const monthStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyKey = `hasene_monthly_${monthStr}`;
+    const monthlyData = safeGetItem(monthlyKey, {
+        hasene: 0,
+        correct: 0,
+        wrong: 0,
+        daysPlayed: 0,
+        gamesPlayed: 0,
+        perfectLessons: 0,
+        maxCombo: 0,
+        streakDays: 0,
+        bestStreak: 0,
+        playedDates: []
+    });
+    
+    monthlyData.hasene = (monthlyData.hasene || 0) + points;
+    monthlyData.correct = (monthlyData.correct || 0) + correct;
+    monthlyData.wrong = (monthlyData.wrong || 0) + wrong;
+    monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
+    monthlyData.perfectLessons = (monthlyData.perfectLessons || 0) + perfectLessons;
+    if (maxCombo > (monthlyData.maxCombo || 0)) {
+        monthlyData.maxCombo = maxCombo;
+    }
+    
+    // Bugün oynandı mı kontrol et
+    const monthlyPlayedDates = monthlyData.playedDates || [];
+    if (!monthlyPlayedDates.includes(today)) {
+        monthlyPlayedDates.push(today);
+        monthlyData.daysPlayed = (monthlyData.daysPlayed || 0) + 1;
+        monthlyData.playedDates = monthlyPlayedDates;
+    }
+    
+    // Streak kontrolü
+    if (streakData.currentStreak > 0) {
+        monthlyData.streakDays = Math.max(monthlyData.streakDays || 0, streakData.currentStreak);
+        monthlyData.bestStreak = Math.max(monthlyData.bestStreak || 0, streakData.bestStreak || 0);
+    }
+    
+    safeSetItem(monthlyKey, monthlyData);
 }
 
 /**
@@ -2671,7 +2884,7 @@ function selectIntelligentWords(words, count, isReviewMode = false) {
         .sort((a, b) => a.daysDiff - b.daysDiff)
         .slice(0, 10);
     
-    // Kelimeleri kategorilere ayır
+    // Kelimeleri kategorilere ayır (Spaced Repetition önceliği ile)
     words.forEach(word => {
         const wordId = word.id;
         const stats = wordStats[wordId];
@@ -2680,6 +2893,18 @@ function selectIntelligentWords(words, count, isReviewMode = false) {
             // Hiç denenmemiş kelime - yüksek öncelik
             normalWords.push({ word, priority: 5 });
             return;
+        }
+        
+        // SPACED REPETITION: Tekrar zamanı gelmiş kelimeler (en yüksek öncelik)
+        if (stats.nextReviewDate) {
+            const daysUntilReview = getDaysDifference(today, stats.nextReviewDate);
+            if (daysUntilReview <= 0) {
+                // Tekrar zamanı geçmiş veya bugün - çok yüksek öncelik
+                const overdueDays = Math.abs(daysUntilReview);
+                const priority = 200 + (overdueDays * 10); // Gecikme ne kadar fazlaysa o kadar öncelik
+                recentWrongWords.push({ word, priority, stats });
+                return;
+            }
         }
         
         // Son yanlış cevap verilen kelimeler
@@ -2702,8 +2927,17 @@ function selectIntelligentWords(words, count, isReviewMode = false) {
             return;
         }
         
-        // Normal kelimeler
-        normalWords.push({ word, priority: 1 });
+        // Normal kelimeler (tekrar zamanı henüz gelmemiş)
+        // Tekrar zamanı yaklaşan kelimelere hafif öncelik ver
+        let priority = 1;
+        if (stats.nextReviewDate) {
+            const daysUntilReview = getDaysDifference(today, stats.nextReviewDate);
+            if (daysUntilReview <= 2 && daysUntilReview > 0) {
+                // 1-2 gün içinde tekrar zamanı gelecek - hafif öncelik
+                priority = 1.5;
+            }
+        }
+        normalWords.push({ word, priority });
     });
     
     // Öncelik sırasına göre birleştir
@@ -3573,6 +3807,15 @@ async function resetAllStats() {
     });
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
+    // Günlük, haftalık, aylık istatistikleri temizle (hasene_daily_*, hasene_weekly_*, hasene_monthly_*)
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('hasene_daily_') || 
+            key.startsWith('hasene_weekly_') || 
+            key.startsWith('hasene_monthly_')) {
+            localStorage.removeItem(key);
+        }
+    });
+    
     // IndexedDB temizle
     await clearIndexedDB();
     
@@ -3585,6 +3828,31 @@ async function resetAllStats() {
             await deleteFromIndexedDB('hasene_dailyTasks');
             await deleteFromIndexedDB('hasene_weeklyTasks');
             await deleteFromIndexedDB('hasene_wordStats');
+            
+            // Günlük, haftalık, aylık istatistikleri IndexedDB'den de temizle
+            // Son 30 günün günlük verilerini temizle
+            for (let i = 0; i < 30; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = getLocalDateString(date);
+                await deleteFromIndexedDB(`hasene_daily_${dateStr}`);
+            }
+            
+            // Son 8 haftanın haftalık verilerini temizle
+            for (let i = 0; i < 8; i++) {
+                const weekStart = new Date();
+                weekStart.setDate(weekStart.getDate() - (i * 7));
+                const weekStartStr = getWeekStartDateString(weekStart);
+                await deleteFromIndexedDB(`hasene_weekly_${weekStartStr}`);
+            }
+            
+            // Son 6 ayın aylık verilerini temizle
+            for (let i = 0; i < 6; i++) {
+                const month = new Date();
+                month.setMonth(month.getMonth() - i);
+                const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+                await deleteFromIndexedDB(`hasene_monthly_${monthStr}`);
+            }
         }
     } catch (e) {
         warnLog('IndexedDB temizleme hatası (normal olabilir):', e);
