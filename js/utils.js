@@ -173,6 +173,15 @@ function getWeekEndDateString(date = new Date()) {
 /**
  * İki tarih arasındaki gün farkını döndürür
  */
+/**
+ * Tarihe belirtilen gün sayısını ekler
+ */
+function addDays(dateString, days) {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return getLocalDateString(date);
+}
+
 function getDaysDifference(date1, date2) {
     const oneDay = 24 * 60 * 60 * 1000;
     const firstDate = new Date(date1);
@@ -461,6 +470,7 @@ document.head.appendChild(style);
 // Export
 if (typeof window !== 'undefined') {
     window.getLocalDateString = getLocalDateString;
+    window.addDays = addDays;
     window.formatNumber = formatNumber;
     window.closeModal = closeModal;
     window.openModal = openModal;
