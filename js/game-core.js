@@ -2110,9 +2110,43 @@ function checkDailyTasks() {
         };
         
         saveStats();
+    } else {
+        // Aynı gün, mevcut görevleri template ile senkronize et (ad ve açıklama güncellemeleri için)
+        syncTasksWithTemplate();
     }
     
     updateTasksDisplay();
+}
+
+/**
+ * Mevcut görevleri template ile senkronize eder (ad ve açıklama güncellemeleri için)
+ */
+function syncTasksWithTemplate() {
+    if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) return;
+    
+    // Template'den görevleri al
+    const templateMap = new Map();
+    DAILY_TASKS_TEMPLATE.forEach(t => templateMap.set(t.id, t));
+    DAILY_BONUS_TASKS_TEMPLATE.forEach(t => templateMap.set(t.id, t));
+    
+    // Mevcut görevleri güncelle
+    dailyTasks.tasks.forEach(task => {
+        const template = templateMap.get(task.id);
+        if (template) {
+            task.name = template.name;
+            task.description = template.description;
+        }
+    });
+    
+    if (dailyTasks.bonusTasks) {
+        dailyTasks.bonusTasks.forEach(task => {
+            const template = templateMap.get(task.id);
+            if (template) {
+                task.name = template.name;
+                task.description = template.description;
+            }
+        });
+    }
 }
 
 /**

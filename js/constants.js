@@ -204,8 +204,8 @@ const DAILY_TASKS_TEMPLATE = [
     },
     {
         id: 'daily_3_difficulties',
-        name: '3 Zorluk Seviyesi',
-        description: '3 farklı zorluk seviyesi dene',
+        name: 'Tüm Zorluk Seviyeleri',
+        description: 'Kolay, Orta ve Zor seviyelerinde oyun oyna',
         target: 3,
         type: 'difficulties',
         reward: 0
