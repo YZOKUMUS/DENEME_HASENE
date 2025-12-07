@@ -1397,7 +1397,7 @@ body {
 .badges-grid,
 .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: var(--spacing-xs);
     margin-top: var(--spacing-sm);
 }
@@ -1405,7 +1405,7 @@ body {
 .badge-item,
 .achievement-item {
     text-align: center;
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-xs);
     background: #f9fafb;
     border-radius: var(--radius-sm);
     border: 1px solid #e5e7eb;
@@ -1467,8 +1467,8 @@ body {
 .achievement-item img,
 .achievement-item .achievement-image,
 .achievement-item .achievement-icon {
-    width: 48px;
-    height: 48px;
+    width: clamp(32px, 5vw, 40px);
+    height: clamp(32px, 5vw, 40px);
     margin: 0 auto var(--spacing-xs);
     display: block;
     object-fit: contain;
@@ -1519,7 +1519,7 @@ body {
 
 .badge-item .badge-name,
 .achievement-item .achievement-name {
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 2vw, 0.75rem);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.2;
@@ -2631,7 +2631,7 @@ body {
     /* Badges ve Achievements */
     .badges-grid,
     .achievements-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
         gap: var(--spacing-xs);
     }
 
@@ -2641,9 +2641,12 @@ body {
     }
 
     .badge-item img,
-    .achievement-item img {
-        width: 40px;
-        height: 40px;
+    .badge-item .badge-image,
+    .achievement-item img,
+    .achievement-item .achievement-image,
+    .achievement-item .achievement-icon {
+        width: clamp(28px, 4vw, 36px);
+        height: clamp(28px, 4vw, 36px);
     }
 
     .badge-item .badge-name,
@@ -2798,7 +2801,22 @@ body {
 
     .badges-grid,
     .achievements-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+        gap: 4px;
+    }
+    
+    .badge-item img,
+    .badge-item .badge-image,
+    .achievement-item img,
+    .achievement-item .achievement-image,
+    .achievement-item .achievement-icon {
+        width: clamp(24px, 3.5vw, 32px);
+        height: clamp(24px, 3.5vw, 32px);
+    }
+    
+    .badge-item .badge-name,
+    .achievement-item .achievement-name {
+        font-size: clamp(0.55rem, 1.5vw, 0.65rem);
     }
 }
 
