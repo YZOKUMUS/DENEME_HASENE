@@ -467,40 +467,44 @@ function calculateBadges(points) {
 }
 
 /**
- * Global puanlara ekler
+ * addToGlobalPoints artık points-manager.js modülünde
+ * Fallback: Eğer modül yüklenmemişse basit versiyon
  */
-async function addToGlobalPoints(points, correctAnswers) {
-    const oldLevel = calculateLevel(totalPoints);
-    totalPoints += points;
-    const newLevel = calculateLevel(totalPoints);
-    
-    // Rozetleri güncelle
-    badges = calculateBadges(totalPoints);
-    
-    // Günlük XP ekle
-    addDailyXP(points);
-    
-    // Seviye atlama kontrolü
-    if (newLevel > oldLevel) {
-        showLevelUpModal(newLevel);
+if (typeof addToGlobalPoints === 'undefined') {
+    async function addToGlobalPoints(points, correctAnswers) {
+        const oldLevel = calculateLevel(totalPoints);
+        totalPoints += points;
+        const newLevel = calculateLevel(totalPoints);
+        
+        // Rozetleri güncelle
+        badges = calculateBadges(totalPoints);
+        
+        // Günlük XP ekle
+        addDailyXP(points);
+        
+        // Seviye atlama kontrolü
+        if (newLevel > oldLevel) {
+            showLevelUpModal(newLevel);
+        }
+        
+        // UI'ı güncelle
+        updateStatsBar();
+        
+        // Kaydet
+        await saveStatsImmediate();
+        
+        // Rozetleri kontrol et
+        checkBadges();
+        
+        // Başarımları kontrol et
+        checkAchievements();
+        
+        // Streak güncelle
+        if (correctAnswers > 0) {
+            updateDailyProgress(correctAnswers);
+        }
     }
-    
-    // UI'ı güncelle
-    updateStatsBar();
-    
-    // Kaydet
-    await saveStatsImmediate();
-    
-    // Rozetleri kontrol et
-    checkBadges();
-    
-    // Başarımları kontrol et
-    checkAchievements();
-    
-    // Streak güncelle
-    if (correctAnswers > 0) {
-        updateDailyProgress(correctAnswers);
-    }
+    window.addToGlobalPoints = addToGlobalPoints;
 }
 
 /**

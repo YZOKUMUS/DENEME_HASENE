@@ -110,26 +110,44 @@ async function addToGlobalPoints(points, correctAnswers) {
     const oldLevel = calculateLevel(totalPoints);
     totalPoints += points;
     
+    // Rozetleri güncelle (eğer calculateBadges fonksiyonu varsa)
+    if (typeof calculateBadges === 'function' && typeof badges !== 'undefined') {
+        badges = calculateBadges(totalPoints);
+    }
+    
+    // Günlük XP ekle
+    addDailyXP(points);
+    
     // Yeni seviye kontrolü
     const newLevel = calculateLevel(totalPoints);
     if (newLevel > oldLevel) {
-        showLevelUpModal(newLevel);
+        if (typeof showLevelUpModal === 'function') {
+            showLevelUpModal(newLevel);
+        }
     }
     
     // UI'ı güncelle
-    updateStatsBar();
+    if (typeof updateStatsBar === 'function') {
+        updateStatsBar();
+    }
     
     // Kaydet
-    await saveStatsImmediate();
+    if (typeof saveStatsImmediate === 'function') {
+        await saveStatsImmediate();
+    }
     
     // Rozetleri kontrol et
-    checkBadges();
+    if (typeof checkBadges === 'function') {
+        checkBadges();
+    }
     
     // Başarımları kontrol et
-    checkAchievements();
+    if (typeof checkAchievements === 'function') {
+        checkAchievements();
+    }
     
     // Streak güncelle
-    if (correctAnswers > 0) {
+    if (correctAnswers > 0 && typeof updateDailyProgress === 'function') {
         updateDailyProgress(correctAnswers);
     }
 }
