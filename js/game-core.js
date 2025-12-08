@@ -4627,7 +4627,10 @@ document.querySelectorAll('.goal-level-btn').forEach(btn => {
 // Export functions
 if (typeof window !== 'undefined') {
     window.startGame = startGame;
-    window.endGame = endGame;
+    // endGame fonksiyonunu koruma altına al (export etmeden önce)
+    const protectedEndGame = endGame;
+    Object.freeze(protectedEndGame);
+    window.endGame = protectedEndGame;
     window.restartGame = restartGame;
     window.saveCurrentGameProgress = saveCurrentGameProgress;
     window.showStatsModal = showStatsModal;
@@ -4655,5 +4658,93 @@ if (typeof window !== 'undefined') {
             }, 100);
         }
     };
+    
+    // ============================================
+    // KRİTİK HESAPLAMA FONKSİYONLARINI KİLİTLE
+    // ⚠️ BU FONKSİYONLAR DEĞİŞTİRİLEMEZ!
+    // ============================================
+    const CRITICAL_FUNCTIONS = {
+        updateTaskProgress: updateTaskProgress,
+        updateDailyProgress: updateDailyProgress,
+        endGame: endGame,
+        showDataStatus: showDataStatus
+    };
+    
+    // Her kritik fonksiyonu koruma altına al
+    Object.keys(CRITICAL_FUNCTIONS).forEach(funcName => {
+        const originalFunc = CRITICAL_FUNCTIONS[funcName];
+        
+        // Fonksiyonu dondur (freeze)
+        Object.freeze(originalFunc);
+        
+        // Window objesinde de koruma altına al
+        if (window[funcName]) {
+            try {
+                Object.defineProperty(window, funcName, {
+                    value: originalFunc,
+                    writable: false,
+                    configurable: false,
+                    enumerable: true
+                });
+            } catch (e) {
+                // Zaten tanımlıysa sessizce geç
+            }
+        }
+    });
+    
+    // addToGlobalPoints fonksiyonunu da koru (points-manager.js'den)
+    if (window.addToGlobalPoints) {
+        try {
+            Object.freeze(window.addToGlobalPoints);
+            Object.defineProperty(window, 'addToGlobalPoints', {
+                value: window.addToGlobalPoints,
+                writable: false,
+                configurable: false,
+                enumerable: true
+            });
+        } catch (e) {
+            // Zaten korunuyorsa sessizce geç
+        }
+    }
+    
+    // saveDetailedStats fonksiyonunu da koru (eğer varsa)
+    if (typeof saveDetailedStats === 'function') {
+        try {
+            Object.freeze(saveDetailedStats);
+            if (window.saveDetailedStats) {
+                Object.defineProperty(window, 'saveDetailedStats', {
+                    value: saveDetailedStats,
+                    writable: false,
+                    configurable: false,
+                    enumerable: true
+                });
+            }
+        } catch (e) {
+            // Zaten korunuyorsa sessizce geç
+        }
+    }
+    
+    // Koruma kontrolü: Eğer birisi değiştirmeye çalışırsa uyar
+    const protectedFunctions = ['updateTaskProgress', 'updateDailyProgress', 'endGame', 'showDataStatus', 'addToGlobalPoints', 'saveDetailedStats'];
+    protectedFunctions.forEach(funcName => {
+        if (window[funcName]) {
+            const originalFunc = window[funcName];
+            try {
+                // Tekrar koruma altına al (ekstra güvenlik)
+                Object.defineProperty(window, funcName, {
+                    value: originalFunc,
+                    writable: false,
+                    configurable: false,
+                    enumerable: true
+                });
+            } catch (e) {
+                // Zaten korunuyorsa sessizce geç
+            }
+        }
+    });
+    
+    infoLog('🔒 Kritik hesaplama fonksiyonları kilitlendi ve koruma altına alındı');
+    infoLog('🔒 Kilitlenen fonksiyonlar: updateTaskProgress, updateDailyProgress, endGame, showDataStatus, addToGlobalPoints, saveDetailedStats');
+    warnLog('⚠️ BU FONKSİYONLAR KORUMA ALTINDA! Değiştirilemez!');
 }
 
