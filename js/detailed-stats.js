@@ -781,9 +781,13 @@ async function loadFavoritesStats() {
  */
 function startFavoritesGame() {
     // Detaylı istatistikler modalını kapat
-    const modal = document.getElementById('detailed-stats-modal');
-    if (modal) {
-        modal.style.display = 'none';
+    if (typeof closeModal === 'function') {
+        closeModal('detailed-stats-modal');
+    } else {
+        const modal = document.getElementById('detailed-stats-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
     
     // Ana menüye dön

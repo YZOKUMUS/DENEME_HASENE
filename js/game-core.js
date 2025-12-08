@@ -1931,6 +1931,13 @@ function displayHadis(hadis, allHadis) {
 function startGame(gameMode) {
     currentGameMode = gameMode;
     
+    // Açık modalları kapat (oyun başlatılırken)
+    if (typeof currentOpenModal !== 'undefined' && currentOpenModal) {
+        if (typeof closeModal === 'function') {
+            closeModal(currentOpenModal);
+        }
+    }
+    
     // Ana menüyü gizle
     const mainMenu = document.getElementById('main-menu');
     if (mainMenu) mainMenu.style.display = 'none';
