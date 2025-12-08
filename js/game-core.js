@@ -23,7 +23,8 @@ let streakData = {
     playDates: [],
     dailyGoal: 5,
     todayProgress: 0,
-    todayDate: ''
+    todayDate: '',
+    todayGoalCompleted: false // Bugün günlük hedef tamamlandı mı? (seri artırma için)
 };
 
 let dailyTasks = {
@@ -210,9 +211,17 @@ async function loadStats() {
         const savedStreak = await loadFromIndexedDB('hasene_streakData');
         if (savedStreak) {
             streakData = savedStreak;
+            // Eski veriler için todayGoalCompleted flag'i yoksa ekle
+            if (typeof streakData.todayGoalCompleted === 'undefined') {
+                streakData.todayGoalCompleted = false;
+            }
         } else {
             const localStreak = safeGetItem('hasene_streakData', streakData);
             streakData = localStreak;
+            // Eski veriler için todayGoalCompleted flag'i yoksa ekle
+            if (typeof streakData.todayGoalCompleted === 'undefined') {
+                streakData.todayGoalCompleted = false;
+            }
         }
 
         const savedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
@@ -3047,6 +3056,7 @@ function updateDailyProgress(correctAnswers) {
         // Bugünkü ilerlemeyi sıfırla
         streakData.todayProgress = 0;
         streakData.todayDate = today;
+        streakData.todayGoalCompleted = false; // Yeni gün - hedef tamamlanmadı
     }
     
     // İlerlemeyi artır
@@ -3064,14 +3074,19 @@ function updateDailyProgress(correctAnswers) {
         }
     }
     
-    // Günlük hedef tamamlandı mı? (Seri artırma için)
-    if (streakData.todayProgress >= streakData.dailyGoal && streakData.lastPlayDate === today) {
-        // Günlük hedef tamamlandı ve bugün oynandı
+    // Günlük hedef tamamlandı mı? (Seri artırma için - sadece bir kez)
+    if (streakData.todayProgress >= streakData.dailyGoal && 
+        streakData.lastPlayDate === today && 
+        !streakData.todayGoalCompleted) {
+        // Günlük hedef tamamlandı ve bugün oynandı - sadece bir kez seri artır
+        streakData.todayGoalCompleted = true;
+        
         // Dün oynandıysa seri artır, yoksa seri başlat
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = getLocalDateString(yesterday);
         
+        // Dün oynandı mı ve dün de hedef tamamlandı mı? (seri devam ediyor mu?)
         if (streakData.playDates.includes(yesterdayStr)) {
             // Dün oynandı - seri devam ediyor
             streakData.currentStreak++;
@@ -3948,12 +3963,16 @@ function showCalendarModal() {
             if (isPlayed && !isFuture && streakData.currentStreak > 0) {
                 const daysDiff = getDaysDifference(date, today);
                 // Bugünden geriye doğru seri uzunluğu kadar gün içinde mi?
+                // daysDiff: 0 = bugün, 1 = dün, 2 = iki gün önce, vs.
+                // currentStreak = 1 ise sadece bugün (daysDiff = 0)
+                // currentStreak = 2 ise bugün ve dün (daysDiff = 0, 1)
                 if (daysDiff >= 0 && daysDiff < streakData.currentStreak) {
                     // Kesintisiz kontrol: Bu günden bugüne kadar tüm günler oynanmış mı?
                     let allDaysPlayed = true;
                     for (let j = 0; j <= daysDiff; j++) {
                         const checkDate = new Date(today);
                         checkDate.setDate(checkDate.getDate() - j);
+                        checkDate.setHours(0, 0, 0, 0);
                         const checkDateStr = getLocalDateString(checkDate);
                         if (!streakData.playDates.includes(checkDateStr)) {
                             allDaysPlayed = false;
@@ -4335,7 +4354,8 @@ async function resetAllStats() {
         playDates: [],
         dailyGoal: 5,
         todayProgress: 0,
-        todayDate: ''
+        todayDate: '',
+        todayGoalCompleted: false
     };
     dailyTasks = {
         lastTaskDate: '',
