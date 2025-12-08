@@ -4086,14 +4086,51 @@ async function showDataStatus() {
             : '❌ Bulunamadı';
     }
     
-    // Günlük görevler
+    // Günlük görevler - Güncel değerleri göster
     const dailyTasksStatus = document.getElementById('daily-tasks-status');
     if (dailyTasksStatus) {
-        const dailyTasksCount = (dailyTasks && dailyTasks.tasks ? dailyTasks.tasks.length : 0) + 
-                                (dailyTasks && dailyTasks.bonusTasks ? dailyTasks.bonusTasks.length : 0);
-        const completedCount = (dailyTasks && dailyTasks.completedTasks) ? dailyTasks.completedTasks.length : 0;
+        // Güncel dailyTasks'ı IndexedDB'den veya localStorage'dan yükle
+        let currentDailyTasks = dailyTasks;
+        try {
+            if (typeof loadFromIndexedDB === 'function') {
+                const savedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
+                if (savedDailyTasks) {
+                    currentDailyTasks = savedDailyTasks;
+                    // Set'leri geri yükle
+                    if (currentDailyTasks.todayStats) {
+                        currentDailyTasks.todayStats.allGameModes = new Set(currentDailyTasks.todayStats.allGameModes || []);
+                        currentDailyTasks.todayStats.farklıZorluk = new Set(currentDailyTasks.todayStats.farklıZorluk || []);
+                        currentDailyTasks.todayStats.reviewWords = new Set(currentDailyTasks.todayStats.reviewWords || []);
+                    }
+                } else {
+                    const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
+                    currentDailyTasks = localDailyTasks || dailyTasks;
+                }
+            } else {
+                const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
+                currentDailyTasks = localDailyTasks || dailyTasks;
+            }
+        } catch (e) {
+            // Hata durumunda localStorage'dan yükle
+            const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
+            currentDailyTasks = localDailyTasks || dailyTasks;
+        }
+        
+        // Tamamlanan görevleri say (hem completedTasks array'inden hem de task.completed flag'lerinden)
+        let completedCount = 0;
+        if (currentDailyTasks.completedTasks && Array.isArray(currentDailyTasks.completedTasks)) {
+            completedCount = currentDailyTasks.completedTasks.length;
+        } else {
+            // Eğer completedTasks array'i yoksa, task.completed flag'lerinden say
+            const allTasks = [...(currentDailyTasks.tasks || []), ...(currentDailyTasks.bonusTasks || [])];
+            completedCount = allTasks.filter(task => task.completed === true).length;
+        }
+        
+        const dailyTasksCount = (currentDailyTasks && currentDailyTasks.tasks ? currentDailyTasks.tasks.length : 0) + 
+                                (currentDailyTasks && currentDailyTasks.bonusTasks ? currentDailyTasks.bonusTasks.length : 0);
+        
         dailyTasksStatus.innerHTML = `
-            <p>Son Tarih: ${(dailyTasks && dailyTasks.lastTaskDate) || 'Yok'}</p>
+            <p>Son Tarih: ${(currentDailyTasks && currentDailyTasks.lastTaskDate) || 'Yok'}</p>
             <p>Tamamlanan: ${completedCount} / ${dailyTasksCount}</p>
         `;
     }
