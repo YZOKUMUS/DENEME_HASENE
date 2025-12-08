@@ -4109,15 +4109,36 @@ async function showDataStatus() {
         `;
     }
     
-    // Streak durumu
+    // Streak durumu - Güncel değerleri göster
     const streakStatus = document.getElementById('streak-status');
-    if (streakStatus && streakData) {
+    if (streakStatus) {
+        // Güncel streakData'yı IndexedDB'den veya localStorage'dan yükle
+        let displayStreak = streakData;
+        try {
+            if (typeof loadFromIndexedDB === 'function') {
+                const savedStreak = await loadFromIndexedDB('hasene_streakData');
+                if (savedStreak) {
+                    displayStreak = savedStreak;
+                } else {
+                    const localStreak = safeGetItem('hasene_streakData', streakData);
+                    displayStreak = localStreak || streakData;
+                }
+            } else {
+                const localStreak = safeGetItem('hasene_streakData', streakData);
+                displayStreak = localStreak || streakData;
+            }
+        } catch (e) {
+            // Hata durumunda localStorage'dan yükle
+            const localStreak = safeGetItem('hasene_streakData', streakData);
+            displayStreak = localStreak || streakData;
+        }
+        
         streakStatus.innerHTML = `
-            <p>Mevcut Seri: ${streakData.currentStreak || 0} gün</p>
-            <p>En İyi Seri: ${streakData.bestStreak || 0} gün</p>
-            <p>Toplam Oyun Günü: ${streakData.totalPlayDays || 0}</p>
-            <p>Son Oyun: ${streakData.lastPlayDate || 'Yok'}</p>
-            <p>Bugünkü İlerleme: ${streakData.todayProgress || 0}/${streakData.dailyGoal || 0}</p>
+            <p>Mevcut Seri: ${displayStreak.currentStreak || 0} gün</p>
+            <p>En İyi Seri: ${displayStreak.bestStreak || 0} gün</p>
+            <p>Toplam Oyun Günü: ${displayStreak.totalPlayDays || 0}</p>
+            <p>Son Oyun: ${displayStreak.lastPlayDate || 'Yok'}</p>
+            <p>Bugünkü İlerleme: ${displayStreak.todayProgress || 0}/${displayStreak.dailyGoal || 5}</p>
         `;
     }
     
