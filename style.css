@@ -205,6 +205,22 @@ body {
     z-index: 10;
 }
 
+.loading-footer {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 10;
+}
+
+.loading-footer p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+}
+
 @keyframes logoFlyIn {
     0% {
         opacity: 0;
@@ -3626,6 +3642,7 @@ select:focus {
         transform: translateY(0);
     }
 }
+
 
 
 /* Mobil uyumluluk */
