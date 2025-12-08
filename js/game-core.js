@@ -716,8 +716,10 @@ async function startKelimeCevirGame(subMode) {
     questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, isReviewMode);
     
     // Ekranı göster
-    document.getElementById('kelime-submode-selection').style.display = 'none';
-    document.getElementById('kelime-game-content').style.display = 'block';
+    const kelimeSubmodeSelection = document.getElementById('kelime-submode-selection');
+    const kelimeGameContent = document.getElementById('kelime-game-content');
+    if (kelimeSubmodeSelection) kelimeSubmodeSelection.style.display = 'none';
+    if (kelimeGameContent) kelimeGameContent.style.display = 'block';
     
     // İlk soruyu yükle
     loadKelimeQuestion();
@@ -1136,7 +1138,8 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
             const comboDisplay = document.getElementById('dinle-combo-display');
             if (comboDisplay) {
                 comboDisplay.style.display = 'block';
-                document.getElementById('dinle-combo-count').textContent = comboCount;
+                const dinleComboCount = document.getElementById('dinle-combo-count');
+                if (dinleComboCount) dinleComboCount.textContent = comboCount;
                 // 2 saniye sonra otomatik gizle
                 setTimeout(() => {
                     comboDisplay.style.display = 'none';
@@ -1469,7 +1472,8 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             const comboDisplay = document.getElementById('bosluk-combo-display');
             if (comboDisplay) {
                 comboDisplay.style.display = 'block';
-                document.getElementById('bosluk-combo-count').textContent = comboCount;
+                const boslukComboCount = document.getElementById('bosluk-combo-count');
+                if (boslukComboCount) boslukComboCount.textContent = comboCount;
                 // 2 saniye sonra otomatik gizle
                 setTimeout(() => {
                     comboDisplay.style.display = 'none';
@@ -1897,21 +1901,28 @@ function startGame(gameMode) {
     currentGameMode = gameMode;
     
     // Ana menüyü gizle
-    document.getElementById('main-menu').style.display = 'none';
+    const mainMenu = document.getElementById('main-menu');
+    if (mainMenu) mainMenu.style.display = 'none';
     
     // İlgili ekranı göster
     if (gameMode === 'kelime-cevir') {
-        document.getElementById('kelime-cevir-screen').style.display = 'block';
-        document.getElementById('kelime-submode-selection').style.display = 'block';
-        document.getElementById('kelime-game-content').style.display = 'none';
+        const kelimeCevirScreen = document.getElementById('kelime-cevir-screen');
+        const kelimeSubmodeSelection = document.getElementById('kelime-submode-selection');
+        const kelimeGameContent = document.getElementById('kelime-game-content');
+        if (kelimeCevirScreen) kelimeCevirScreen.style.display = 'block';
+        if (kelimeSubmodeSelection) kelimeSubmodeSelection.style.display = 'block';
+        if (kelimeGameContent) kelimeGameContent.style.display = 'none';
     } else if (gameMode === 'dinle-bul') {
-        document.getElementById('dinle-bul-screen').style.display = 'block';
+        const dinleBulScreen = document.getElementById('dinle-bul-screen');
+        if (dinleBulScreen) dinleBulScreen.style.display = 'block';
         startDinleBulGame();
     } else if (gameMode === 'bosluk-doldur') {
-        document.getElementById('bosluk-doldur-screen').style.display = 'block';
+        const boslukDoldurScreen = document.getElementById('bosluk-doldur-screen');
+        if (boslukDoldurScreen) boslukDoldurScreen.style.display = 'block';
         startBoslukDoldurGame();
     } else if (gameMode === 'ayet-oku') {
-        document.getElementById('ayet-oku-screen').style.display = 'block';
+        const ayetOkuScreen = document.getElementById('ayet-oku-screen');
+        if (ayetOkuScreen) ayetOkuScreen.style.display = 'block';
         startAyetOku();
     } else if (gameMode === 'dua-et') {
         document.getElementById('dua-et-screen').style.display = 'block';
@@ -1945,13 +1956,16 @@ async function saveCurrentGameProgress() {
     await addToGlobalPoints(sessionScore, sessionCorrect);
     
     // Günlük istatistikleri güncelle
+    // NOT: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
+    // Burada sadece localStorage'daki dailyCorrect/dailyWrong değerlerini güncelle
+    // saveDetailedStats() tekrar çağrılmamalı çünkü yanlış cevap sayısı iki kez eklenir!
     const dailyCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0');
     const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0');
     localStorage.setItem('dailyCorrect', (dailyCorrect + sessionCorrect).toString());
     localStorage.setItem('dailyWrong', (dailyWrong + sessionWrong).toString());
     
-    // Detaylı istatistikleri kaydet (günlük, haftalık, aylık)
-    saveDetailedStats(sessionScore, sessionCorrect, sessionWrong, maxCombo, 0);
+    // Detaylı istatistikler her soru cevaplandığında zaten kaydediliyor
+    // Burada tekrar kaydetmeye gerek yok - yanlış cevap sayısı iki kez eklenirdi!
     
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
@@ -2039,6 +2053,10 @@ async function endGame() {
     dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
     if (perfectBonus > 0) {
         dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
+    }
+    // Oyun modu sayısını artır (her soru için değil, oyun bitince)
+    if (currentGameMode) {
+        dailyData.gameModes[currentGameMode] = (dailyData.gameModes[currentGameMode] || 0) + 1;
     }
     safeSetItem(dailyKey, dailyData);
     
@@ -2421,6 +2439,9 @@ function updateTaskProgress(gameType, data) {
         task.progress = progress;
         if (progress >= task.target) {
             task.completed = true;
+            if (!dailyTasks.completedTasks) {
+                dailyTasks.completedTasks = [];
+            }
             if (!dailyTasks.completedTasks.includes(task.id)) {
                 dailyTasks.completedTasks.push(task.id);
             }
@@ -2453,6 +2474,9 @@ function updateTaskProgress(gameType, data) {
         task.progress = progress;
         if (progress >= task.target) {
             task.completed = true;
+            if (!dailyTasks.completedTasks) {
+                dailyTasks.completedTasks = [];
+            }
             if (!dailyTasks.completedTasks.includes(task.id)) {
                 dailyTasks.completedTasks.push(task.id);
             }
@@ -2491,6 +2515,9 @@ function updateTaskProgress(gameType, data) {
         task.progress = progress;
         if (progress >= task.target) {
             task.completed = true;
+            if (!weeklyTasks.completedTasks) {
+                weeklyTasks.completedTasks = [];
+            }
             if (!weeklyTasks.completedTasks.includes(task.id)) {
                 weeklyTasks.completedTasks.push(task.id);
             }
@@ -2585,14 +2612,14 @@ function updateTasksDisplay() {
     }
     
     // Ödül butonlarını kontrol et
-    const allDailyCompleted = dailyTasks.tasks.every(t => t.completed) && 
-                              dailyTasks.bonusTasks.every(t => t.completed);
+    const allDailyCompleted = (dailyTasks.tasks && dailyTasks.tasks.length > 0 ? dailyTasks.tasks.every(t => t.completed) : false) && 
+                              (dailyTasks.bonusTasks && dailyTasks.bonusTasks.length > 0 ? dailyTasks.bonusTasks.every(t => t.completed) : false);
     const claimDailyBtn = document.getElementById('claim-daily-reward');
     if (claimDailyBtn) {
         claimDailyBtn.disabled = !allDailyCompleted || dailyTasks.rewardsClaimed;
     }
     
-    const allWeeklyCompleted = weeklyTasks.tasks.every(t => t.completed);
+    const allWeeklyCompleted = weeklyTasks.tasks && weeklyTasks.tasks.length > 0 ? weeklyTasks.tasks.every(t => t.completed) : false;
     const claimWeeklyBtn = document.getElementById('claim-weekly-reward');
     if (claimWeeklyBtn) {
         claimWeeklyBtn.disabled = !allWeeklyCompleted || weeklyTasks.rewardsClaimed;
@@ -2774,14 +2801,14 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     dailyData.correct = (dailyData.correct || 0) + correct;
     dailyData.wrong = (dailyData.wrong || 0) + wrong;
     dailyData.points = (dailyData.points || 0) + points;
-    dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    // NOT: gamesPlayed ve gameModes her soru için değil, oyun bitince artırılmalı
+    // Burada artırılırsa her soru için oyun sayısı artar (yanlış!)
+    // gamesPlayed ve gameModes sadece endGame() içinde artırılmalı
     dailyData.perfectLessons = (dailyData.perfectLessons || 0) + perfectLessons;
     if (maxCombo > (dailyData.maxCombo || 0)) {
         dailyData.maxCombo = maxCombo;
     }
-    if (currentGameMode) {
-        dailyData.gameModes[currentGameMode] = (dailyData.gameModes[currentGameMode] || 0) + 1;
-    }
+    // gameModes artırımı kaldırıldı - sadece oyun bitince artırılmalı
     
     safeSetItem(dailyKey, dailyData);
     
@@ -2803,7 +2830,7 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     weeklyData.hasene = (weeklyData.hasene || 0) + points;
     weeklyData.correct = (weeklyData.correct || 0) + correct;
     weeklyData.wrong = (weeklyData.wrong || 0) + wrong;
-    weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
+    // NOT: gamesPlayed her soru için değil, oyun bitince artırılmalı
     weeklyData.perfectLessons = (weeklyData.perfectLessons || 0) + perfectLessons;
     if (maxCombo > (weeklyData.maxCombo || 0)) {
         weeklyData.maxCombo = maxCombo;
@@ -2843,7 +2870,7 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     monthlyData.hasene = (monthlyData.hasene || 0) + points;
     monthlyData.correct = (monthlyData.correct || 0) + correct;
     monthlyData.wrong = (monthlyData.wrong || 0) + wrong;
-    monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
+    // NOT: gamesPlayed her soru için değil, oyun bitince artırılmalı
     monthlyData.perfectLessons = (monthlyData.perfectLessons || 0) + perfectLessons;
     if (maxCombo > (monthlyData.maxCombo || 0)) {
         monthlyData.maxCombo = maxCombo;
@@ -3241,23 +3268,36 @@ function showStatsModal() {
     const safeTotalWrong = (gameStats && gameStats.totalWrong) || 0;
     const safeGameModeCounts = (gameStats && gameStats.gameModeCounts) || {};
     
-    document.getElementById('stats-daily-correct').textContent = dailyCorrect;
-    document.getElementById('stats-daily-wrong').textContent = dailyWrong;
-    document.getElementById('stats-total-points').textContent = formatNumber(safeTotalPoints);
-    document.getElementById('stats-total-correct').textContent = formatNumber(safeTotalCorrect);
-    document.getElementById('stats-total-wrong').textContent = formatNumber(safeTotalWrong);
+    const statsDailyCorrect = document.getElementById('stats-daily-correct');
+    const statsDailyWrong = document.getElementById('stats-daily-wrong');
+    const statsTotalPoints = document.getElementById('stats-total-points');
+    const statsTotalCorrect = document.getElementById('stats-total-correct');
+    const statsTotalWrong = document.getElementById('stats-total-wrong');
+    const statsAccuracy = document.getElementById('stats-accuracy');
+    const statsKelimeCount = document.getElementById('stats-kelime-count');
+    const statsDinleCount = document.getElementById('stats-dinle-count');
+    
+    if (statsDailyCorrect) statsDailyCorrect.textContent = dailyCorrect;
+    if (statsDailyWrong) statsDailyWrong.textContent = dailyWrong;
+    if (statsTotalPoints) statsTotalPoints.textContent = formatNumber(safeTotalPoints);
+    if (statsTotalCorrect) statsTotalCorrect.textContent = formatNumber(safeTotalCorrect);
+    if (statsTotalWrong) statsTotalWrong.textContent = formatNumber(safeTotalWrong);
     
     const accuracy = safeTotalCorrect + safeTotalWrong > 0
         ? Math.round((safeTotalCorrect / (safeTotalCorrect + safeTotalWrong)) * 100)
         : 0;
-    document.getElementById('stats-accuracy').textContent = accuracy + '%';
+    if (statsAccuracy) statsAccuracy.textContent = accuracy + '%';
     
-    document.getElementById('stats-kelime-count').textContent = safeGameModeCounts['kelime-cevir'] || 0;
-    document.getElementById('stats-dinle-count').textContent = safeGameModeCounts['dinle-bul'] || 0;
-    document.getElementById('stats-bosluk-count').textContent = safeGameModeCounts['bosluk-doldur'] || 0;
-    document.getElementById('stats-ayet-count').textContent = safeGameModeCounts['ayet-oku'] || 0;
-    document.getElementById('stats-dua-count').textContent = safeGameModeCounts['dua-et'] || 0;
-    document.getElementById('stats-hadis-count').textContent = safeGameModeCounts['hadis-oku'] || 0;
+    if (statsKelimeCount) statsKelimeCount.textContent = safeGameModeCounts['kelime-cevir'] || 0;
+    if (statsDinleCount) statsDinleCount.textContent = safeGameModeCounts['dinle-bul'] || 0;
+    const statsBoslukCount = document.getElementById('stats-bosluk-count');
+    const statsAyetCount = document.getElementById('stats-ayet-count');
+    const statsDuaCount = document.getElementById('stats-dua-count');
+    const statsHadisCount = document.getElementById('stats-hadis-count');
+    if (statsBoslukCount) statsBoslukCount.textContent = safeGameModeCounts['bosluk-doldur'] || 0;
+    if (statsAyetCount) statsAyetCount.textContent = safeGameModeCounts['ayet-oku'] || 0;
+    if (statsDuaCount) statsDuaCount.textContent = safeGameModeCounts['dua-et'] || 0;
+    if (statsHadisCount) statsHadisCount.textContent = safeGameModeCounts['hadis-oku'] || 0;
     
     openModal('stats-modal');
 }
@@ -3809,15 +3849,17 @@ async function showDataStatus() {
         : '❌ Bulunamadı';
     
     const dailyTasksStatus = document.getElementById('daily-tasks-status');
+    const dailyTasksCount = (dailyTasks.tasks ? dailyTasks.tasks.length : 0) + (dailyTasks.bonusTasks ? dailyTasks.bonusTasks.length : 0);
     dailyTasksStatus.innerHTML = `
         <p>Son Tarih: ${dailyTasks.lastTaskDate || 'Yok'}</p>
-        <p>Tamamlanan: ${dailyTasks.completedTasks.length} / ${dailyTasks.tasks.length + dailyTasks.bonusTasks.length}</p>
+        <p>Tamamlanan: ${dailyTasks.completedTasks ? dailyTasks.completedTasks.length : 0} / ${dailyTasksCount}</p>
     `;
     
     const weeklyTasksStatus = document.getElementById('weekly-tasks-status');
+    const weeklyTasksCount = weeklyTasks.tasks ? weeklyTasks.tasks.length : 0;
     weeklyTasksStatus.innerHTML = `
         <p>Hafta: ${weeklyTasks.weekStart || 'Yok'} - ${weeklyTasks.weekEnd || 'Yok'}</p>
-        <p>Tamamlanan: ${weeklyTasks.completedTasks.length} / ${weeklyTasks.tasks.length}</p>
+        <p>Tamamlanan: ${weeklyTasks.completedTasks ? weeklyTasks.completedTasks.length : 0} / ${weeklyTasksCount}</p>
     `;
     
     const streakStatus = document.getElementById('streak-status');
