@@ -348,6 +348,10 @@ async function loadStats() {
 
 /**
  * Tüm istatistikleri kaydeder
+ * 
+ * ⚠️ HATIRLATMA: Yeni bir rakamsal alan eklediğinizde:
+ * 1. Bu fonksiyona kaydetme kodunu ekleyin
+ * 2. resetAllStats() fonksiyonuna sıfırlama kodunu eklemeyi unutmayın!
  */
 async function saveStats() {
     try {
@@ -2556,10 +2560,12 @@ function updateTasksDisplay() {
             const progressPercent = task.target > 0 ? Math.min(100, Math.round((task.progress / task.target) * 100)) : 0;
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+            // XSS koruması: sanitizeHTML kullan (güvenlik için)
+            const taskName = typeof sanitizeHTML === 'function' ? sanitizeHTML(task.description || task.name) : (task.description || task.name);
             taskItem.innerHTML = `
                 <div class="task-info">
                     <div class="task-name-row">
-                        <span class="task-name">${task.description || task.name}</span>
+                        <span class="task-name">${taskName}</span>
                         ${task.completed ? '<span class="task-check">✓</span>' : `<span class="task-progress-text">${task.progress}/${task.target}</span>`}
                     </div>
                     ${!task.completed ? `
@@ -2593,10 +2599,12 @@ function updateTasksDisplay() {
             const progressPercent = task.target > 0 ? Math.min(100, Math.round((task.progress / task.target) * 100)) : 0;
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+            // XSS koruması: sanitizeHTML kullan (güvenlik için)
+            const taskName = typeof sanitizeHTML === 'function' ? sanitizeHTML(task.description || task.name) : (task.description || task.name);
             taskItem.innerHTML = `
                 <div class="task-info">
                     <div class="task-name-row">
-                        <span class="task-name">${task.description || task.name}</span>
+                        <span class="task-name">${taskName}</span>
                         ${task.completed ? '<span class="task-check">✓</span>' : `<span class="task-progress-text">${task.progress}/${task.target}</span>`}
                     </div>
                     ${!task.completed ? `
@@ -3461,12 +3469,16 @@ function showBadgesModal() {
             badgeItem.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
             
             // Kazanılan rozetler için minimal görünüm (sadece ikon ve isim)
+            // XSS koruması: sanitizeHTML kullan (güvenlik için)
+            const badgeName = typeof sanitizeHTML === 'function' ? sanitizeHTML(badge.name) : badge.name;
+            const badgeDesc = typeof sanitizeHTML === 'function' ? sanitizeHTML(badge.description || '') : (badge.description || '');
+            
             if (isUnlocked) {
                 badgeItem.innerHTML = `
-                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                    <img src="assets/badges/${badge.image}" alt="${badgeName}" class="badge-image" 
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
-                    <div class="badge-name">${badge.name}</div>
+                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badgeName.charAt(0)}</div>
+                    <div class="badge-name">${badgeName}</div>
                 `;
             } else {
                 // Kilitli rozetler için tam bilgi (açıklama ve ilerleme)
@@ -3478,11 +3490,11 @@ function showBadgesModal() {
                 ` : '';
                 
                 badgeItem.innerHTML = `
-                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                    <img src="assets/badges/${badge.image}" alt="${badgeName}" class="badge-image" 
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
-                    <div class="badge-name">${badge.name}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badge.description}</div>
+                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badgeName.charAt(0)}</div>
+                    <div class="badge-name">${badgeName}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badgeDesc}</div>
                     ${progressBar}
                 `;
             }
@@ -3642,18 +3654,22 @@ function showBadgesModal() {
             const achievementItem = document.createElement('div');
             achievementItem.className = `achievement-item ${isUnlocked ? 'unlocked' : ''}`;
             
+            // XSS koruması: sanitizeHTML kullan (güvenlik için)
+            const achievementName = typeof sanitizeHTML === 'function' ? sanitizeHTML(achievement.name) : achievement.name;
+            const achievementDesc = typeof sanitizeHTML === 'function' ? sanitizeHTML(achievement.description || '') : (achievement.description || '');
+            
             // Kazanılan başarımlar için minimal görünüm (sadece ikon ve isim)
             if (isUnlocked) {
                 achievementItem.innerHTML = `
-                    <img src="assets/badges/${badgeImage}" alt="${achievement.name}" class="achievement-image">
-                    <div class="achievement-name">${achievement.name}</div>
+                    <img src="assets/badges/${badgeImage}" alt="${achievementName}" class="achievement-image">
+                    <div class="achievement-name">${achievementName}</div>
                 `;
             } else {
                 // Kilitli başarımlar için tam bilgi (açıklama)
                 achievementItem.innerHTML = `
-                    <img src="assets/badges/${badgeImage}" alt="${achievement.name}" class="achievement-image">
-                    <div class="achievement-name">${achievement.name}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${achievement.description}</div>
+                    <img src="assets/badges/${badgeImage}" alt="${achievementName}" class="achievement-image">
+                    <div class="achievement-name">${achievementName}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${achievementDesc}</div>
                 `;
             }
             achievementsGrid.appendChild(achievementItem);
@@ -3876,6 +3892,19 @@ async function showDataStatus() {
 
 /**
  * Tüm verileri sıfırlar
+ * 
+ * ⚠️ ÖNEMLİ HATIRLATMA: YENİ RAKAMSAL ALAN EKLENDİĞİNDE BURAYA EKLEMEYİ UNUTMA!
+ * 
+ * Yeni bir istatistik veya rakamsal alan eklediğinizde:
+ * 1. Global değişkenleri sıfırla bölümüne ekleyin
+ * 2. localStorage temizleme listesine ekleyin (eğer localStorage'da saklanıyorsa)
+ * 3. IndexedDB temizleme listesine ekleyin (eğer IndexedDB'de saklanıyorsa)
+ * 4. Session değişkenleri bölümüne ekleyin (eğer session değişkeniyse)
+ * 
+ * Örnek: Yeni bir "totalGamesPlayed" değişkeni eklerseniz:
+ * - Global değişkenler: totalGamesPlayed = 0;
+ * - localStorage: key === 'totalGamesPlayed' kontrolü ekleyin
+ * - IndexedDB: await deleteFromIndexedDB('totalGamesPlayed'); ekleyin
  */
 async function resetAllStats() {
     if (!confirm('Tüm verileri sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
@@ -3930,35 +3959,44 @@ async function resetAllStats() {
             await deleteFromIndexedDB('hasene_wordStats');
             
             // Günlük, haftalık, aylık istatistikleri IndexedDB'den de temizle
-            // Son 30 günün günlük verilerini temizle
-            for (let i = 0; i < 30; i++) {
+            // TÜM geçmiş verileri temizle (sadece son 30 gün değil, hepsi)
+            // IndexedDB'deki tüm key'leri kontrol et ve hasene_daily_*, hasene_weekly_*, hasene_monthly_* ile başlayanları sil
+            // Not: clearIndexedDB() zaten tüm verileri temizliyor, ama ekstra güvenlik için manuel silme de yapıyoruz
+            // Son 365 günün günlük verilerini temizle (1 yıl)
+            for (let i = 0; i < 365; i++) {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 const dateStr = getLocalDateString(date);
                 await deleteFromIndexedDB(`hasene_daily_${dateStr}`);
             }
             
-            // Son 8 haftanın haftalık verilerini temizle
-            for (let i = 0; i < 8; i++) {
+            // Son 52 haftanın haftalık verilerini temizle (1 yıl)
+            for (let i = 0; i < 52; i++) {
                 const weekStart = new Date();
                 weekStart.setDate(weekStart.getDate() - (i * 7));
                 const weekStartStr = getWeekStartDateString(weekStart);
                 await deleteFromIndexedDB(`hasene_weekly_${weekStartStr}`);
             }
             
-            // Son 6 ayın aylık verilerini temizle
-            for (let i = 0; i < 6; i++) {
+            // Son 24 ayın aylık verilerini temizle (2 yıl)
+            for (let i = 0; i < 24; i++) {
                 const month = new Date();
                 month.setMonth(month.getMonth() - i);
                 const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
                 await deleteFromIndexedDB(`hasene_monthly_${monthStr}`);
             }
+            
+            // IndexedDB'deki favori kelimeleri de temizle
+            await deleteFromIndexedDB('hasene_favoriteWords');
         }
     } catch (e) {
         warnLog('IndexedDB temizleme hatası (normal olabilir):', e);
     }
     
-    // Global değişkenleri sıfırla
+    // ============================================
+    // GLOBAL DEĞİŞKENLERİ SIFIRLA
+    // ⚠️ YENİ RAKAMSAL ALAN EKLENDİĞİNDE BURAYA EKLEMEYİ UNUTMA!
+    // ============================================
     totalPoints = 0;
     badges = { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 };
     
@@ -3973,6 +4011,29 @@ async function resetAllStats() {
     currentQuestionData = null;
     hintUsed = false;
     lives = 3;
+    
+    // Oyun durumu değişkenlerini sıfırla
+    currentGame = null;
+    currentGameMode = null;
+    currentSubMode = null;
+    allWordsData = null;
+    correctAnswerPositions = {
+        count: [0, 0, 0, 0],
+        total: 0
+    };
+    
+    // Window global değişkenlerini sıfırla
+    window.currentGame = null;
+    window.currentGameMode = null;
+    window.currentSubMode = null;
+    
+    // Audio durumunu sıfırla (eğer audio-manager.js yüklüyse)
+    if (typeof stopCurrentAudio === 'function') {
+        stopCurrentAudio();
+    }
+    if (typeof window.stopCurrentAudio === 'function') {
+        window.stopCurrentAudio();
+    }
     streakData = {
         currentStreak: 0,
         bestStreak: 0,
@@ -4078,6 +4139,26 @@ async function resetAllStats() {
     
     // Verileri kaydet
     await saveStatsImmediate();
+    
+    // ⚠️ KONTROL: Eksik sıfırlanmış veri var mı kontrol et
+    // Bu kontrol, yeni eklenen verilerin sıfırlanmayı unutulup unutulmadığını tespit eder
+    try {
+        const remainingKeys = Object.keys(localStorage).filter(key => 
+            key.startsWith('hasene_') && 
+            key !== 'hasene_statsJustReset' &&
+            key !== 'hasene_onboarding_seen_v2' &&
+            !key.startsWith('hasene_daily_') &&
+            !key.startsWith('hasene_weekly_') &&
+            !key.startsWith('hasene_monthly_')
+        );
+        
+        if (remainingKeys.length > 0) {
+            warnLog('⚠️ UYARI: Sıfırlanmamış localStorage key\'leri bulundu:', remainingKeys);
+            warnLog('⚠️ Bu key\'ler resetAllStats() fonksiyonuna eklenmeyi unutulmuş olabilir!');
+        }
+    } catch (e) {
+        // Kontrol hatası kritik değil, sessizce geç
+    }
     
     closeModal('data-status-modal');
     showSuccessMessage('Tüm veriler sıfırlandı!');
