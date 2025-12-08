@@ -122,6 +122,8 @@ let lives = 3;
 // Timer yönetimi - Memory leak önleme için
 let questionTimer = null; // Soru geçiş timer'ı
 let comboHideTimer = null; // Combo gizleme timer'ı
+let achievementModalTimer = null; // Achievement modal kapatma timer'ı
+let loadingScreenTimer = null; // Loading ekranı timer'ı
 
 // ============================================
 // DOM ELEMENTS
@@ -1550,11 +1552,20 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
                         console.error('Original onended handler error:', e);
                     }
                 }
-                setTimeout(moveToNextQuestion, 500);
+                // Timer ile yönet
+                if (questionTimer) clearTimeout(questionTimer);
+                questionTimer = setTimeout(() => {
+                    moveToNextQuestion();
+                    questionTimer = null;
+                }, 500);
             };
         } else {
             // Audio çalmıyorsa, normal süre sonra geç
-            setTimeout(moveToNextQuestion, 1500);
+            if (questionTimer) clearTimeout(questionTimer);
+            questionTimer = setTimeout(() => {
+                moveToNextQuestion();
+                questionTimer = null;
+            }, 1500);
         }
     } else {
         optionButtons[selectedIndex].classList.add('wrong');
@@ -1582,6 +1593,9 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             loadBoslukQuestion();
         };
         
+        // Önceki timer'ı temizle
+        if (questionTimer) clearTimeout(questionTimer);
+        
         if (window.currentAudio && !window.currentAudio.paused && !window.currentAudio.ended) {
             // Audio çalıyorsa, bitmesini bekle
             // Mevcut onended handler'ını sakla
@@ -1595,11 +1609,18 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
                         errorLog('Original onended handler error:', e);
                     }
                 }
-                setTimeout(moveToNextQuestion, 500);
+                // Timer ile yönet
+                questionTimer = setTimeout(() => {
+                    moveToNextQuestion();
+                    questionTimer = null;
+                }, 500);
             };
         } else {
             // Audio çalmıyorsa, normal süre sonra geç
-            setTimeout(moveToNextQuestion, 2000);
+            questionTimer = setTimeout(() => {
+                moveToNextQuestion();
+                questionTimer = null;
+            }, 2000);
         }
     }
     
@@ -2074,6 +2095,10 @@ async function endGame() {
     if (comboHideTimer) {
         clearTimeout(comboHideTimer);
         comboHideTimer = null;
+    }
+    if (achievementModalTimer) {
+        clearTimeout(achievementModalTimer);
+        achievementModalTimer = null;
     }
     
     // Perfect Lesson bonusu kontrolü
@@ -3087,9 +3112,13 @@ function showBadgeUnlock(badge) {
     
     openModal('achievement-modal');
     
+    // Önceki timer'ı temizle
+    if (achievementModalTimer) clearTimeout(achievementModalTimer);
+    
     // 3 saniye sonra otomatik kapat
-    setTimeout(() => {
+    achievementModalTimer = setTimeout(() => {
         closeModal('achievement-modal');
+        achievementModalTimer = null;
     }, 3000);
 }
 
@@ -3175,9 +3204,13 @@ function showAchievementUnlock(achievement) {
     
     openModal('achievement-modal');
     
+    // Önceki timer'ı temizle
+    if (achievementModalTimer) clearTimeout(achievementModalTimer);
+    
     // 3 saniye sonra otomatik kapat
-    setTimeout(() => {
+    achievementModalTimer = setTimeout(() => {
         closeModal('achievement-modal');
+        achievementModalTimer = null;
     }, 3000);
 }
 
@@ -4150,12 +4183,16 @@ window.addEventListener('load', async () => {
     const elapsedTime = Date.now() - startTime;
     const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
     
-    setTimeout(() => {
+    // Önceki timer'ı temizle (eğer varsa)
+    if (loadingScreenTimer) clearTimeout(loadingScreenTimer);
+    
+    loadingScreenTimer = setTimeout(() => {
         // Loading ekranını kapat
         const loadingScreen = document.getElementById('loadingScreen');
         if (loadingScreen) {
             loadingScreen.style.transition = 'opacity 0.6s ease';
             loadingScreen.style.opacity = '0';
+            // İç timer için ayrı bir değişken gerekmiyor (tek seferlik, sayfa yüklendiğinde)
             setTimeout(() => {
                 if (loadingScreen && loadingScreen.parentNode) {
                     loadingScreen.remove();
@@ -4171,6 +4208,8 @@ window.addEventListener('load', async () => {
                 }
             }, 500);
         }
+        
+        loadingScreenTimer = null;
     }, remainingTime);
 });
 
