@@ -34,6 +34,14 @@
             text-align: center;
         }
 
+        /* ---- LOGO ---- */
+        .loading-logo {
+            width: clamp(80px, 20vw, 120px);
+            height: clamp(80px, 20vw, 120px);
+            margin-bottom: 16px;
+            object-fit: contain;
+        }
+
         /* ---- BÜYÜK HASENE BAŞLIK ---- */
         .loading-title {
             font-size: clamp(32px, 8vw, 46px);
@@ -150,6 +158,11 @@
             #loadingScreen {
                 padding-bottom: 80px;
             }
+            .loading-logo {
+                width: clamp(50px, 12vw, 80px);
+                height: clamp(50px, 12vw, 80px);
+                margin-bottom: 12px;
+            }
             .loading-title {
                 font-size: clamp(28px, 7vw, 40px);
                 letter-spacing: clamp(2px, 1vw, 6px);
@@ -185,6 +198,11 @@
         @media (max-width: 360px) {
             #loadingScreen {
                 padding-bottom: 70px;
+            }
+            .loading-logo {
+                width: clamp(60px, 15vw, 90px);
+                height: clamp(60px, 15vw, 90px);
+                margin-bottom: 10px;
             }
             .loading-title {
                 font-size: clamp(24px, 6vw, 36px);
@@ -225,6 +243,11 @@
             #loadingScreen {
                 padding-bottom: 60px;
             }
+            .loading-logo {
+                width: clamp(60px, 12vh, 80px);
+                height: clamp(60px, 12vh, 80px);
+                margin-bottom: 8px;
+            }
             .loading-title {
                 font-size: clamp(24px, 5vh, 36px);
                 margin-bottom: 4px;
@@ -257,6 +280,7 @@
 <body>
     <!-- Loading Screen -->
     <div id="loadingScreen">
+        <img src="assets/images/icon-512.png" alt="HASENE Logo" class="loading-logo">
         <div class="loading-title">HASENE</div>
         <div class="loading-subtitle">Arapça Kelime • Ayet • Dua • Hadis Öğrenme Oyunu</div>
 
