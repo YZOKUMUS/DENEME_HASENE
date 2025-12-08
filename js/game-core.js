@@ -4255,166 +4255,83 @@ function updateUI() {
 // ============================================
 
 // İstatistik sayıları (JSON dosyalarından yüklenecek)
-let loadingStats = {
-    kelime: 0,
-    ayet: 0,
-    sure: 114, // Kuran'da 114 sure var
-    dua: 0,
-    hadis: 0
-};
 
-// Loading mesajlarını oluştur (sayılarla birlikte)
-function getLoadingMessages() {
-    const formatNumber = (num) => {
-        if (num === 0) return '...';
-        return num.toLocaleString('tr-TR');
-    };
-    
-    return [
-        `${formatNumber(loadingStats.kelime)} Kuran kelimesi yükleniyor...`,
-        `${formatNumber(loadingStats.ayet)} Ayet hazırlanıyor...`,
-        `${formatNumber(loadingStats.sure)} Sure yükleniyor...`,
-        `${formatNumber(loadingStats.dua)} Dua hazırlanıyor...`,
-        `${formatNumber(loadingStats.hadis)} Hadis yükleniyor...`,
-        'Rozetler hazırlanıyor...',
-        'İstatistikler yükleniyor...',
-        'Görevler kontrol ediliyor...',
-        'Ses dosyaları yükleniyor...',
-        'Neredeyse hazır...'
-    ];
-}
+// Arap harfleri yağmuru
+const arabicLetters = ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي'];
+let letterInterval = null;
 
-// İstatistik sayılarını yükle
-async function loadStatisticsCounts() {
-    try {
-        // Kelime sayısı
-        try {
-            const kelimeResponse = await fetch(CONFIG.DATA_PATH + 'kelimebul.json');
-            if (kelimeResponse.ok) {
-                const kelimeData = await kelimeResponse.json();
-                loadingStats.kelime = Array.isArray(kelimeData) ? kelimeData.length : 0;
-            }
-        } catch (e) {
-            console.warn('Kelime sayısı yüklenemedi:', e);
-        }
-        
-        // Ayet sayısı
-        try {
-            const ayetResponse = await fetch(CONFIG.DATA_PATH + 'ayetoku.json');
-            if (ayetResponse.ok) {
-                const ayetData = await ayetResponse.json();
-                loadingStats.ayet = Array.isArray(ayetData) ? ayetData.length : 0;
-            }
-        } catch (e) {
-            console.warn('Ayet sayısı yüklenemedi:', e);
-        }
-        
-        // Dua sayısı
-        try {
-            const duaResponse = await fetch(CONFIG.DATA_PATH + 'duaet.json');
-            if (duaResponse.ok) {
-                const duaData = await duaResponse.json();
-                loadingStats.dua = Array.isArray(duaData) ? duaData.length : 0;
-            }
-        } catch (e) {
-            console.warn('Dua sayısı yüklenemedi:', e);
-        }
-        
-        // Hadis sayısı
-        try {
-            const hadisResponse = await fetch(CONFIG.DATA_PATH + 'hadisoku.json');
-            if (hadisResponse.ok) {
-                const hadisData = await hadisResponse.json();
-                loadingStats.hadis = Array.isArray(hadisData) ? hadisData.length : 0;
-            }
-        } catch (e) {
-            console.warn('Hadis sayısı yüklenemedi:', e);
-        }
-        
-        // Sayılar yüklendikten sonra mesajları güncelle
-        refreshLoadingMessages();
-    } catch (error) {
-        console.warn('İstatistik sayıları yüklenirken hata:', error);
-    }
-}
-
-let currentMessageIndex = 0;
-let loadingMessageInterval = null;
-
-// Loading mesajını güncelle
-function updateLoadingMessage() {
-    const messageEl = document.querySelector('.loading-message');
-    if (messageEl) {
-        const loadingMessages = getLoadingMessages();
-        if (loadingMessages.length > 0) {
-            // Fade out animasyonu
-            messageEl.style.opacity = '0';
-            messageEl.style.transform = 'translateY(5px)';
-            
-            setTimeout(() => {
-                messageEl.textContent = loadingMessages[currentMessageIndex];
-                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
-                // Fade in animasyonu
-                messageEl.style.opacity = '1';
-                messageEl.style.transform = 'translateY(0)';
-            }, 200);
-        }
-    }
-}
-
-// Loading mesajlarını başlat
-function startLoadingMessages() {
-    // İlk mesajı hemen göster
-    const messageEl = document.querySelector('.loading-message');
-    if (messageEl) {
-        const loadingMessages = getLoadingMessages();
-        if (loadingMessages.length > 0) {
-            messageEl.textContent = loadingMessages[0];
-            currentMessageIndex = 1;
-        }
+function createArabicLetter() {
+    const container = document.getElementById('arabic-letters-container');
+    if (!container) {
+        console.warn('Arabic letters container not found');
+        return;
     }
     
-    // Her 3 saniyede bir mesaj değiştir (daha yavaş, okunabilir)
-    loadingMessageInterval = setInterval(() => {
-        updateLoadingMessage();
-    }, 3000);
-}
-
-// İstatistik sayıları yüklendikten sonra mesajları güncelle
-function refreshLoadingMessages() {
-    // Eğer mesajlar zaten başlatıldıysa, ilk mesajı güncelle
-    const messageEl = document.querySelector('.loading-message');
-    if (messageEl && loadingMessageInterval) {
-        const loadingMessages = getLoadingMessages();
-        if (loadingMessages.length > 0) {
-            // Mevcut mesajı güncelle (fade animasyonu ile)
-            messageEl.style.opacity = '0';
-            setTimeout(() => {
-                messageEl.textContent = loadingMessages[currentMessageIndex - 1];
-                messageEl.style.opacity = '1';
-            }, 200);
+    const letter = document.createElement('div');
+    letter.className = 'arabic-letter';
+    letter.textContent = arabicLetters[Math.floor(Math.random() * arabicLetters.length)];
+    
+    // Rastgele pozisyon (ekran genişliği boyunca, kenarlardan biraz içeride)
+    const leftPercent = 5 + Math.random() * 90; // 5% ile 95% arası
+    letter.style.left = leftPercent + '%';
+    letter.style.top = '-150px'; // Başlangıç pozisyonu yukarıda
+    
+    // Rastgele animasyon süresi (4-7 saniye arası - daha yavaş)
+    const duration = 4 + Math.random() * 3;
+    letter.style.animationDuration = duration + 's';
+    
+    // Rastgele gecikme (0-1 saniye)
+    letter.style.animationDelay = Math.random() * 1 + 's';
+    
+    // Rastgele font boyutu (daha büyük)
+    const fontSize = 2.5 + Math.random() * 1.5;
+    letter.style.fontSize = fontSize + 'rem';
+    
+    container.appendChild(letter);
+    
+    // Animasyon bitince elementi kaldır
+    setTimeout(() => {
+        if (letter && letter.parentNode) {
+            letter.parentNode.removeChild(letter);
         }
+    }, (duration + 1) * 1000);
+}
+
+function startArabicLettersRain() {
+    // İlk harfleri hemen oluştur
+    for (let i = 0; i < 15; i++) {
+        setTimeout(() => createArabicLetter(), i * 150);
+    }
+    
+    // Her 250ms'de bir yeni harf oluştur (daha sık)
+    letterInterval = setInterval(() => {
+        createArabicLetter();
+    }, 250);
+}
+
+function stopArabicLettersRain() {
+    if (letterInterval) {
+        clearInterval(letterInterval);
+        letterInterval = null;
+    }
+    const container = document.getElementById('arabic-letters-container');
+    if (container) {
+        container.innerHTML = '';
     }
 }
 
-// Loading mesajlarını durdur
-function stopLoadingMessages() {
-    if (loadingMessageInterval) {
-        clearInterval(loadingMessageInterval);
-        loadingMessageInterval = null;
-    }
-}
-
-// DOM yüklendiğinde istatistikleri önce yükle, sonra mesajları başlat
-document.addEventListener('DOMContentLoaded', async () => {
-    // Önce istatistik sayılarını yükle (mesajlar sayılarla gösterilsin)
-    await loadStatisticsCounts();
-    // Sonra mesajları başlat
-    startLoadingMessages();
+// Sayfa yüklendiğinde - Arap harfleri yağmurunu hemen başlat
+document.addEventListener('DOMContentLoaded', () => {
+    // Arap harfleri yağmurunu başlat
+    startArabicLettersRain();
 });
 
 // Sayfa yüklendiğinde
 window.addEventListener('load', async () => {
+    // Minimum loading süresi (Duolingo tarzı)
+    const minLoadingTime = 2000; // 2 saniye
+    const startTime = Date.now();
+    
     // İstatistikleri yükle
     await loadStats();
     
@@ -4423,39 +4340,33 @@ window.addEventListener('load', async () => {
         preloadAllDataBackground();
     }
     
-    // Minimum loading süresi - tüm mesajların gösterilmesi için yeterli süre
-    // 10 mesaj × 3 saniye = 30 saniye (tüm mesajların gösterilmesi için)
-    // Ancak kullanıcı deneyimi için 15-20 saniye yeterli (mesajlar döngüsel)
-    const minLoadingTime = 15000; // 15 saniye - kullanıcı en az 5 mesaj görebilir
-    const startTime = Date.now();
+    // Minimum süreyi bekle, sonra loading ekranını kapat
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
     
-    // Tüm yüklemeler tamamlandıktan sonra minimum süreyi bekle
     setTimeout(() => {
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+        // Arap harfleri yağmurunu durdur
+        stopArabicLettersRain();
         
-        setTimeout(() => {
-            // Loading mesajlarını durdur
-            stopLoadingMessages();
-            
-            // Loading screen'i gizle
-            if (elements.loadingScreen) {
-                elements.loadingScreen.classList.add('hidden');
-                setTimeout(() => {
+        // Loading screen'i gizle
+        if (elements.loadingScreen) {
+            elements.loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                if (elements.loadingScreen) {
                     elements.loadingScreen.style.display = 'none';
-                }, 500);
-            }
-            
-            // Onboarding kontrolü
-            if (!localStorage.getItem('hasene_onboarding_seen_v2')) {
-                setTimeout(() => {
-                    if (typeof showOnboarding === 'function') {
-                        showOnboarding();
-                    }
-                }, 500);
-            }
-        }, remainingTime);
-    }, 100);
+                }
+            }, 500);
+        }
+        
+        // Onboarding kontrolü
+        if (!localStorage.getItem('hasene_onboarding_seen_v2')) {
+            setTimeout(() => {
+                if (typeof showOnboarding === 'function') {
+                    showOnboarding();
+                }
+            }, 500);
+        }
+    }, remainingTime);
 });
 
 // Oyun kartları
