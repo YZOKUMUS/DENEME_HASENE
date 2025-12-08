@@ -17,16 +17,279 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Reem+Kufi:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ========== LOADING SCREEN ========== */
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            color: #fff;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 120px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            text-align: center;
+        }
+
+        /* ---- BÜYÜK HASENE BAŞLIK ---- */
+        .loading-title {
+            font-size: clamp(32px, 8vw, 46px);
+            font-weight: 700;
+            letter-spacing: clamp(4px, 1.5vw, 8px);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .loading-subtitle {
+            font-size: clamp(11px, 2.5vw, 14px);
+            opacity: 0.65;
+            letter-spacing: 1px;
+            margin-bottom: 22px;
+            padding: 0 20px;
+        }
+
+        /* ---- HADİS METNİ ---- */
+        .loading-quote {
+            text-align: center;
+            max-width: 420px;
+            line-height: 1.5;
+            padding: 0 20px;
+        }
+
+        .loading-arabic {
+            font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', 'Scheherazade New', serif;
+            font-size: clamp(16px, 4vw, 22px);
+            margin-bottom: 10px;
+            direction: rtl;
+        }
+
+        .loading-turkish {
+            font-size: clamp(11px, 2.5vw, 13px);
+            opacity: 0.92;
+        }
+
+        /* ---- Küçük SPINNER ---- */
+        .spinner-wrapper {
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            bottom: 65px;
+            left: 50%;
+            margin-left: -16px; /* transform yerine margin kullan */
+        }
+
+        .spinner-circle {
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25);
+            border-top-color: #fff;
+            animation: spin 1s linear infinite !important;
+            will-change: transform;
+            transform-origin: center center;
+        }
+        
+        #loadingScreen .spinner-circle {
+            animation: spin 1s linear infinite !important;
+        }
+
+        @keyframes spin { 
+            0% { 
+                transform: rotate(0deg);
+            }
+            100% { 
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-center-dot {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #fff;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* ---- FOOTER ---- */
+        .loading-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: clamp(9px, 2vw, 11px);
+            opacity: 0.45;
+            letter-spacing: 1px;
+            padding: 0 20px;
+        }
+
+        /* Responsive - Tablet */
+        @media (max-width: 768px) {
+            #loadingScreen {
+                padding-bottom: 100px;
+            }
+            .loading-quote {
+                max-width: 90%;
+            }
+        }
+
+        /* Responsive - Mobil */
+        @media (max-width: 600px) {
+            #loadingScreen {
+                padding-bottom: 80px;
+            }
+            .loading-title {
+                font-size: clamp(28px, 7vw, 40px);
+                letter-spacing: clamp(2px, 1vw, 6px);
+                margin-bottom: 6px;
+            }
+            .loading-subtitle {
+                font-size: clamp(10px, 2.2vw, 13px);
+                margin-bottom: 18px;
+                padding: 0 15px;
+            }
+            .loading-quote {
+                max-width: 95%;
+                padding: 0 15px;
+            }
+            .loading-arabic {
+                font-size: clamp(14px, 3.5vw, 20px);
+                margin-bottom: 8px;
+            }
+            .loading-turkish {
+                font-size: clamp(10px, 2.2vw, 12px);
+            }
+            .spinner-wrapper {
+                bottom: 55px;
+            }
+            .loading-footer {
+                bottom: 15px;
+                font-size: clamp(8px, 1.8vw, 10px);
+                padding: 0 15px;
+            }
+        }
+
+        /* Responsive - Küçük Mobil */
+        @media (max-width: 360px) {
+            #loadingScreen {
+                padding-bottom: 70px;
+            }
+            .loading-title {
+                font-size: clamp(24px, 6vw, 36px);
+                letter-spacing: clamp(1px, 0.8vw, 4px);
+                margin-bottom: 5px;
+            }
+            .loading-subtitle {
+                font-size: clamp(9px, 2vw, 12px);
+                margin-bottom: 15px;
+                padding: 0 10px;
+            }
+            .loading-quote {
+                max-width: 98%;
+                padding: 0 10px;
+            }
+            .loading-arabic {
+                font-size: clamp(12px, 3vw, 18px);
+                margin-bottom: 6px;
+            }
+            .loading-turkish {
+                font-size: clamp(9px, 2vw, 11px);
+            }
+            .spinner-wrapper {
+                bottom: 50px;
+                width: 28px;
+                height: 28px;
+                margin-left: -14px;
+            }
+            .loading-footer {
+                bottom: 12px;
+                font-size: clamp(7px, 1.6vw, 9px);
+                padding: 0 10px;
+            }
+        }
+
+        /* Yatay Mod (Landscape) */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #loadingScreen {
+                padding-bottom: 60px;
+            }
+            .loading-title {
+                font-size: clamp(24px, 5vh, 36px);
+                margin-bottom: 4px;
+            }
+            .loading-subtitle {
+                font-size: clamp(9px, 2vh, 12px);
+                margin-bottom: 12px;
+            }
+            .loading-quote {
+                max-width: 85%;
+                padding: 0 15px;
+            }
+            .loading-arabic {
+                font-size: clamp(12px, 3vh, 18px);
+                margin-bottom: 6px;
+            }
+            .loading-turkish {
+                font-size: clamp(9px, 2vh, 11px);
+            }
+            .spinner-wrapper {
+                bottom: 45px;
+            }
+            .loading-footer {
+                bottom: 10px;
+                font-size: clamp(7px, 1.5vh, 9px);
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Loading Screen - Duolingo Style -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="arabic-letters-container" id="arabic-letters-container"></div>
-        <h1 class="loading-logo">HASENE</h1>
-        <p class="loading-text">Haydi Bismillah</p>
-        <footer class="loading-footer">
-            <p>&copy; YZOKUMUS-2025</p>
-        </footer>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loading-title">HASENE</div>
+        <div class="loading-subtitle">Arapça Kelime • Ayet • Dua • Hadis Öğrenme Oyunu</div>
+
+        <!-- HADİS: KUR'ÂN'DAN BİR HARF OKUMANIN SEVABI -->
+        <div class="loading-quote">
+            <div class="loading-arabic">
+                مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللهِ فَلَهُ بِهِ حَسَنَةٌ،
+                وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا،
+                لَا أَقُولُ: الم حَرْفٌ،
+                وَلَكِنْ أَلِفٌ حَرْفٌ،
+                وَلَامٌ حَرْفٌ،
+                وَمِيمٌ حَرْفٌ
+            </div>
+
+            <div class="loading-turkish">
+                "Kim Kur'ân-ı Kerîm'den bir harf okursa, onun için bir iyilik sevabı vardır.
+                Her bir iyiliğin karşılığı da on sevaptır.
+                Ben, 'elif lâm mîm bir harftir' demiyorum; bilâkis elif bir harftir,
+                lâm bir harftir, mîm de bir harftir."
+                <br>(Tirmizî, Fezâilü'l-Kur'ân 16)
+            </div>
+        </div>
+
+        <!-- Küçük spinner -->
+        <div class="spinner-wrapper">
+            <div class="spinner-circle"></div>
+            <div class="spinner-center-dot"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="loading-footer">
+            © 2025 YZOKUMUS
+        </div>
     </div>
 
     <!-- Main Container -->
@@ -1121,7 +1384,6 @@
             });
         }
     </script>
-
     
 </body>
 </html>

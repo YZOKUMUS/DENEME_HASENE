@@ -124,7 +124,6 @@ let lives = 3;
 // ============================================
 
 const elements = {
-    loadingScreen: document.getElementById('loading-screen'),
     totalPointsEl: document.getElementById('total-points'),
     starPointsEl: document.getElementById('star-points'),
     currentLevelEl: document.getElementById('current-level'),
@@ -4256,80 +4255,10 @@ function updateUI() {
 
 // İstatistik sayıları (JSON dosyalarından yüklenecek)
 
-// Arap harfleri yağmuru
-const arabicLetters = ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي'];
-let letterInterval = null;
-
-function createArabicLetter() {
-    const container = document.getElementById('arabic-letters-container');
-    if (!container) {
-        console.warn('Arabic letters container not found');
-        return;
-    }
-    
-    const letter = document.createElement('div');
-    letter.className = 'arabic-letter';
-    letter.textContent = arabicLetters[Math.floor(Math.random() * arabicLetters.length)];
-    
-    // Rastgele pozisyon (ekran genişliği boyunca, kenarlardan biraz içeride)
-    const leftPercent = 5 + Math.random() * 90; // 5% ile 95% arası
-    letter.style.left = leftPercent + '%';
-    letter.style.top = '-150px'; // Başlangıç pozisyonu yukarıda
-    
-    // Rastgele animasyon süresi (4-7 saniye arası - daha yavaş)
-    const duration = 4 + Math.random() * 3;
-    letter.style.animationDuration = duration + 's';
-    
-    // Rastgele gecikme (0-1 saniye)
-    letter.style.animationDelay = Math.random() * 1 + 's';
-    
-    // Rastgele font boyutu (daha büyük)
-    const fontSize = 2.5 + Math.random() * 1.5;
-    letter.style.fontSize = fontSize + 'rem';
-    
-    container.appendChild(letter);
-    
-    // Animasyon bitince elementi kaldır
-    setTimeout(() => {
-        if (letter && letter.parentNode) {
-            letter.parentNode.removeChild(letter);
-        }
-    }, (duration + 1) * 1000);
-}
-
-function startArabicLettersRain() {
-    // İlk harfleri hemen oluştur
-    for (let i = 0; i < 15; i++) {
-        setTimeout(() => createArabicLetter(), i * 150);
-    }
-    
-    // Her 250ms'de bir yeni harf oluştur (daha sık)
-    letterInterval = setInterval(() => {
-        createArabicLetter();
-    }, 250);
-}
-
-function stopArabicLettersRain() {
-    if (letterInterval) {
-        clearInterval(letterInterval);
-        letterInterval = null;
-    }
-    const container = document.getElementById('arabic-letters-container');
-    if (container) {
-        container.innerHTML = '';
-    }
-}
-
-// Sayfa yüklendiğinde - Arap harfleri yağmurunu hemen başlat
-document.addEventListener('DOMContentLoaded', () => {
-    // Arap harfleri yağmurunu başlat
-    startArabicLettersRain();
-});
-
 // Sayfa yüklendiğinde
 window.addEventListener('load', async () => {
-    // Minimum loading süresi (Duolingo tarzı)
-    const minLoadingTime = 2000; // 2 saniye
+    // Minimum loading süresi
+    const minLoadingTime = 2400; // 2.4 saniye (ornek.html ile aynı)
     const startTime = Date.now();
     
     // İstatistikleri yükle
@@ -4345,17 +4274,16 @@ window.addEventListener('load', async () => {
     const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
     
     setTimeout(() => {
-        // Arap harfleri yağmurunu durdur
-        stopArabicLettersRain();
-        
-        // Loading screen'i gizle
-        if (elements.loadingScreen) {
-            elements.loadingScreen.classList.add('hidden');
+        // Loading ekranını kapat
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+            loadingScreen.style.transition = 'opacity 0.6s ease';
+            loadingScreen.style.opacity = '0';
             setTimeout(() => {
-                if (elements.loadingScreen) {
-                    elements.loadingScreen.style.display = 'none';
+                if (loadingScreen && loadingScreen.parentNode) {
+                    loadingScreen.remove();
                 }
-            }, 500);
+            }, 700);
         }
         
         // Onboarding kontrolü
