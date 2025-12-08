@@ -3900,38 +3900,62 @@ function showLevelUpModal(level) {
  * Veri durumu modalını gösterir
  */
 async function showDataStatus() {
-    const indexeddbStatus = await checkIndexedDBStatus();
-    document.getElementById('indexeddb-status').textContent = indexeddbStatus.available 
-        ? '✅ Mevcut' 
-        : `❌ Bulunamadı: ${indexeddbStatus.error}`;
+    // IndexedDB durumu
+    const indexeddbStatusEl = document.getElementById('indexeddb-status');
+    if (indexeddbStatusEl) {
+        try {
+            const indexeddbStatus = await checkIndexedDBStatus();
+            indexeddbStatusEl.textContent = indexeddbStatus.available 
+                ? '✅ Mevcut' 
+                : `❌ Bulunamadı: ${indexeddbStatus.error || 'Bilinmeyen hata'}`;
+        } catch (e) {
+            indexeddbStatusEl.textContent = `❌ Hata: ${e.message || 'Bilinmeyen hata'}`;
+        }
+    }
     
-    const localStorageAvailable = typeof Storage !== 'undefined';
-    document.getElementById('localstorage-status').textContent = localStorageAvailable 
-        ? '✅ Mevcut' 
-        : '❌ Bulunamadı';
+    // localStorage durumu
+    const localStorageStatusEl = document.getElementById('localstorage-status');
+    if (localStorageStatusEl) {
+        const localStorageAvailable = typeof Storage !== 'undefined';
+        localStorageStatusEl.textContent = localStorageAvailable 
+            ? '✅ Mevcut' 
+            : '❌ Bulunamadı';
+    }
     
+    // Günlük görevler
     const dailyTasksStatus = document.getElementById('daily-tasks-status');
-    const dailyTasksCount = (dailyTasks.tasks ? dailyTasks.tasks.length : 0) + (dailyTasks.bonusTasks ? dailyTasks.bonusTasks.length : 0);
-    dailyTasksStatus.innerHTML = `
-        <p>Son Tarih: ${dailyTasks.lastTaskDate || 'Yok'}</p>
-        <p>Tamamlanan: ${dailyTasks.completedTasks ? dailyTasks.completedTasks.length : 0} / ${dailyTasksCount}</p>
-    `;
+    if (dailyTasksStatus) {
+        const dailyTasksCount = (dailyTasks && dailyTasks.tasks ? dailyTasks.tasks.length : 0) + 
+                                (dailyTasks && dailyTasks.bonusTasks ? dailyTasks.bonusTasks.length : 0);
+        const completedCount = (dailyTasks && dailyTasks.completedTasks) ? dailyTasks.completedTasks.length : 0;
+        dailyTasksStatus.innerHTML = `
+            <p>Son Tarih: ${(dailyTasks && dailyTasks.lastTaskDate) || 'Yok'}</p>
+            <p>Tamamlanan: ${completedCount} / ${dailyTasksCount}</p>
+        `;
+    }
     
+    // Haftalık görevler
     const weeklyTasksStatus = document.getElementById('weekly-tasks-status');
-    const weeklyTasksCount = weeklyTasks.tasks ? weeklyTasks.tasks.length : 0;
-    weeklyTasksStatus.innerHTML = `
-        <p>Hafta: ${weeklyTasks.weekStart || 'Yok'} - ${weeklyTasks.weekEnd || 'Yok'}</p>
-        <p>Tamamlanan: ${weeklyTasks.completedTasks ? weeklyTasks.completedTasks.length : 0} / ${weeklyTasksCount}</p>
-    `;
+    if (weeklyTasksStatus) {
+        const weeklyTasksCount = (weeklyTasks && weeklyTasks.tasks) ? weeklyTasks.tasks.length : 0;
+        const completedCount = (weeklyTasks && weeklyTasks.completedTasks) ? weeklyTasks.completedTasks.length : 0;
+        weeklyTasksStatus.innerHTML = `
+            <p>Hafta: ${(weeklyTasks && weeklyTasks.weekStart) || 'Yok'} - ${(weeklyTasks && weeklyTasks.weekEnd) || 'Yok'}</p>
+            <p>Tamamlanan: ${completedCount} / ${weeklyTasksCount}</p>
+        `;
+    }
     
+    // Streak durumu
     const streakStatus = document.getElementById('streak-status');
-    streakStatus.innerHTML = `
-        <p>Mevcut Seri: ${streakData.currentStreak} gün</p>
-        <p>En İyi Seri: ${streakData.bestStreak} gün</p>
-        <p>Toplam Oyun Günü: ${streakData.totalPlayDays}</p>
-        <p>Son Oyun: ${streakData.lastPlayDate || 'Yok'}</p>
-        <p>Bugünkü İlerleme: ${streakData.todayProgress}/${streakData.dailyGoal}</p>
-    `;
+    if (streakStatus && streakData) {
+        streakStatus.innerHTML = `
+            <p>Mevcut Seri: ${streakData.currentStreak || 0} gün</p>
+            <p>En İyi Seri: ${streakData.bestStreak || 0} gün</p>
+            <p>Toplam Oyun Günü: ${streakData.totalPlayDays || 0}</p>
+            <p>Son Oyun: ${streakData.lastPlayDate || 'Yok'}</p>
+            <p>Bugünkü İlerleme: ${streakData.todayProgress || 0}/${streakData.dailyGoal || 0}</p>
+        `;
+    }
     
     openModal('data-status-modal');
 }
