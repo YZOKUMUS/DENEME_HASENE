@@ -212,14 +212,6 @@ const DAILY_TASKS_TEMPLATE = [
         reward: 0
     },
     {
-        id: 'daily_5_combo',
-        name: '5x Combo',
-        description: '🔥 Arka arkaya 5 doğru cevap ver',
-        target: 5,
-        type: 'combo',
-        reward: 0
-    },
-    {
         id: 'daily_streak',
         name: 'Seri Koru',
         description: '🔥 Günlük serini koru',
@@ -279,14 +271,6 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
         target: 6,
         type: 'game_modes',
         reward: 0
-    },
-    {
-        id: 'daily_10_combo',
-        name: '10x Combo',
-        description: '🔥 Arka arkaya 10 doğru cevap ver',
-        target: 10,
-        type: 'combo',
-        reward: 0
     }
 ];
 
@@ -324,14 +308,6 @@ const WEEKLY_TASKS_TEMPLATE = [
         description: '🎮 Tüm 6 oyun modunu oyna',
         target: 6,
         type: 'game_modes',
-        reward: 0
-    },
-    {
-        id: 'weekly_30_combo',
-        name: '30x Combo',
-        description: '🔥 Arka arkaya 30 doğru cevap ver',
-        target: 30,
-        type: 'combo',
         reward: 0
     },
     {

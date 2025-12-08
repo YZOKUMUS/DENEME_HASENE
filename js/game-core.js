@@ -114,7 +114,8 @@ let sessionScore = 0;
 let sessionCorrect = 0;
 let sessionWrong = 0;
 let comboCount = 0;
-let maxCombo = 0;
+let maxCombo = 0; // Global maksimum combo (tüm oyunlar için)
+let sessionMaxCombo = 0; // Bu oyun için maksimum combo (sadece bu oyun için)
 let currentQuestion = 0;
 let questions = [];
 let currentQuestionData = null;
@@ -629,6 +630,7 @@ async function startKelimeCevirGame(subMode) {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
+    sessionMaxCombo = 0; // Bu oyun için maksimum combo (sadece bu oyun için)
     
     gameLog('📊 Session sıfırlandı', { sessionScore, sessionCorrect, sessionWrong, comboCount });
     // maxCombo global olarak tutulmalı, sadece yeni maksimum değerlerde güncellenmeli
@@ -909,6 +911,11 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
             safeSetItem('hasene_maxCombo', maxCombo);
             // Rozet kontrolü için anında kontrol et
             checkBadges();
+        }
+        
+        // Bu oyun için maksimum combo'yu güncelle
+        if (comboCount > sessionMaxCombo) {
+            sessionMaxCombo = comboCount;
         }
         
         // Puan ekle - Kelimenin difficulty değerine göre
@@ -1215,6 +1222,11 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
             safeSetItem('hasene_maxCombo', maxCombo);
             // Rozet kontrolü için anında kontrol et
             checkBadges();
+        }
+        
+        // Bu oyun için maksimum combo'yu güncelle
+        if (comboCount > sessionMaxCombo) {
+            sessionMaxCombo = comboCount;
         }
         
         // Puan ekle - Kelimenin difficulty değerine göre
@@ -1534,6 +1546,11 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             safeSetItem('hasene_maxCombo', maxCombo);
             // Rozet kontrolü için anında kontrol et
             checkBadges();
+        }
+        
+        // Bu oyun için maksimum combo'yu güncelle
+        if (comboCount > sessionMaxCombo) {
+            sessionMaxCombo = comboCount;
         }
         
         // Doğru kelimeyi boşluğa yerleştir
@@ -2146,13 +2163,13 @@ async function saveCurrentGameProgress() {
         correct: sessionCorrect,
         wrong: sessionWrong,
         points: sessionScore,
-        combo: maxCombo
+        combo: sessionMaxCombo // Bu oyun için maksimum combo
     });
     updateTaskProgress(gameModeKey, {
         correct: sessionCorrect,
         wrong: sessionWrong,
         points: sessionScore,
-        combo: maxCombo,
+        combo: sessionMaxCombo, // Bu oyun için maksimum combo
         perfect: 0 // Oyun bitmeden çıkıldığı için perfect bonus yok
     });
     gameLog('✅ Görev ilerlemesi güncellendi');
@@ -2239,6 +2256,27 @@ async function endGame() {
     await addToGlobalPoints(sessionScore, sessionCorrect);
     gameLog('✅ Global puanlar güncellendi');
     
+    // Oyun oynandı - lastPlayDate güncelle (günlük hedefe ulaşılmasa bile)
+    const today = getLocalDateString();
+    if (streakData.lastPlayDate !== today) {
+        gameLog('📅 Oyun oynandı - lastPlayDate güncelleniyor', { 
+            oldLastPlayDate: streakData.lastPlayDate,
+            newLastPlayDate: today,
+            oldTotalPlayDays: streakData.totalPlayDays
+        });
+        streakData.lastPlayDate = today;
+        
+        // Bugün ilk kez oynanıyorsa totalPlayDays artır
+        if (!streakData.playDates.includes(today)) {
+            streakData.totalPlayDays++;
+            streakData.playDates.push(today);
+            gameLog('✅ Toplam oyun günü artırıldı', { newTotalPlayDays: streakData.totalPlayDays });
+        }
+        
+        // Streak verilerini kaydet
+        debouncedSaveStats();
+    }
+    
     // Günlük istatistikleri güncelle
     const dailyCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0');
     const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0');
@@ -2257,7 +2295,7 @@ async function endGame() {
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle
-    const today = getLocalDateString();
+    // today zaten yukarıda tanımlı
     const dailyKey = `hasene_daily_${today}`;
     const dailyData = safeGetItem(dailyKey, {
         correct: 0,
@@ -2364,14 +2402,14 @@ async function endGame() {
         correct: sessionCorrect,
         wrong: sessionWrong,
         points: sessionScore,
-        combo: maxCombo,
+        combo: sessionMaxCombo, // Bu oyun için maksimum combo
         perfect: perfectBonus > 0 ? 1 : 0
     });
     updateTaskProgress(currentGameMode, {
         correct: sessionCorrect,
         wrong: sessionWrong,
         points: sessionScore,
-        combo: maxCombo,
+        combo: sessionMaxCombo, // Bu oyun için maksimum combo
         perfect: perfectBonus > 0 ? 1 : 0
     });
     gameLog('✅ Görev ilerlemesi güncellendi');
@@ -2706,7 +2744,9 @@ function updateTaskProgress(gameType, data) {
             progress = dailyTasks.todayStats.farklıZorluk.size;
         } else if (task.type === 'combo') {
             // Arka arkaya doğru cevap görevleri için maxConsecutiveCorrect kullan
-            progress = dailyTasks.todayStats.maxConsecutiveCorrect || 0;
+            // Ancak progress, hedefe ulaşana kadar 0 olmalı (sadece hedefe ulaşıldığında progress göster)
+            const maxCombo = dailyTasks.todayStats.maxConsecutiveCorrect || 0;
+            progress = maxCombo >= task.target ? task.target : maxCombo;
         } else if (task.type === 'streak') {
             progress = streakData.currentStreak > 0 ? 1 : 0;
         } else if (task.type === 'ayet_oku') {
@@ -2796,7 +2836,9 @@ function updateTaskProgress(gameType, data) {
             progress = weeklyTasks.weekStats.allModesPlayed.size;
         } else if (task.type === 'combo') {
             // Arka arkaya doğru cevap görevleri için maxConsecutiveCorrect kullan
-            progress = weeklyTasks.weekStats.maxConsecutiveCorrect || 0;
+            // Ancak progress, hedefe ulaşana kadar 0 olmalı (sadece hedefe ulaşıldığında progress göster)
+            const maxCombo = weeklyTasks.weekStats.maxConsecutiveCorrect || 0;
+            progress = maxCombo >= task.target ? task.target : maxCombo;
         } else if (task.type === 'perfect_lessons') {
             // Haftalık perfect lessons için perfectLessonsCount kullan
             progress = perfectLessonsCount;
@@ -3010,20 +3052,41 @@ function updateDailyProgress(correctAnswers) {
     // İlerlemeyi artır
     streakData.todayProgress += correctAnswers;
     
-    // Günlük hedef tamamlandı mı?
-    if (streakData.todayProgress >= streakData.dailyGoal && streakData.lastPlayDate !== today) {
-        streakData.currentStreak++;
-        if (streakData.currentStreak > streakData.bestStreak) {
-            streakData.bestStreak = streakData.currentStreak;
-        }
+    // Oyun oynandı - lastPlayDate ve playDates güncelle (günlük hedefe ulaşılmasa bile)
+    if (streakData.lastPlayDate !== today) {
+        // Bugün ilk kez oynanıyor
         streakData.lastPlayDate = today;
-        streakData.totalPlayDays++;
         
+        // Bugün ilk kez oynanıyorsa totalPlayDays artır
         if (!streakData.playDates.includes(today)) {
+            streakData.totalPlayDays++;
             streakData.playDates.push(today);
         }
+    }
+    
+    // Günlük hedef tamamlandı mı? (Seri artırma için)
+    if (streakData.todayProgress >= streakData.dailyGoal && streakData.lastPlayDate === today) {
+        // Günlük hedef tamamlandı ve bugün oynandı
+        // Dün oynandıysa seri artır, yoksa seri başlat
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = getLocalDateString(yesterday);
         
-        showSuccessMessage(`🔥 Seri: ${streakData.currentStreak} gün!`);
+        if (streakData.playDates.includes(yesterdayStr)) {
+            // Dün oynandı - seri devam ediyor
+            streakData.currentStreak++;
+            if (streakData.currentStreak > streakData.bestStreak) {
+                streakData.bestStreak = streakData.currentStreak;
+            }
+            showSuccessMessage(`🔥 Seri: ${streakData.currentStreak} gün!`);
+        } else if (streakData.currentStreak === 0) {
+            // İlk gün - seri başlat
+            streakData.currentStreak = 1;
+            if (streakData.currentStreak > streakData.bestStreak) {
+                streakData.bestStreak = streakData.currentStreak;
+            }
+            showSuccessMessage(`🔥 Seri: ${streakData.currentStreak} gün!`);
+        }
     }
     
     updateStreakDisplay();
