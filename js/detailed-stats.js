@@ -777,6 +777,45 @@ async function loadFavoritesStats() {
 }
 
 /**
+ * Favori kelimelerden oyun başlatır
+ */
+function startFavoritesGame() {
+    // Detaylı istatistikler modalını kapat
+    const modal = document.getElementById('detailed-stats-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    // Ana menüye dön
+    showMainMenu();
+    
+    // Zorluk seviyesi seçim ekranını göster
+    const difficultyScreen = document.getElementById('difficulty-selection');
+    if (difficultyScreen) {
+        difficultyScreen.style.display = 'block';
+    }
+    
+    // Oyun modu seçim ekranını göster
+    const gameModeScreen = document.getElementById('game-mode-selection');
+    if (gameModeScreen) {
+        gameModeScreen.style.display = 'block';
+    }
+    
+    // Kelime Çevir alt mod seçim ekranını göster
+    const kelimeSubmodeSelection = document.getElementById('kelime-submode-selection');
+    if (kelimeSubmodeSelection) {
+        kelimeSubmodeSelection.style.display = 'block';
+    }
+    
+    // Favori kelimelerden oyunu başlat
+    if (typeof startKelimeCevirGame === 'function') {
+        startKelimeCevirGame('favorites');
+    } else {
+        showErrorMessage('Oyun modülü yüklenemedi!');
+    }
+}
+
+/**
  * Kelime istatistik öğesi HTML'i oluşturur
  * @param {Object} word - Kelime objesi
  * @param {boolean} showInFavorites - Favori sayfasında mı gösteriliyor?
@@ -879,7 +918,7 @@ function refreshDetailedStatsIfOpen() {
 if (typeof window !== 'undefined') {
     window.showDetailedStatsModal = showDetailedStatsModal;
     window.loadTabContent = loadTabContent;
-    window.toggleFavorite = toggleFavorite;
+    // toggleFavorite artık favorites-manager.js'de tanımlı
     window.startFavoritesGame = startFavoritesGame;
     window.loadFavoritesStats = loadFavoritesStats;
     window.refreshDetailedStatsIfOpen = refreshDetailedStatsIfOpen;

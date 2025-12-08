@@ -78,6 +78,40 @@ function getFavoriteWords() {
 }
 
 /**
+ * Kelimeyi favorilere ekler veya çıkarır (toggle)
+ * @param {string} wordId - Kelime ID'si
+ * @param {HTMLElement} buttonElement - Buton elementi (opsiyonel)
+ * @returns {boolean} - Favori mi? (işlem sonrası)
+ */
+function toggleFavorite(wordId, buttonElement = null) {
+    if (!wordId) return false;
+    
+    const wasFavorite = favoriteWords.has(wordId);
+    
+    if (wasFavorite) {
+        removeFromFavorites(wordId);
+    } else {
+        addToFavorites(wordId);
+    }
+    
+    // Buton varsa güncelle
+    if (buttonElement) {
+        const isNowFavorite = favoriteWords.has(wordId);
+        if (isNowFavorite) {
+            buttonElement.classList.add('favorited');
+            buttonElement.innerHTML = '⭐';
+            buttonElement.title = 'Favorilerden çıkar';
+        } else {
+            buttonElement.classList.remove('favorited');
+            buttonElement.innerHTML = '☆';
+            buttonElement.title = 'Favorilere ekle';
+        }
+    }
+    
+    return favoriteWords.has(wordId);
+}
+
+/**
  * Favori kelime sayısını döndürür
  * @returns {number} - Favori kelime sayısı
  */
@@ -103,5 +137,6 @@ if (typeof window !== 'undefined') {
     window.getFavoriteWords = getFavoriteWords;
     window.getFavoriteWordsCount = getFavoriteWordsCount;
     window.loadFavorites = loadFavorites;
+    window.toggleFavorite = toggleFavorite;
 }
 

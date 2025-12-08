@@ -284,6 +284,9 @@ async function loadStats() {
         }
         perfectLessonsCount = parseInt(safeGetItem('perfectLessonsCount', 0)) || 0;
         
+        // maxCombo'yu localStorage'dan yükle (global maksimum combo)
+        maxCombo = parseInt(safeGetItem('hasene_maxCombo', 0)) || 0;
+        
         const savedGameStats = safeGetItem('gameStats', gameStats);
         // Güvenli bir şekilde gameStats'ı yükle
         if (savedGameStats && typeof savedGameStats === 'object') {
@@ -616,7 +619,8 @@ async function startKelimeCevirGame(subMode) {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
-    maxCombo = 0;
+    // maxCombo global olarak tutulmalı, sadece yeni maksimum değerlerde güncellenmeli
+    // maxCombo = 0; // KALDIRILDI - maxCombo global olarak tutulacak
     hintUsed = false;
     // Can sistemi kaldırıldı
     lives = -1;
@@ -851,7 +855,14 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
         optionButtons[selectedIndex].classList.add('correct');
         sessionCorrect++;
         comboCount++;
-        if (comboCount > maxCombo) maxCombo = comboCount;
+        // maxCombo global olarak tutulur, sadece yeni maksimum değerlerde güncellenir
+        if (comboCount > maxCombo) {
+            maxCombo = comboCount;
+            // localStorage'a kaydet
+            safeSetItem('hasene_maxCombo', maxCombo);
+            // Rozet kontrolü için anında kontrol et
+            checkBadges();
+        }
         
         // Puan ekle - Kelimenin difficulty değerine göre
         let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
@@ -991,7 +1002,8 @@ async function startDinleBulGame() {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
-    maxCombo = 0;
+    // maxCombo global olarak tutulmalı, sadece yeni maksimum değerlerde güncellenmeli
+    // maxCombo = 0; // KALDIRILDI - maxCombo global olarak tutulacak
     
     const allWords = await loadKelimeData();
     if (!allWords || allWords.length === 0) {
@@ -1127,7 +1139,14 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         optionButtons[selectedIndex].classList.add('correct');
         sessionCorrect++;
         comboCount++;
-        if (comboCount > maxCombo) maxCombo = comboCount;
+        // maxCombo global olarak tutulur, sadece yeni maksimum değerlerde güncellenir
+        if (comboCount > maxCombo) {
+            maxCombo = comboCount;
+            // localStorage'a kaydet
+            safeSetItem('hasene_maxCombo', maxCombo);
+            // Rozet kontrolü için anında kontrol et
+            checkBadges();
+        }
         
         // Puan ekle - Kelimenin difficulty değerine göre
         let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
@@ -1218,7 +1237,8 @@ async function startBoslukDoldurGame() {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
-    maxCombo = 0;
+    // maxCombo global olarak tutulmalı, sadece yeni maksimum değerlerde güncellenmeli
+    // maxCombo = 0; // KALDIRILDI - maxCombo global olarak tutulacak
     
     // Doğru cevap pozisyon takibini sıfırla
     correctAnswerPositions = {
@@ -1434,7 +1454,14 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         optionButtons[selectedIndex].classList.add('correct');
         sessionCorrect++;
         comboCount++;
-        if (comboCount > maxCombo) maxCombo = comboCount;
+        // maxCombo global olarak tutulur, sadece yeni maksimum değerlerde güncellenir
+        if (comboCount > maxCombo) {
+            maxCombo = comboCount;
+            // localStorage'a kaydet
+            safeSetItem('hasene_maxCombo', maxCombo);
+            // Rozet kontrolü için anında kontrol et
+            checkBadges();
+        }
         
         // Doğru kelimeyi boşluğa yerleştir
         const blankWordEl = document.getElementById('blank-word');
@@ -2012,7 +2039,8 @@ async function saveCurrentGameProgress() {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
-    maxCombo = 0;
+    // maxCombo global olarak tutulmalı, sadece yeni maksimum değerlerde güncellenmeli
+    // maxCombo = 0; // KALDIRILDI - maxCombo global olarak tutulacak
     currentQuestion = 0;
     questions = [];
     currentQuestionData = null;
@@ -2108,6 +2136,16 @@ async function endGame() {
     if (typeof refreshDetailedStatsIfOpen === 'function') {
         refreshDetailedStatsIfOpen();
     }
+    
+    // maxCombo'yu güncelle (oyun bitince, eğer yeni maksimum ise)
+    // Not: maxCombo zaten oyun içinde güncelleniyor, burada sadece kontrol ediyoruz
+    // maxCombo global olarak tutulduğu için sıfırlamaya gerek yok
+    
+    // maxCombo'yu güncelle (oyun bitince, eğer yeni maksimum ise)
+    // Not: maxCombo zaten oyun içinde güncelleniyor, burada sadece kontrol ediyoruz
+    // maxCombo global olarak tutulduğu için sıfırlamaya gerek yok
+    // Ancak localStorage'a kaydetmeyi unutma
+    safeSetItem('hasene_maxCombo', maxCombo);
     
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
@@ -3944,6 +3982,7 @@ async function resetAllStats() {
     
     // Favori kelimeleri de temizle
     localStorage.removeItem('hasene_favoriteWords');
+    localStorage.removeItem('hasene_maxCombo'); // maxCombo'yu da temizle
     
     // IndexedDB temizle
     await clearIndexedDB();
@@ -4005,7 +4044,7 @@ async function resetAllStats() {
     sessionCorrect = 0;
     sessionWrong = 0;
     comboCount = 0;
-    maxCombo = 0;
+    maxCombo = 0; // resetAllStats içinde sıfırlanmalı
     currentQuestion = 0;
     questions = [];
     currentQuestionData = null;
