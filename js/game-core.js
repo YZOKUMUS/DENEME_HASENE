@@ -119,10 +119,15 @@ let currentQuestionData = null;
 let hintUsed = false;
 let lives = 3;
 
+// Timer yönetimi - Memory leak önleme için
+let questionTimer = null; // Soru geçiş timer'ı
+let comboHideTimer = null; // Combo gizleme timer'ı
+
 // ============================================
 // DOM ELEMENTS
 // ============================================
 
+// DOM element cache - Performans optimizasyonu için
 const elements = {
     totalPointsEl: document.getElementById('total-points'),
     starPointsEl: document.getElementById('star-points'),
@@ -131,7 +136,40 @@ const elements = {
     dailyGoalCurrent: document.getElementById('daily-goal-current'),
     dailyGoalTarget: document.getElementById('daily-goal-target'),
     dailyGoalPercent: document.getElementById('daily-goal-percent'),
-    currentStreakEl: document.getElementById('current-streak')
+    currentStreakEl: document.getElementById('current-streak'),
+    // Oyun ekranı elementleri
+    kelimeSubmodeSelection: document.getElementById('kelime-submode-selection'),
+    kelimeGameContent: document.getElementById('kelime-game-content'),
+    arabicWordEl: document.getElementById('arabic-word'),
+    kelimeIdEl: document.getElementById('kelime-id'),
+    kelimePlayAudioBtn: document.getElementById('kelime-play-audio-btn'),
+    questionNumberEl: document.getElementById('question-number'),
+    hintBtn: document.getElementById('hint-btn'),
+    sessionScoreEl: document.getElementById('session-score'),
+    comboDisplay: document.getElementById('combo-display'),
+    comboCountEl: document.getElementById('combo-count'),
+    // Dinle Bul elementleri
+    dinleIdEl: document.getElementById('dinle-id'),
+    playAudioBtn: document.getElementById('play-audio-btn'),
+    dinleQuestionNumberEl: document.getElementById('dinle-question-number'),
+    dinleComboDisplay: document.getElementById('dinle-combo-display'),
+    dinleComboCount: document.getElementById('dinle-combo-count'),
+    dinleSessionScoreEl: document.getElementById('dinle-session-score'),
+    // Boşluk Doldur elementleri
+    verseTextEl: document.getElementById('verse-text'),
+    boslukVerseIdEl: document.getElementById('bosluk-verse-id'),
+    verseMealEl: document.getElementById('verse-meal'),
+    boslukPlayAudioBtn: document.getElementById('bosluk-play-audio-btn'),
+    boslukComboDisplay: document.getElementById('bosluk-combo-display'),
+    boslukComboCount: document.getElementById('bosluk-combo-count'),
+    boslukQuestionNumberEl: document.getElementById('bosluk-question-number'),
+    boslukSessionScoreEl: document.getElementById('bosluk-session-score'),
+    // Result ekranı elementleri
+    resultCorrectEl: document.getElementById('result-correct'),
+    resultWrongEl: document.getElementById('result-wrong'),
+    resultXpEl: document.getElementById('result-xp'),
+    perfectLessonBonusEl: document.getElementById('perfect-lesson-bonus'),
+    perfectBonusEl: document.getElementById('perfect-bonus')
 };
 
 // ============================================
@@ -689,16 +727,14 @@ async function startKelimeCevirGame(subMode) {
     // Review mode'da zorlanılan kelimelere ekstra öncelik ver
     questions = selectIntelligentWords(filteredWords, CONFIG.QUESTIONS_PER_GAME, isReviewMode);
     
-    // Ekranı göster
-    const kelimeSubmodeSelection = document.getElementById('kelime-submode-selection');
-    const kelimeGameContent = document.getElementById('kelime-game-content');
-    if (kelimeSubmodeSelection) kelimeSubmodeSelection.style.display = 'none';
-    if (kelimeGameContent) kelimeGameContent.style.display = 'block';
+    // Ekranı göster (cache'lenmiş elementler kullanılıyor)
+    if (elements.kelimeSubmodeSelection) elements.kelimeSubmodeSelection.style.display = 'none';
+    if (elements.kelimeGameContent) elements.kelimeGameContent.style.display = 'block';
     
     // İlk soruyu yükle
     loadKelimeQuestion();
     
-    // Can gösterimi kaldırıldı
+    // Can gösterimi kaldırıldı (eğer varsa)
     const livesDisplay = document.getElementById('lives-display');
     if (livesDisplay) {
         livesDisplay.style.display = 'none';
@@ -717,38 +753,35 @@ function loadKelimeQuestion() {
     currentQuestionData = questions[currentQuestion];
     hintUsed = false;
     
-    // Arapça kelimeyi göster
-    const arabicWordEl = document.getElementById('arabic-word');
-    if (arabicWordEl) {
-        arabicWordEl.textContent = currentQuestionData.kelime;
+    // Arapça kelimeyi göster (cache'lenmiş element kullanılıyor)
+    if (elements.arabicWordEl) {
+        elements.arabicWordEl.textContent = currentQuestionData.kelime;
     }
     
-    // Kelime ID'sini göster
-    const kelimeIdEl = document.getElementById('kelime-id');
-    if (kelimeIdEl && currentQuestionData.id) {
-        kelimeIdEl.textContent = currentQuestionData.id;
-        kelimeIdEl.style.display = 'inline';
-    } else if (kelimeIdEl) {
-        kelimeIdEl.style.display = 'none';
+    // Kelime ID'sini göster (cache'lenmiş element kullanılıyor)
+    if (elements.kelimeIdEl && currentQuestionData.id) {
+        elements.kelimeIdEl.textContent = currentQuestionData.id;
+        elements.kelimeIdEl.style.display = 'inline';
+    } else if (elements.kelimeIdEl) {
+        elements.kelimeIdEl.style.display = 'none';
     }
     
-    // Ses çal butonu - Audio Manager kullan
-    const playAudioBtn = document.getElementById('kelime-play-audio-btn');
-    if (playAudioBtn && typeof setupAudioButton === 'function') {
-        setupAudioButton(playAudioBtn, currentQuestionData.ses_dosyasi);
-    } else if (playAudioBtn) {
+    // Ses çal butonu - Audio Manager kullan (cache'lenmiş element kullanılıyor)
+    if (elements.kelimePlayAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(elements.kelimePlayAudioBtn, currentQuestionData.ses_dosyasi);
+    } else if (elements.kelimePlayAudioBtn) {
         // Fallback: Eski yöntem (audio-manager yüklenmemişse)
         if (currentQuestionData.ses_dosyasi) {
-            playAudioBtn.onclick = () => {
+            elements.kelimePlayAudioBtn.onclick = () => {
                 if (typeof playAudio === 'function') {
-                    playAudio(currentQuestionData.ses_dosyasi, playAudioBtn);
+                    playAudio(currentQuestionData.ses_dosyasi, elements.kelimePlayAudioBtn);
                 }
             };
-            playAudioBtn.disabled = false;
-            playAudioBtn.style.opacity = '1';
+            elements.kelimePlayAudioBtn.disabled = false;
+            elements.kelimePlayAudioBtn.style.opacity = '1';
         } else {
-            playAudioBtn.style.opacity = '0.5';
-            playAudioBtn.disabled = true;
+            elements.kelimePlayAudioBtn.style.opacity = '0.5';
+            elements.kelimePlayAudioBtn.disabled = true;
         }
     }
     
@@ -791,16 +824,14 @@ function loadKelimeQuestion() {
         btn.onclick = () => checkKelimeAnswer(index, index === correctIndex);
     });
     
-    // Soru numarası
-    const questionNumberEl = document.getElementById('question-number');
-    if (questionNumberEl) {
-        questionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
+    // Soru numarası (cache'lenmiş element kullanılıyor)
+    if (elements.questionNumberEl) {
+        elements.questionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
     }
     
-    // İpucu butonunu sıfırla
-    const hintBtn = document.getElementById('hint-btn');
-    if (hintBtn) {
-        hintBtn.disabled = false;
+    // İpucu butonunu sıfırla (cache'lenmiş element kullanılıyor)
+    if (elements.hintBtn) {
+        elements.hintBtn.disabled = false;
     }
 }
 
@@ -853,10 +884,12 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
             refreshDetailedStatsIfOpen();
         }
         
-        // Bir sonraki soruya geç
-        setTimeout(() => {
+        // Bir sonraki soruya geç (önceki timer'ı temizle)
+        if (questionTimer) clearTimeout(questionTimer);
+        questionTimer = setTimeout(() => {
             currentQuestion++;
             loadKelimeQuestion();
+            questionTimer = null;
         }, 1500);
     } else {
         // Yanlış cevap
@@ -894,17 +927,18 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
             refreshDetailedStatsIfOpen();
         }
         
-        // Bir sonraki soruya geç
-        setTimeout(() => {
+        // Bir sonraki soruya geç (önceki timer'ı temizle)
+        if (questionTimer) clearTimeout(questionTimer);
+        questionTimer = setTimeout(() => {
             currentQuestion++;
             loadKelimeQuestion();
+            questionTimer = null;
         }, 2000);
     }
     
-    // Session skorunu güncelle
-    const sessionScoreEl = document.getElementById('session-score');
-    if (sessionScoreEl) {
-        sessionScoreEl.textContent = `Hasene: ${sessionScore}`;
+    // Session skorunu güncelle (cache'lenmiş element kullanılıyor)
+    if (elements.sessionScoreEl) {
+        elements.sessionScoreEl.textContent = `Hasene: ${sessionScore}`;
     }
 }
 
@@ -929,9 +963,9 @@ function handleHint() {
         randomWrong.disabled = true;
     }
     
-    const hintBtn = document.getElementById('hint-btn');
-    if (hintBtn) {
-        hintBtn.disabled = true;
+    // İpucu butonunu devre dışı bırak (cache'lenmiş element kullanılıyor)
+    if (elements.hintBtn) {
+        elements.hintBtn.disabled = true;
     }
 }
 
@@ -939,16 +973,19 @@ function handleHint() {
  * Combo bonusu gösterir
  */
 function showComboBonus() {
-    const comboDisplay = document.getElementById('combo-display');
-    if (comboDisplay) {
-        comboDisplay.style.display = 'block';
-        const comboCountEl = document.getElementById('combo-count');
-        if (comboCountEl) {
-            comboCountEl.textContent = comboCount;
+    // Cache'lenmiş elementler kullanılıyor
+    if (elements.comboDisplay) {
+        elements.comboDisplay.style.display = 'block';
+        if (elements.comboCountEl) {
+            elements.comboCountEl.textContent = comboCount;
         }
-        // 2 saniye sonra otomatik gizle
-        setTimeout(() => {
-            comboDisplay.style.display = 'none';
+        // 2 saniye sonra otomatik gizle (önceki timer'ı temizle)
+        if (comboHideTimer) clearTimeout(comboHideTimer);
+        comboHideTimer = setTimeout(() => {
+            if (elements.comboDisplay) {
+                elements.comboDisplay.style.display = 'none';
+            }
+            comboHideTimer = null;
         }, 2000);
     }
 }
@@ -1007,13 +1044,12 @@ function loadDinleQuestion() {
     
     currentQuestionData = questions[currentQuestion];
     
-    // Kelime ID'sini göster
-    const dinleIdEl = document.getElementById('dinle-id');
-    if (dinleIdEl && currentQuestionData.id) {
-        dinleIdEl.textContent = currentQuestionData.id;
-        dinleIdEl.style.display = 'inline';
-    } else if (dinleIdEl) {
-        dinleIdEl.style.display = 'none';
+    // Kelime ID'sini göster (cache'lenmiş element kullanılıyor)
+    if (elements.dinleIdEl && currentQuestionData.id) {
+        elements.dinleIdEl.textContent = currentQuestionData.id;
+        elements.dinleIdEl.style.display = 'inline';
+    } else if (elements.dinleIdEl) {
+        elements.dinleIdEl.style.display = 'none';
     }
     
     // Ses çal (otomatik) - Audio Manager kullan
@@ -1024,23 +1060,22 @@ function loadDinleQuestion() {
         playAudio(currentQuestionData.ses_dosyasi);
     }
     
-    // Ses çal butonunu güncelle - Audio Manager kullan
-    const playBtn = document.getElementById('play-audio-btn');
-    if (playBtn && typeof setupAudioButton === 'function') {
-        setupAudioButton(playBtn, currentQuestionData.ses_dosyasi);
-    } else if (playBtn) {
+    // Ses çal butonunu güncelle - Audio Manager kullan (cache'lenmiş element kullanılıyor)
+    if (elements.playAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(elements.playAudioBtn, currentQuestionData.ses_dosyasi);
+    } else if (elements.playAudioBtn) {
         // Fallback: Eski yöntem (audio-manager yüklenmemişse)
         if (currentQuestionData.ses_dosyasi) {
-            playBtn.onclick = () => {
+            elements.playAudioBtn.onclick = () => {
                 if (typeof playAudio === 'function') {
-                    playAudio(currentQuestionData.ses_dosyasi, playBtn);
+                    playAudio(currentQuestionData.ses_dosyasi, elements.playAudioBtn);
                 }
             };
-            playBtn.disabled = false;
-            playBtn.style.opacity = '1';
+            elements.playAudioBtn.disabled = false;
+            elements.playAudioBtn.style.opacity = '1';
         } else {
-            playBtn.style.opacity = '0.5';
-            playBtn.disabled = true;
+            elements.playAudioBtn.style.opacity = '0.5';
+            elements.playAudioBtn.disabled = true;
         }
     }
     
@@ -1083,10 +1118,9 @@ function loadDinleQuestion() {
         btn.onclick = () => checkDinleAnswer(index, index === correctIndex);
     });
     
-    // Soru numarası
-    const questionNumberEl = document.getElementById('dinle-question-number');
-    if (questionNumberEl) {
-        questionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
+    // Soru numarası (cache'lenmiş element kullanılıyor)
+    if (elements.dinleQuestionNumberEl) {
+        elements.dinleQuestionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
     }
 }
 
@@ -1124,14 +1158,19 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         updateWordStats(currentQuestionData.id, true);
         
         if (comboCount % 3 === 0) {
-            const comboDisplay = document.getElementById('dinle-combo-display');
-            if (comboDisplay) {
-                comboDisplay.style.display = 'block';
-                const dinleComboCount = document.getElementById('dinle-combo-count');
-                if (dinleComboCount) dinleComboCount.textContent = comboCount;
-                // 2 saniye sonra otomatik gizle
-                setTimeout(() => {
-                    comboDisplay.style.display = 'none';
+            // Combo göster (cache'lenmiş elementler kullanılıyor)
+            if (elements.dinleComboDisplay) {
+                elements.dinleComboDisplay.style.display = 'block';
+                if (elements.dinleComboCount) {
+                    elements.dinleComboCount.textContent = comboCount;
+                }
+                // 2 saniye sonra otomatik gizle (önceki timer'ı temizle)
+                if (comboHideTimer) clearTimeout(comboHideTimer);
+                comboHideTimer = setTimeout(() => {
+                    if (elements.dinleComboDisplay) {
+                        elements.dinleComboDisplay.style.display = 'none';
+                    }
+                    comboHideTimer = null;
                 }, 2000);
             }
         }
@@ -1144,9 +1183,12 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
             refreshDetailedStatsIfOpen();
         }
         
-        setTimeout(() => {
+        // Bir sonraki soruya geç (önceki timer'ı temizle)
+        if (questionTimer) clearTimeout(questionTimer);
+        questionTimer = setTimeout(() => {
             currentQuestion++;
             loadDinleQuestion();
+            questionTimer = null;
         }, 1500);
     } else {
         // Yanlış cevap - sadece doğru cevabı göster, puan kaybı yok
@@ -1176,15 +1218,18 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
             refreshDetailedStatsIfOpen();
         }
         
-        setTimeout(() => {
+        // Bir sonraki soruya geç (önceki timer'ı temizle)
+        if (questionTimer) clearTimeout(questionTimer);
+        questionTimer = setTimeout(() => {
             currentQuestion++;
             loadDinleQuestion();
+            questionTimer = null;
         }, 2000);
     }
     
-    const sessionScoreEl = document.getElementById('dinle-session-score');
-    if (sessionScoreEl) {
-        sessionScoreEl.textContent = `Hasene: ${sessionScore}`;
+    // Session skorunu güncelle (cache'lenmiş element kullanılıyor)
+    if (elements.dinleSessionScoreEl) {
+        elements.dinleSessionScoreEl.textContent = `Hasene: ${sessionScore}`;
     }
 }
 
@@ -1312,46 +1357,42 @@ async function loadBoslukQuestion() {
     words[randomIndex] = '_____';
     const verseWithBlank = words.join(' ');
     
-    // Verse text'i göster
-    const verseTextEl = document.getElementById('verse-text');
-    if (verseTextEl) {
-        verseTextEl.innerHTML = verseWithBlank.replace('_____', '<span class="blank" id="blank-word"></span>');
+    // Verse text'i göster (cache'lenmiş element kullanılıyor)
+    if (elements.verseTextEl) {
+        elements.verseTextEl.innerHTML = verseWithBlank.replace('_____', '<span class="blank" id="blank-word"></span>');
     }
     
-    // Ayet kimliğini göster (verse-info panelinde)
-    const verseIdEl = document.getElementById('bosluk-verse-id');
-    if (verseIdEl) {
+    // Ayet kimliğini göster (verse-info panelinde) (cache'lenmiş element kullanılıyor)
+    if (elements.boslukVerseIdEl) {
         if (currentQuestionData.ayet_kimligi) {
-            verseIdEl.textContent = currentQuestionData.ayet_kimligi;
-            verseIdEl.style.display = 'inline';
+            elements.boslukVerseIdEl.textContent = currentQuestionData.ayet_kimligi;
+            elements.boslukVerseIdEl.style.display = 'inline';
         } else {
-            verseIdEl.style.display = 'none';
+            elements.boslukVerseIdEl.style.display = 'none';
         }
     }
     
-    // Meali göster
-    const verseMealEl = document.getElementById('verse-meal');
-    if (verseMealEl && currentQuestionData.meal) {
-        verseMealEl.textContent = currentQuestionData.meal;
+    // Meali göster (cache'lenmiş element kullanılıyor)
+    if (elements.verseMealEl && currentQuestionData.meal) {
+        elements.verseMealEl.textContent = currentQuestionData.meal;
     }
     
-    // Ses çal butonu - Audio Manager kullan
-    const playBtn = document.getElementById('bosluk-play-audio-btn');
-    if (playBtn && typeof setupAudioButton === 'function') {
-        setupAudioButton(playBtn, currentQuestionData.ayet_ses_dosyasi);
-    } else if (playBtn) {
+    // Ses çal butonu - Audio Manager kullan (cache'lenmiş element kullanılıyor)
+    if (elements.boslukPlayAudioBtn && typeof setupAudioButton === 'function') {
+        setupAudioButton(elements.boslukPlayAudioBtn, currentQuestionData.ayet_ses_dosyasi);
+    } else if (elements.boslukPlayAudioBtn) {
         // Fallback: Eski yöntem
         if (currentQuestionData.ayet_ses_dosyasi) {
-            playBtn.onclick = () => {
+            elements.boslukPlayAudioBtn.onclick = () => {
                 if (typeof playAudio === 'function') {
-                    playAudio(currentQuestionData.ayet_ses_dosyasi, playBtn);
+                    playAudio(currentQuestionData.ayet_ses_dosyasi, elements.boslukPlayAudioBtn);
                 }
             };
-            playBtn.disabled = false;
-            playBtn.style.opacity = '1';
+            elements.boslukPlayAudioBtn.disabled = false;
+            elements.boslukPlayAudioBtn.style.opacity = '1';
         } else {
-            playBtn.style.opacity = '0.5';
-            playBtn.disabled = true;
+            elements.boslukPlayAudioBtn.style.opacity = '0.5';
+            elements.boslukPlayAudioBtn.disabled = true;
         }
     }
     
@@ -1395,10 +1436,9 @@ async function loadBoslukQuestion() {
         btn.onclick = () => checkBoslukAnswer(index, index === correctIndex);
     });
     
-    // Soru numarası
-    const questionNumberEl = document.getElementById('bosluk-question-number');
-    if (questionNumberEl) {
-        questionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
+    // Soru numarası (cache'lenmiş element kullanılıyor)
+    if (elements.boslukQuestionNumberEl) {
+        elements.boslukQuestionNumberEl.textContent = `${currentQuestion + 1}/${questions.length}`;
     }
     
     // Doğru kelimeyi sakla
@@ -1466,14 +1506,19 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         addSessionPoints(points);
         
         if (comboCount % 3 === 0) {
-            const comboDisplay = document.getElementById('bosluk-combo-display');
-            if (comboDisplay) {
-                comboDisplay.style.display = 'block';
-                const boslukComboCount = document.getElementById('bosluk-combo-count');
-                if (boslukComboCount) boslukComboCount.textContent = comboCount;
-                // 2 saniye sonra otomatik gizle
-                setTimeout(() => {
-                    comboDisplay.style.display = 'none';
+            // Combo göster (cache'lenmiş elementler kullanılıyor)
+            if (elements.boslukComboDisplay) {
+                elements.boslukComboDisplay.style.display = 'block';
+                if (elements.boslukComboCount) {
+                    elements.boslukComboCount.textContent = comboCount;
+                }
+                // 2 saniye sonra otomatik gizle (önceki timer'ı temizle)
+                if (comboHideTimer) clearTimeout(comboHideTimer);
+                comboHideTimer = setTimeout(() => {
+                    if (elements.boslukComboDisplay) {
+                        elements.boslukComboDisplay.style.display = 'none';
+                    }
+                    comboHideTimer = null;
                 }, 2000);
             }
         }
@@ -1558,9 +1603,9 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         }
     }
     
-    const sessionScoreEl = document.getElementById('bosluk-session-score');
-    if (sessionScoreEl) {
-        sessionScoreEl.textContent = `Hasene: ${sessionScore}`;
+    // Session skorunu güncelle (cache'lenmiş element kullanılıyor)
+    if (elements.boslukSessionScoreEl) {
+        elements.boslukSessionScoreEl.textContent = `Hasene: ${sessionScore}`;
     }
 }
 
@@ -2021,6 +2066,16 @@ async function saveCurrentGameProgress() {
 }
 
 async function endGame() {
+    // Timer'ları temizle (memory leak önleme)
+    if (questionTimer) {
+        clearTimeout(questionTimer);
+        questionTimer = null;
+    }
+    if (comboHideTimer) {
+        clearTimeout(comboHideTimer);
+        comboHideTimer = null;
+    }
+    
     // Perfect Lesson bonusu kontrolü
     // Tüm sorular doğru cevaplanmış olmalı (hiç yanlış cevap yok ve tüm sorular cevaplanmış)
     let perfectBonus = 0;
@@ -2152,14 +2207,14 @@ async function endGame() {
  * Oyun sonu modalını gösterir
  */
 function showCustomConfirm(correct, wrong, xp, perfectBonus = 0) {
-    document.getElementById('result-correct').textContent = correct;
-    document.getElementById('result-wrong').textContent = wrong;
-    document.getElementById('result-xp').textContent = formatNumber(xp);
+    // Result ekranı elementleri (cache'lenmiş elementler kullanılıyor)
+    if (elements.resultCorrectEl) elements.resultCorrectEl.textContent = correct;
+    if (elements.resultWrongEl) elements.resultWrongEl.textContent = wrong;
+    if (elements.resultXpEl) elements.resultXpEl.textContent = formatNumber(xp);
     
-    const perfectBonusEl = document.getElementById('perfect-lesson-bonus');
     if (perfectBonus > 0) {
-        perfectBonusEl.style.display = 'block';
-        document.getElementById('perfect-bonus').textContent = formatNumber(perfectBonus);
+        if (elements.perfectLessonBonusEl) elements.perfectLessonBonusEl.style.display = 'block';
+        if (elements.perfectBonusEl) elements.perfectBonusEl.textContent = formatNumber(perfectBonus);
     } else {
         perfectBonusEl.style.display = 'none';
     }

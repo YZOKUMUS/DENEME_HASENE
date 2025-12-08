@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizasyon ve Senkronizasyon Testleri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #764ba2;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .test-results {
+            margin-top: 30px;
+        }
+        
+        .test-category {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .test-category h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+        
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .test-item.pass {
+            border-left: 4px solid #10b981;
+        }
+        
+        .test-item.warning {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .test-item.fail {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .test-name {
+            font-weight: 600;
+        }
+        
+        .test-status {
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .summary h3 {
+            margin-bottom: 15px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        #console-output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .console-line {
+            margin: 5px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Optimizasyon ve Senkronizasyon Testleri</h1>
+        <p class="subtitle">Proje performans ve veri tutarlılığı testleri</p>
+        
+        <div class="test-controls">
+            <button class="btn-primary" onclick="runAllTests()">🚀 Tüm Testleri Çalıştır</button>
+            <button class="btn-secondary" onclick="clearResults()">🗑️ Sonuçları Temizle</button>
+            <button class="btn-success" onclick="exportResults()">📥 Sonuçları Dışa Aktar</button>
+        </div>
+        
+        <div id="test-results" class="test-results">
+            <!-- Test sonuçları buraya eklenecek -->
+        </div>
+        
+        <div id="console-output"></div>
+    </div>
+    
+    <!-- Ana proje dosyalarını yükle -->
+    <script src="../js/config.js"></script>
+    <script src="../js/constants.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/indexeddb-cache.js"></script>
+    <script src="../js/data-loader.js"></script>
+    <script src="../js/error-handler.js"></script>
+    <script src="../js/audio-manager.js"></script>
+    <script src="../js/points-manager.js"></script>
+    <script src="../js/word-stats-manager.js"></script>
+    <script src="../js/favorites-manager.js"></script>
+    <script src="../js/badge-visualization.js"></script>
+    <script src="../js/game-core.js"></script>
+    <script src="../js/detailed-stats.js"></script>
+    
+    <!-- Test dosyasını yükle -->
+    <script src="optimization-sync-tests.js"></script>
+    
+    <script>
+        // Console output yakalama
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function addConsoleLine(message, type = 'log') {
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.textContent = message;
+            if (type === 'error') {
+                line.style.color = '#f48771';
+            } else if (type === 'warn') {
+                line.style.color = '#dcdcaa';
+            }
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addConsoleLine(args.join(' '), 'log');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addConsoleLine(args.join(' '), 'warn');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addConsoleLine(args.join(' '), 'error');
+        };
+        
+        // Test sonuçlarını göster
+        function displayResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            if (!window.OPTIMIZATION_TESTS) {
+                resultsDiv.innerHTML = '<p>Testler henüz çalıştırılmadı.</p>';
+                return;
+            }
+            
+            const categories = [
+                { name: 'DOM Optimizasyonu', results: window.OPTIMIZATION_TESTS.results.domOptimization },
+                { name: 'Event Listener Yönetimi', results: window.OPTIMIZATION_TESTS.results.eventListeners },
+                { name: 'Memory Leak Kontrolü', results: window.OPTIMIZATION_TESTS.results.memoryLeaks },
+                { name: 'Senkronizasyon', results: window.OPTIMIZATION_TESTS.results.synchronization },
+                { name: 'Veri Tutarlılığı', results: window.OPTIMIZATION_TESTS.results.dataConsistency },
+                { name: 'Race Condition', results: window.OPTIMIZATION_TESTS.results.raceConditions }
+            ];
+            
+            categories.forEach(category => {
+                if (category.results.length === 0) return;
+                
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'test-category';
+                categoryDiv.innerHTML = `<h3>${category.name}</h3>`;
+                
+                category.results.forEach(result => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `test-item ${result.status.toLowerCase()}`;
+                    
+                    const icon = result.status === 'PASS' ? '✅' : 
+                                result.status === 'WARNING' ? '⚠️' : '❌';
+                    
+                    itemDiv.innerHTML = `
+                        <div>
+                            <span class="test-name">${icon} ${result.test}</span>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">${result.message}</div>
+                        </div>
+                        <div>
+                            <span class="test-status status-${result.status.toLowerCase()}">${result.status}</span>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px; text-align: right;">Skor: ${result.score}/100</div>
+                        </div>
+                    `;
+                    
+                    categoryDiv.appendChild(itemDiv);
+                });
+                
+                resultsDiv.appendChild(categoryDiv);
+            });
+            
+            // Özet istatistikler
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'summary';
+            const stats = window.OPTIMIZATION_TESTS.stats;
+            const successRate = stats.totalTests > 0 
+                ? Math.round((stats.passed / stats.totalTests) * 100)
+                : 0;
+            
+            summaryDiv.innerHTML = `
+                <h3>📊 Özet İstatistikler</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.totalTests}</div>
+                        <div class="stat-label">Toplam Test</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #10b981;">${stats.passed}</div>
+                        <div class="stat-label">✅ Başarılı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #f59e0b;">${stats.warnings}</div>
+                        <div class="stat-label">⚠️ Uyarı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #ef4444;">${stats.failed}</div>
+                        <div class="stat-label">❌ Başarısız</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${successRate}%</div>
+                        <div class="stat-label">📊 Başarı Oranı</div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.appendChild(summaryDiv);
+        }
+        
+        // Tüm testleri çalıştır
+        async function runAllTests() {
+            console.log('🚀 Testler başlatılıyor...');
+            
+            if (window.runOptimizationTests) {
+                await window.runOptimizationTests();
+                displayResults();
+            } else {
+                console.error('Test fonksiyonları yüklenemedi!');
+            }
+        }
+        
+        // Sonuçları temizle
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('console-output').innerHTML = '';
+            if (window.OPTIMIZATION_TESTS) {
+                window.OPTIMIZATION_TESTS.stats = {
+                    totalTests: 0,
+                    passed: 0,
+                    failed: 0,
+                    warnings: 0
+                };
+                Object.keys(window.OPTIMIZATION_TESTS.results).forEach(key => {
+                    window.OPTIMIZATION_TESTS.results[key] = [];
+                });
+            }
+        }
+        
+        // Sonuçları dışa aktar
+        function exportResults() {
+            if (!window.OPTIMIZATION_TESTS) {
+                alert('Önce testleri çalıştırın!');
+                return;
+            }
+            
+            const data = {
+                timestamp: new Date().toISOString(),
+                stats: window.OPTIMIZATION_TESTS.stats,
+                results: window.OPTIMIZATION_TESTS.results
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `test-results-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', () => {
+            console.log('✅ Test sayfası yüklendi');
+            console.log('💡 "Tüm Testleri Çalıştır" butonuna tıklayarak testleri başlatabilirsiniz');
+        });
+    </script>
+</body>
+</html>
+
