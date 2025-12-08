@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Ekranı Örnekleri - Hasene</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .example-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            max-width: 400px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .example-title {
+            color: #fff;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .demo-btn {
+            background: #fff;
+            color: #764ba2;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           ÖRNEK 1: BASIT SPINNER + LOGO
+           ============================================ */
+        .loading-example-1 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-example-1.active {
+            display: flex;
+        }
+
+        .loading-logo-1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: logoPulse 2s ease-in-out infinite;
+        }
+
+        .loading-spinner-1 {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text-1 {
+            margin-top: 30px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           ÖRNEK 2: LOGO + PROGRESS BAR + İPUCU
+           ============================================ */
+        .loading-example-2 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .loading-example-2.active {
+            display: flex;
+        }
+
+        .loading-content-2 {
+            text-align: center;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .loading-logo-2 {
+            font-size: 5rem;
+            margin-bottom: 10px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .loading-title-2 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-progress-container-2 {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .loading-progress-bar-2 {
+            height: 100%;
+            background: #fff;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressShine 2s infinite;
+        }
+
+        .loading-percent-2 {
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .loading-tip-2 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            min-height: 60px;
+            animation: tipFade 4s infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes progressShine {
+            0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+
+        @keyframes tipFade {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0.5; }
+        }
+
+        /* ============================================
+           ÖRNEK 3: MODERN SKELETON LOADING
+           ============================================ */
+        .loading-example-3 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .loading-example-3.active {
+            display: flex;
+        }
+
+        .loading-skeleton-3 {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 350px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .skeleton-logo-3 {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            animation: skeletonPulse 1.5s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skeleton-logo-3 img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .skeleton-title-3 {
+            width: 200px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            margin: 0 auto 30px;
+            animation: skeletonPulse 1.5s ease-in-out infinite;
+        }
+
+        .skeleton-bar-3 {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .skeleton-bar-fill-3 {
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            width: 0%;
+            animation: skeletonShimmer 2s infinite, skeletonProgress 3s ease-in-out infinite;
+        }
+
+        .skeleton-text-3 {
+            width: 80%;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin: 10px auto;
+            animation: skeletonPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes skeletonPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes skeletonShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes skeletonProgress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        /* ============================================
+           ÖRNEK 4: DUOLINGO TARZI - KARAKTER + ANİMASYON
+           ============================================ */
+        .loading-example-4 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-example-4.active {
+            display: flex;
+        }
+
+        .loading-character-4 {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            animation: characterBounce 1s ease-in-out infinite;
+            transform-origin: center bottom;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-character-4 img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
+        }
+
+        .loading-dots-4 {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .loading-dot-4 {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            animation: dotBounce 1.4s ease-in-out infinite;
+        }
+
+        .loading-dot-4:nth-child(1) { animation-delay: 0s; }
+        .loading-dot-4:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot-4:nth-child(3) { animation-delay: 0.4s; }
+
+        .loading-title-4 {
+            color: #fff;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            animation: titleFade 2s ease-in-out infinite;
+        }
+
+        .loading-message-4 {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            max-width: 250px;
+        }
+
+        @keyframes titleFade {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        @keyframes characterBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.7; }
+            40% { transform: translateY(-15px); opacity: 1; }
+        }
+
+        /* ============================================
+           ÖRNEK 5: MINIMALIST + TİP MESAJLARI
+           ============================================ */
+        .loading-example-5 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .loading-example-5.active {
+            display: flex;
+        }
+
+        .loading-brand-5 {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .loading-brand-icon-5 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: iconRotate 3s ease-in-out infinite;
+        }
+
+        .loading-brand-name-5 {
+            color: #fff;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .loading-spinner-5 {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #fff;
+            border-right-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 40px;
+        }
+
+        .loading-tips-5 {
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .loading-tip-item-5 {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1rem;
+            line-height: 1.8;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            animation: tipSlide 5s infinite;
+            opacity: 0;
+        }
+
+        .loading-tip-item-5.active {
+            opacity: 1;
+        }
+
+        @keyframes iconRotate {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(5deg) scale(1.05); }
+            75% { transform: rotate(-5deg) scale(1.05); }
+        }
+
+        @keyframes tipSlide {
+            0%, 20% { opacity: 0; transform: translateY(10px); }
+            25%, 75% { opacity: 1; transform: translateY(0); }
+            80%, 100% { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: #fff; margin-bottom: 30px; text-align: center;">Loading Ekranı Örnekleri</h1>
+
+    <!-- ÖRNEK 1: BASIT SPINNER + LOGO -->
+    <div class="example-container">
+        <h2 class="example-title">Örnek 1: Basit Spinner + Logo</h2>
+        <button class="demo-btn" onclick="showExample(1)">Göster</button>
+    </div>
+
+    <!-- ÖRNEK 2: LOGO + PROGRESS BAR + İPUCU -->
+    <div class="example-container">
+        <h2 class="example-title">Örnek 2: Logo + Progress Bar + İpucu</h2>
+        <button class="demo-btn" onclick="showExample(2)">Göster</button>
+    </div>
+
+    <!-- ÖRNEK 3: MODERN SKELETON LOADING -->
+    <div class="example-container">
+        <h2 class="example-title">Örnek 3: Modern Skeleton Loading</h2>
+        <button class="demo-btn" onclick="showExample(3)">Göster</button>
+    </div>
+
+    <!-- ÖRNEK 4: DUOLINGO TARZI -->
+    <div class="example-container">
+        <h2 class="example-title">Örnek 4: Duolingo Tarzı (Karakter + Animasyon)</h2>
+        <button class="demo-btn" onclick="showExample(4)">Göster</button>
+    </div>
+
+    <!-- ÖRNEK 5: MINIMALIST + TİP MESAJLARI -->
+    <div class="example-container">
+        <h2 class="example-title">Örnek 5: Minimalist + Tip Mesajları</h2>
+        <button class="demo-btn" onclick="showExample(5)">Göster</button>
+    </div>
+
+    <!-- LOADING EKRANLARI -->
+    
+    <!-- ÖRNEK 1 -->
+    <div id="loading-1" class="loading-example-1">
+        <div class="loading-logo-1">🕌</div>
+        <div class="loading-spinner-1"></div>
+        <p class="loading-text-1">Yükleniyor...</p>
+    </div>
+
+    <!-- ÖRNEK 2 -->
+    <div id="loading-2" class="loading-example-2">
+        <div class="loading-content-2">
+            <div class="loading-logo-2">🕌</div>
+            <h1 class="loading-title-2">Hasene</h1>
+            <div class="loading-progress-container-2">
+                <div class="loading-progress-bar-2" id="progress-2"></div>
+            </div>
+            <div class="loading-percent-2" id="percent-2">0%</div>
+            <div class="loading-tip-2" id="tip-2">
+                Kuran-ı Kerim'de yaklaşık 77,000 kelime bulunmaktadır
+            </div>
+        </div>
+    </div>
+
+    <!-- ÖRNEK 3 -->
+    <div id="loading-3" class="loading-example-3">
+        <div class="loading-skeleton-3">
+            <div class="skeleton-logo-3">
+                <img src="assets/badges/rozet18.png" alt="Hasene Rozet">
+            </div>
+            <div class="skeleton-title-3"></div>
+            <div class="skeleton-bar-3">
+                <div class="skeleton-bar-fill-3"></div>
+            </div>
+            <div class="skeleton-text-3"></div>
+            <div class="skeleton-text-3" style="width: 60%;"></div>
+        </div>
+    </div>
+
+    <!-- ÖRNEK 4 -->
+    <div id="loading-4" class="loading-example-4">
+        <div class="loading-character-4">
+            <img src="assets/images/icon-512.png" alt="Hasene Icon">
+        </div>
+        <h1 class="loading-title-4">HASENE</h1>
+        <div class="loading-dots-4">
+            <div class="loading-dot-4"></div>
+            <div class="loading-dot-4"></div>
+            <div class="loading-dot-4"></div>
+        </div>
+        <p class="loading-message-4">Kelime verileri yükleniyor...</p>
+    </div>
+
+    <!-- ÖRNEK 5 -->
+    <div id="loading-5" class="loading-example-5">
+        <div class="loading-brand-5">
+            <div class="loading-brand-icon-5">🕌</div>
+            <div class="loading-brand-name-5">HASENE</div>
+        </div>
+        <div class="loading-spinner-5"></div>
+        <div class="loading-tips-5">
+            <div class="loading-tip-item-5 active" id="tip-5-1">
+                💡 Perfect bonus için tüm soruları doğru cevaplayın
+            </div>
+            <div class="loading-tip-item-5" id="tip-5-2">
+                🔥 Combo bonusu için ardışık doğru cevaplar verin
+            </div>
+            <div class="loading-tip-item-5" id="tip-5-3">
+                ⭐ Günlük virdinizi tamamlayarak bonus Hasene kazanın
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // İpucu mesajları
+        const tips = [
+            "Kuran-ı Kerim'de yaklaşık 77,000 kelime bulunmaktadır",
+            "Perfect bonus için tüm soruları doğru cevaplayın",
+            "Combo bonusu için ardışık doğru cevaplar verin",
+            "Günlük virdinizi tamamlayarak bonus Hasene kazanın",
+            "Zor kelimeler daha fazla Hasene puanı verir",
+            "Her 3 doğru cevapta combo bonusu kazanırsınız"
+        ];
+
+        function showExample(num) {
+            const loading = document.getElementById(`loading-${num}`);
+            loading.classList.add('active');
+
+            // Örnek 2: Progress bar animasyonu
+            if (num === 2) {
+                let progress = 0;
+                const progressBar = document.getElementById('progress-2');
+                const percent = document.getElementById('percent-2');
+                const tip = document.getElementById('tip-2');
+                
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 100) progress = 100;
+                    
+                    progressBar.style.width = progress + '%';
+                    percent.textContent = Math.floor(progress) + '%';
+                    
+                    // İpucu değiştir
+                    if (Math.floor(progress) % 30 === 0 && progress < 100) {
+                        tip.textContent = tips[Math.floor(Math.random() * tips.length)];
+                    }
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            loading.classList.remove('active');
+                        }, 500);
+                    }
+                }, 200);
+            }
+            // Örnek 5: Tip mesajları rotasyonu
+            else if (num === 5) {
+                let currentTip = 0;
+                const tipItems = document.querySelectorAll('.loading-tip-item-5');
+                
+                const tipInterval = setInterval(() => {
+                    tipItems.forEach(item => item.classList.remove('active'));
+                    tipItems[currentTip].classList.add('active');
+                    currentTip = (currentTip + 1) % tipItems.length;
+                }, 2000);
+                
+                setTimeout(() => {
+                    clearInterval(tipInterval);
+                    loading.classList.remove('active');
+                }, 6000);
+            }
+            // Diğer örnekler: 3 saniye sonra kapat
+            else {
+                setTimeout(() => {
+                    loading.classList.remove('active');
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
+
