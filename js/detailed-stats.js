@@ -791,7 +791,9 @@ function startFavoritesGame() {
     }
     
     // Ana menüye dön
-    showMainMenu();
+    if (typeof goToMainMenu === 'function') {
+        goToMainMenu();
+    }
     
     // Zorluk seviyesi seçim ekranını göster
     const difficultyScreen = document.getElementById('difficulty-selection');
