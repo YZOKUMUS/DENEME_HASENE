@@ -493,6 +493,29 @@ body {
     font-size: 0.9rem;
 }
 
+.game-info-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.game-info-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+    border-color: var(--accent-primary);
+}
+
 /* Submode Selection */
 .submode-selection {
     text-align: center;
@@ -1288,6 +1311,26 @@ body {
 }
 
 .modal-close:hover {
+    background: #f3f4f6;
+    color: var(--text-primary);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+}
+
+.close-btn:hover {
     background: #f3f4f6;
     color: var(--text-primary);
 }
@@ -3359,5 +3402,156 @@ select:focus {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+}
+
+/* ============================================
+   OYUN BİLGİLENDİRME MODAL STİLLERİ
+   ============================================ */
+
+.game-info-modal-content {
+    max-width: 600px;
+    max-height: 85vh;
+}
+
+.game-info-body {
+    padding: 0;
+}
+
+.game-info-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+    flex-wrap: wrap;
+    padding: 0 var(--spacing-md);
+    padding-top: var(--spacing-md);
+}
+
+.info-tab-btn {
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-normal);
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: -2px;
+}
+
+.info-tab-btn:hover {
+    color: var(--accent-primary);
+}
+
+.info-tab-btn.active {
+    border-bottom-color: var(--accent-primary);
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.game-info-content {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+.info-tab-content {
+    display: none;
+    padding: var(--spacing-md) 0;
+    animation: fadeIn 0.3s ease;
+}
+
+.info-tab-content.active {
+    display: block;
+}
+
+.info-tab-content h3 {
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.info-tab-content h4 {
+    font-size: 1rem;
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.info-tab-content p {
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.info-tab-content ul {
+    list-style: none;
+    padding-left: 0;
+    margin: var(--spacing-md) 0;
+}
+
+.info-tab-content ul li {
+    padding: var(--spacing-xs) 0;
+    padding-left: var(--spacing-lg);
+    position: relative;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.info-tab-content ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+
+.info-item {
+    padding: 12px;
+    margin: 8px 0;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent-primary);
+    color: var(--text-secondary);
+}
+
+.info-item strong {
+    color: var(--text-primary);
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobil uyumluluk */
+@media (max-width: 600px) {
+    .game-info-tabs {
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    
+    .game-info-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .info-tab-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    
+    .game-info-modal-content {
+        max-height: 90vh;
+    }
 }
 

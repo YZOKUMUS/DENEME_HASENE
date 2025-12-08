@@ -2009,14 +2009,15 @@ async function saveCurrentGameProgress() {
     gameStats.totalCorrect += sessionCorrect;
     gameStats.totalWrong += sessionWrong;
     
-    // currentGameMode yerine currentGame kullan
+    // NOT: Oyun sayısı sadece tamamlanan oyunlar için sayılmalı
+    // Bu fonksiyon oyun tamamlanmadan çıkıldığında çağrıldığı için
+    // oyun sayısı artırılmamalı
+    // Oyun sayısı sadece endGame() içinde artırılmalı
+    
+    // currentGameMode yerine currentGame kullan (görev ilerlemesi için)
     const gameModeKey = currentGame === 'kelime-cevir' ? 'kelime-cevir' :
                         currentGame === 'dinle-bul' ? 'dinle-bul' :
                         currentGame === 'bosluk-doldur' ? 'bosluk-doldur' : null;
-    
-    if (gameModeKey) {
-        gameStats.gameModeCounts[gameModeKey] = (gameStats.gameModeCounts[gameModeKey] || 0) + 1;
-    }
     
     // Görev ilerlemesini güncelle
     updateTaskProgress(gameModeKey, {

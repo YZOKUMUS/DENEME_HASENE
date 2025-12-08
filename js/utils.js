@@ -467,6 +467,156 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+/**
+ * Oyun bilgilendirme modalını gösterir
+ * @param {string} gameMode - Oyun modu ('kelime-cevir', 'dinle-bul', 'bosluk-doldur')
+ */
+function showGameInfoModal(gameMode) {
+    // Modal'ı aç
+    openModal('game-info-modal');
+    
+    // Oyun moduna göre içeriği güncelle
+    updateGameInfoContent(gameMode);
+    
+    // Tab event listener'larını ekle
+    setupGameInfoTabs();
+}
+
+/**
+ * Oyun moduna göre bilgilendirme içeriğini günceller
+ * @param {string} gameMode - Oyun modu
+ */
+function updateGameInfoContent(gameMode) {
+    const howToPlayContent = document.getElementById('how-to-play-content');
+    if (!howToPlayContent) return;
+    
+    let content = '';
+    
+    switch(gameMode) {
+        case 'kelime-cevir':
+            content = `
+                <p>Arapça kelimenin Türkçe meâl karşılığını bulun.</p>
+                <ul>
+                    <li>4 seçenekten birini seçin</li>
+                    <li>Doğru cevap için kelimenin zorluk seviyesine göre Hasene kazanın (5-21 Hasene)</li>
+                    <li>Kolay kelimeler daha az, zor kelimeler daha fazla Hasene verir</li>
+                    <li>10 soru tamamlayın</li>
+                    <li>Perfect bonus için tüm soruları doğru cevaplayın</li>
+                    <li>İpucu butonunu kullanarak yanlış bir seçeneği devre dışı bırakabilirsiniz (her soruda 1 kez)</li>
+                    <li>Ses butonunu kullanarak kelimeyi dinleyebilirsiniz</li>
+                    <li>Oyunu istediğiniz zaman "Geri" butonu ile çıkabilirsiniz</li>
+                </ul>
+                <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                    💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
+                    Ancak oyun sayısı sadece 10 soruyu tamamladığınızda artar. 
+                    Detaylı bilgi için "İstatistikler" tab'ına bakın.
+                </p>
+            `;
+            break;
+        case 'dinle-bul':
+            content = `
+                <p>Dinlediğiniz Arapça kelimenin Türkçe meâl karşılığını bulun.</p>
+                <ul>
+                    <li>🎧 Ses butonuna tıklayarak kelimeyi dinleyin</li>
+                    <li>4 seçenekten doğru olanı seçin</li>
+                    <li>Doğru cevap için kelimenin zorluk seviyesine göre Hasene kazanın (5-21 Hasene)</li>
+                    <li>Kolay kelimeler daha az, zor kelimeler daha fazla Hasene verir</li>
+                    <li>10 soru tamamlayın</li>
+                    <li>Perfect bonus için tüm soruları doğru cevaplayın</li>
+                    <li>Oyunu istediğiniz zaman "Geri" butonu ile çıkabilirsiniz</li>
+                </ul>
+                <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                    💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
+                    Ancak oyun sayısı sadece 10 soruyu tamamladığınızda artar. 
+                    Detaylı bilgi için "İstatistikler" tab'ına bakın.
+                </p>
+            `;
+            break;
+        case 'bosluk-doldur':
+            content = `
+                <p>Ayetteki eksik kelimeyi tamamlayın.</p>
+                <ul>
+                    <li>Ayetin Arapça metnini okuyun</li>
+                    <li>Boşlukta hangi kelime olması gerektiğini bulun</li>
+                    <li>4 seçenekten doğru olanı seçin</li>
+                    <li>Doğru cevap için ayetin zorluk seviyesine göre Hasene kazanın:</li>
+                    <li style="padding-left: 2rem;">• Kısa ayetler (1-6 kelime): 10 Hasene</li>
+                    <li style="padding-left: 2rem;">• Orta ayetler (7-12 kelime): 15 Hasene</li>
+                    <li style="padding-left: 2rem;">• Uzun ayetler (13+ kelime): 20 Hasene</li>
+                    <li>10 soru tamamlayın</li>
+                    <li>Perfect bonus için tüm soruları doğru cevaplayın</li>
+                    <li>Ses butonunu kullanarak ayeti dinleyebilirsiniz</li>
+                    <li>Oyunu istediğiniz zaman "Geri" butonu ile çıkabilirsiniz</li>
+                </ul>
+                <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                    💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
+                    Ancak oyun sayısı sadece 10 soruyu tamamladığınızda artar. 
+                    Detaylı bilgi için "İstatistikler" tab'ına bakın.
+                </p>
+            `;
+            break;
+        default:
+            content = `
+                <p>Arapça kelimenin Türkçe meâl karşılığını bulun.</p>
+                <ul>
+                    <li>4 seçenekten birini seçin</li>
+                    <li>Doğru cevap için kelimenin zorluk seviyesine göre Hasene kazanın (5-21 Hasene)</li>
+                    <li>10 soru tamamlayın</li>
+                    <li>Perfect bonus için tüm soruları doğru cevaplayın</li>
+                </ul>
+            `;
+    }
+    
+    howToPlayContent.innerHTML = content;
+}
+
+/**
+ * Bilgilendirme modalındaki tab'ları ayarlar
+ */
+function setupGameInfoTabs() {
+    // Mevcut event listener'ları temizle
+    document.querySelectorAll('.info-tab-btn').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+    
+    // Yeni event listener'ları ekle
+    document.querySelectorAll('.info-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            switchInfoTab(tabName);
+        });
+    });
+}
+
+/**
+ * Bilgilendirme modalında tab değiştirir
+ * @param {string} tabName - Tab adı
+ */
+function switchInfoTab(tabName) {
+    // Tüm tab butonlarını pasif yap
+    document.querySelectorAll('.info-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Tüm tab içeriklerini gizle
+    document.querySelectorAll('.info-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Seçilen tab'ı aktif yap
+    const activeBtn = document.querySelector(`.info-tab-btn[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+    
+    // Seçilen tab içeriğini göster
+    const activeContent = document.getElementById(`${tabName}-tab`);
+    if (activeContent) {
+        activeContent.classList.add('active');
+    }
+}
+
 // Export
 if (typeof window !== 'undefined') {
     window.getLocalDateString = getLocalDateString;
@@ -495,5 +645,7 @@ if (typeof window !== 'undefined') {
     window.filterByDifficulty = filterByDifficulty;
     window.filterJuz30 = filterJuz30;
     window.shuffleWithEqualDistribution = shuffleWithEqualDistribution;
+    window.showGameInfoModal = showGameInfoModal;
+    window.switchInfoTab = switchInfoTab;
 }
 

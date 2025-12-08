@@ -158,6 +158,7 @@
                     <span id="question-number">1/10</span>
                     <span id="session-score">Hasene: 0</span>
                 </div>
+                <button class="game-info-btn" onclick="showGameInfoModal('kelime-cevir')" title="Oyun Bilgileri">ℹ️</button>
             </div>
 
             <!-- Alt Mod Seçimi -->
@@ -211,6 +212,7 @@
                     <span id="dinle-question-number">1/10</span>
                     <span id="dinle-session-score">Hasene: 0</span>
                 </div>
+                <button class="game-info-btn" onclick="showGameInfoModal('dinle-bul')" title="Oyun Bilgileri">ℹ️</button>
             </div>
 
             <div class="game-content">
@@ -250,6 +252,7 @@
                     <span id="bosluk-question-number">1/10</span>
                     <span id="bosluk-session-score">Hasene: 0</span>
                 </div>
+                <button class="game-info-btn" onclick="showGameInfoModal('bosluk-doldur')" title="Oyun Bilgileri">ℹ️</button>
             </div>
 
             <div class="game-content">
@@ -843,6 +846,138 @@
                 <div class="tab-content" id="favorites-stats-tab" style="display:none;">
                     <h3>⭐ Favori Kelimeler</h3>
                     <div id="favorites-stats-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oyun Bilgilendirme Modal -->
+    <div id="game-info-modal" class="modal" style="display:none;">
+        <div class="modal-content game-info-modal-content">
+            <div class="modal-header">
+                <h2>📚 Oyun Bilgileri</h2>
+                <button class="close-btn" onclick="closeModal('game-info-modal')">×</button>
+            </div>
+            <div class="modal-body game-info-body">
+                <!-- Tab Navigation -->
+                <div class="game-info-tabs">
+                    <button class="info-tab-btn active" data-tab="how-to-play">Nasıl Oynanır?</button>
+                    <button class="info-tab-btn" data-tab="scoring">Puan Sistemi</button>
+                    <button class="info-tab-btn" data-tab="combo">Combo</button>
+                    <button class="info-tab-btn" data-tab="perfect">Perfect Bonus</button>
+                    <button class="info-tab-btn" data-tab="stats">İstatistikler</button>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="game-info-content">
+                    <!-- Nasıl Oynanır? -->
+                    <div class="info-tab-content active" id="how-to-play-tab">
+                        <h3>🎯 Nasıl Oynanır?</h3>
+                        <div id="how-to-play-content">
+                            <p>Arapça kelimenin Türkçe meâl karşılığını bulun.</p>
+                            <ul>
+                                <li>4 seçenekten birini seçin</li>
+                                <li>Doğru cevap için kelimenin zorluk seviyesine göre Hasene kazanın (5-21 Hasene)</li>
+                                <li>10 soru tamamlayın</li>
+                                <li>Perfect bonus için tüm soruları doğru cevaplayın</li>
+                                <li>İpucu butonunu kullanarak yanlış bir seçeneği devre dışı bırakabilirsiniz (her soruda 1 kez)</li>
+                                <li>Ses butonunu kullanarak kelimeyi dinleyebilirsiniz</li>
+                                <li>Oyunu istediğiniz zaman "Geri" butonu ile çıkabilirsiniz</li>
+                            </ul>
+                            <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                                💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
+                                Ancak oyun sayısı sadece 10 soruyu tamamladığınızda artar. 
+                                Detaylı bilgi için "İstatistikler" tab'ına bakın.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Puan Sistemi -->
+                    <div class="info-tab-content" id="scoring-tab">
+                        <h3>💰 Puan Sistemi</h3>
+                        <div class="info-item">
+                            <strong>✅ Doğru Cevap (Kelime Çevir & Dinle Bul):</strong> Kelimenin zorluk seviyesine göre 5-21 Hasene
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Kolay kelimeler: 5-8 Hasene<br>
+                                • Orta kelimeler: 9-12 Hasene<br>
+                                • Zor kelimeler: 13-21 Hasene
+                            </p>
+                        </div>
+                        <div class="info-item">
+                            <strong>✅ Doğru Cevap (Boşluk Doldur):</strong> Ayetin uzunluğuna göre Hasene
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Kısa ayetler (1-6 kelime): 10 Hasene<br>
+                                • Orta ayetler (7-12 kelime): 15 Hasene<br>
+                                • Uzun ayetler (13+ kelime): 20 Hasene
+                            </p>
+                        </div>
+                        <div class="info-item">
+                            <strong>❌ Yanlış Cevap:</strong> 0 Hasene (puan kaybı yok)
+                        </div>
+                        <div class="info-item">
+                            <strong>🔥 Combo Bonusu:</strong> Her 3 doğru cevapta +5 Hasene
+                        </div>
+                        <div class="info-item">
+                            <strong>⭐ Perfect Bonus:</strong> Tüm sorular doğruysa %50 ekstra puan
+                        </div>
+                    </div>
+                    
+                    <!-- Combo -->
+                    <div class="info-tab-content" id="combo-tab">
+                        <h3>🔥 Combo Sistemi</h3>
+                        <p>Ardışık doğru cevaplar combo oluşturur.</p>
+                        <ul>
+                            <li>Her doğru cevap combo sayısını artırır</li>
+                            <li>Yanlış cevap combo'yu sıfırlar</li>
+                            <li>Her 3 doğru cevapta combo bonusu verilir (+5 Hasene)</li>
+                            <li>Maksimum combo takip edilir ve rozetler için kullanılır</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Perfect Bonus -->
+                    <div class="info-tab-content" id="perfect-tab">
+                        <h3>🎯 Perfect Bonus</h3>
+                        <p>Tüm soruları doğru cevapladığınızda perfect bonus kazanırsınız.</p>
+                        <ul>
+                            <li><strong>Koşul:</strong> Tüm 10 soru doğru cevaplanmalı, hiç yanlış cevap olmamalı</li>
+                            <li><strong>Bonus:</strong> Session skorunun %50'si ekstra Hasene (Math.floor ile yuvarlanır)</li>
+                            <li><strong>Örnek:</strong> 100 Hasene kazandıysanız → 50 Hasene ekstra = 150 Hasene toplam</li>
+                            <li><strong>Not:</strong> Perfect bonus sadece oyun tamamlandığında (10 soru bittikten sonra) verilir</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- İstatistikler -->
+                    <div class="info-tab-content" id="stats-tab">
+                        <h3>📊 İstatistikler ve Oyun Durumu</h3>
+                        
+                        <h4>🎮 Oyun Tamamlanırsa (10 Soru Bittikten Sonra):</h4>
+                        <div class="info-item" style="margin-top: 12px;">
+                            <ul>
+                                <li><strong>✅ Puanlar kaydedilir:</strong> Kazandığınız tüm Hasene puanları global puanlarınıza eklenir</li>
+                                <li><strong>✅ İstatistikler güncellenir:</strong> Doğru ve yanlış cevap sayıları kaydedilir</li>
+                                <li><strong>✅ Oyun sayısı artırılır:</strong> Oynadığınız oyun modunun sayacı 1 artar</li>
+                                <li><strong>✅ Perfect bonus verilir:</strong> Tüm soruları doğru cevapladıysanız %50 ekstra puan kazanırsınız</li>
+                                <li><strong>✅ Görevler güncellenir:</strong> Günlük ve haftalık görevlerde ilerleme kaydedilir</li>
+                                <li><strong>✅ Rozetler kontrol edilir:</strong> Yeni rozetler kazanabilirsiniz</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>⏸️ Oyun Yarım Bırakılırsa (1 veya Birkaç Soru Sonra Çıkılırsa):</h4>
+                        <div class="info-item" style="margin-top: 12px;">
+                            <ul>
+                                <li><strong>✅ Puanlar kaydedilir:</strong> O ana kadar kazandığınız Hasene puanları kaydedilir</li>
+                                <li><strong>✅ İstatistikler güncellenir:</strong> Doğru ve yanlış cevap sayıları kaydedilir</li>
+                                <li><strong>❌ Oyun sayısı artırılmaz:</strong> Oyun tamamlanmadığı için oyun sayacı artmaz</li>
+                                <li><strong>❌ Perfect bonus verilmez:</strong> Oyun bitmeden çıkıldığı için perfect bonus verilmez</li>
+                                <li><strong>✅ Görevler güncellenir:</strong> Cevapladığınız sorular görevlerde ilerleme sağlar</li>
+                                <li><strong>✅ Rozetler kontrol edilir:</strong> Kazandığınız puanlarla ilgili rozetler kontrol edilir</li>
+                            </ul>
+                            <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary); font-style: italic;">
+                                💡 <strong>Not:</strong> Yarım bırakılan oyunlarda puanlarınız kaybolmaz, ancak oyun tamamlanmış sayılmaz. 
+                                Oyun sayısı istatistiği sadece 10 soruyu tamamladığınızda artar.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
