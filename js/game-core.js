@@ -4430,10 +4430,7 @@ async function resetAllStats() {
     // Flag set et
     localStorage.setItem('hasene_statsJustReset', 'true');
     
-    // Verileri kaydet
-    await saveStatsImmediate();
-    
-    // ⚠️ KONTROL: Eksik sıfırlanmış veri var mı kontrol et
+    // ⚠️ KONTROL: Eksik sıfırlanmış veri var mı kontrol et (saveStatsImmediate'den ÖNCE)
     // Bu kontrol, yeni eklenen verilerin sıfırlanmayı unutulup unutulmadığını tespit eder
     try {
         const remainingKeys = Object.keys(localStorage).filter(key => 
@@ -4448,10 +4445,15 @@ async function resetAllStats() {
         if (remainingKeys.length > 0) {
             warnLog('⚠️ UYARI: Sıfırlanmamış localStorage key\'leri bulundu:', remainingKeys);
             warnLog('⚠️ Bu key\'ler resetAllStats() fonksiyonuna eklenmeyi unutulmuş olabilir!');
+            // Kalan key'leri de temizle
+            remainingKeys.forEach(key => localStorage.removeItem(key));
         }
     } catch (e) {
         // Kontrol hatası kritik değil, sessizce geç
     }
+    
+    // Sıfırlanmış verileri kaydet (sıfırlanmış halini kaydetmek için)
+    await saveStatsImmediate();
     
     closeModal('data-status-modal');
     showSuccessMessage('Tüm veriler sıfırlandı!');
