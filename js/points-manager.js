@@ -7,7 +7,19 @@
  * @param {number} points - Eklenecek puan
  */
 function addSessionPoints(points) {
+    const oldScore = sessionScore;
     sessionScore += points;
+    
+    // Log ekle (eğer gameLog fonksiyonu varsa)
+    if (typeof gameLog === 'function') {
+        gameLog('💰 Puan eklendi', { 
+            points, 
+            oldScore, 
+            newScore: sessionScore,
+            totalSessionScore: sessionScore
+        });
+    }
+    
     const sessionScoreEl = document.getElementById('session-score');
     if (sessionScoreEl) {
         sessionScoreEl.textContent = `Hasene: ${sessionScore}`;

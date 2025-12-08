@@ -10,10 +10,37 @@ let favoriteWords = new Set();
 /**
  * Favori kelimeleri yükler
  */
-function loadFavorites() {
+async function loadFavorites() {
     try {
+        // Önce IndexedDB'den yükle (öncelikli)
+        if (typeof loadFromIndexedDB === 'function') {
+            try {
+                const indexedDBData = await loadFromIndexedDB('hasene_favoriteWords');
+                if (indexedDBData && Array.isArray(indexedDBData) && indexedDBData.length >= 0) {
+                    favoriteWords = new Set(indexedDBData);
+                    // localStorage'a da senkronize et (yedek)
+                    safeSetItem('hasene_favoriteWords', indexedDBData);
+                    return;
+                }
+            } catch (e) {
+                // IndexedDB'den yüklenemezse localStorage'dan yükle
+                infoLog('IndexedDB\'den favori kelimeler yüklenemedi, localStorage\'dan yükleniyor:', e);
+            }
+        }
+        
+        // IndexedDB'de yoksa veya yüklenemezse localStorage'dan yükle (yedek)
         const favoritesData = safeGetItem('hasene_favoriteWords', []);
         favoriteWords = new Set(favoritesData);
+        
+        // IndexedDB'ye de senkronize et (eğer yoksa)
+        if (typeof saveToIndexedDB === 'function' && favoritesData.length > 0) {
+            try {
+                await saveToIndexedDB('hasene_favoriteWords', favoritesData);
+            } catch (e) {
+                // IndexedDB'ye kaydedilemezse devam et
+                infoLog('Favori kelimeler IndexedDB\'ye kaydedilemedi:', e);
+            }
+        }
     } catch (e) {
         errorLog('Favori kelimeler yüklenirken hata:', e);
         favoriteWords = new Set();
@@ -23,13 +50,21 @@ function loadFavorites() {
 /**
  * Favori kelimeleri kaydeder
  */
-function saveFavorites() {
+async function saveFavorites() {
     try {
         const favoritesArray = Array.from(favoriteWords);
+        
+        // localStorage'a kaydet (yedek)
         safeSetItem('hasene_favoriteWords', favoritesArray);
-        // IndexedDB'ye de kaydet
-        if (db) {
-            saveToIndexedDB('hasene_favoriteWords', favoritesArray);
+        
+        // IndexedDB'ye de kaydet (ana sistem)
+        if (typeof saveToIndexedDB === 'function') {
+            try {
+                await saveToIndexedDB('hasene_favoriteWords', favoritesArray);
+            } catch (e) {
+                // IndexedDB'ye kaydedilemezse localStorage'a kaydedildi, devam et
+                infoLog('Favori kelimeler IndexedDB\'ye kaydedilemedi, localStorage\'a kaydedildi:', e);
+            }
         }
     } catch (e) {
         errorLog('Favori kelimeler kaydedilirken hata:', e);
@@ -41,10 +76,10 @@ function saveFavorites() {
  * @param {string} wordId - Kelime ID'si
  * @returns {boolean} - Başarılı mı?
  */
-function addToFavorites(wordId) {
+async function addToFavorites(wordId) {
     if (!wordId) return false;
     favoriteWords.add(wordId);
-    saveFavorites();
+    await saveFavorites();
     return true;
 }
 
@@ -53,10 +88,10 @@ function addToFavorites(wordId) {
  * @param {string} wordId - Kelime ID'si
  * @returns {boolean} - Başarılı mı?
  */
-function removeFromFavorites(wordId) {
+async function removeFromFavorites(wordId) {
     if (!wordId) return false;
     favoriteWords.delete(wordId);
-    saveFavorites();
+    await saveFavorites();
     return true;
 }
 
@@ -83,15 +118,15 @@ function getFavoriteWords() {
  * @param {HTMLElement} buttonElement - Buton elementi (opsiyonel)
  * @returns {boolean} - Favori mi? (işlem sonrası)
  */
-function toggleFavorite(wordId, buttonElement = null) {
+async function toggleFavorite(wordId, buttonElement = null) {
     if (!wordId) return false;
     
     const wasFavorite = favoriteWords.has(wordId);
     
     if (wasFavorite) {
-        removeFromFavorites(wordId);
+        await removeFromFavorites(wordId);
     } else {
-        addToFavorites(wordId);
+        await addToFavorites(wordId);
     }
     
     // Buton varsa güncelle
@@ -123,9 +158,15 @@ function getFavoriteWordsCount() {
 if (typeof window !== 'undefined') {
     // DOMContentLoaded'da yükle
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadFavorites);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFavorites().catch(e => {
+                errorLog('Favori kelimeler yüklenirken hata:', e);
+            });
+        });
     } else {
-        loadFavorites();
+        loadFavorites().catch(e => {
+            errorLog('Favori kelimeler yüklenirken hata:', e);
+        });
     }
 }
 

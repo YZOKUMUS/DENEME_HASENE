@@ -382,6 +382,7 @@ function loadMonthlyStats() {
             gamesPlayed: 0,
             perfectLessons: 0,
             maxCombo: 0,
+            maxConsecutiveCorrect: 0,
             streakDays: 0,
             bestStreak: 0
         });
@@ -696,7 +697,7 @@ async function loadFavoritesStats() {
     }
 
     if (typeof loadFavorites === 'function') {
-        loadFavorites();
+        await loadFavorites();
     }
 
     const favoriteWordIds = getFavoriteWords();
@@ -902,8 +903,12 @@ function createWordStatItem(word, showInFavorites = false) {
     `;
 }
 
+// Debounce için timer
+let refreshStatsTimer = null;
+
 /**
  * Eğer detaylı istatistikler modalı açıksa, aktif tab'ı yeniler
+ * Debounce ile çağrılır - çok sık çağrılırsa hesaplamalar bozulabilir
  */
 function refreshDetailedStatsIfOpen() {
     const modal = document.getElementById('detailed-stats-modal');
@@ -911,13 +916,22 @@ function refreshDetailedStatsIfOpen() {
         return; // Modal açık değil
     }
     
-    // Aktif tab'ı bul
-    const activeTab = document.querySelector('.tab-btn.active');
-    if (activeTab && typeof loadTabContent === 'function') {
-        const tab = activeTab.dataset.tab;
-        // Tab içeriğini yenile
-        loadTabContent(tab);
+    // Debounce: Eğer zaten bir yenileme bekliyorsa, önceki timer'ı iptal et
+    if (refreshStatsTimer) {
+        clearTimeout(refreshStatsTimer);
     }
+    
+    // 300ms sonra yenile (çok sık yenilemeyi önlemek için)
+    refreshStatsTimer = setTimeout(() => {
+        // Aktif tab'ı bul
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab && typeof loadTabContent === 'function') {
+            const tab = activeTab.dataset.tab;
+            // Tab içeriğini yenile
+            loadTabContent(tab);
+        }
+        refreshStatsTimer = null;
+    }, 300);
 }
 
 // Export

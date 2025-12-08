@@ -3,25 +3,39 @@
 // ============================================
 
 let db = null;
+let initPromise = null; // Başlatma Promise'ini sakla (singleton pattern)
 const DB_NAME = CONFIG.INDEXEDDB_NAME;
 const DB_VERSION = CONFIG.INDEXEDDB_VERSION;
 const STORE_NAME = 'gameData';
 
 /**
- * IndexedDB'yi başlatır
+ * IndexedDB'yi başlatır (singleton pattern - sadece bir kez açılır)
  */
 async function initIndexedDB() {
-    return new Promise((resolve, reject) => {
+    // Eğer zaten açıksa, mevcut db'yi döndür
+    if (db) {
+        return db;
+    }
+    
+    // Eğer zaten açılıyorsa, mevcut Promise'i bekle
+    if (initPromise) {
+        return initPromise;
+    }
+    
+    // Yeni bir başlatma işlemi başlat
+    initPromise = new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         
         request.onerror = () => {
             errorLog('IndexedDB açılamadı:', request.error);
+            initPromise = null; // Hata durumunda Promise'i sıfırla
             reject(request.error);
         };
         
         request.onsuccess = () => {
             db = request.result;
             infoLog('IndexedDB başarıyla açıldı');
+            initPromise = null; // Başarılı olduğunda Promise'i sıfırla
             resolve(db);
         };
         
@@ -35,6 +49,8 @@ async function initIndexedDB() {
             }
         };
     });
+    
+    return initPromise;
 }
 
 /**
@@ -173,12 +189,17 @@ async function checkIndexedDBStatus() {
     }
 }
 
-// Sayfa yüklendiğinde IndexedDB'yi başlat
+// Sayfa yüklendiğinde IndexedDB'yi başlat (sadece bir kez)
 if (typeof window !== 'undefined') {
+    // Sadece bir kez başlat (load event'inde)
+    let indexedDBInitialized = false;
     window.addEventListener('load', () => {
-        initIndexedDB().catch(err => {
-            warnLog('IndexedDB başlatılamadı, localStorage kullanılacak:', err);
-        });
+        if (!indexedDBInitialized) {
+            indexedDBInitialized = true;
+            initIndexedDB().catch(err => {
+                warnLog('IndexedDB başlatılamadı, localStorage kullanılacak:', err);
+            });
+        }
     });
 }
 

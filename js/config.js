@@ -8,6 +8,7 @@ const CONFIG = {
     
     // Logging
     LOG_LEVEL: 'info', // 'debug', 'info', 'warn', 'error'
+    GAME_DEBUG: true, // Oyun adımları için detaylı log (test için)
     
     // Performance
     DEBOUNCE_DELAY: 500, // ms
@@ -63,6 +64,14 @@ function infoLog(...args) {
     }
 }
 
+// Oyun adımları için özel log fonksiyonu
+function gameLog(step, data = {}) {
+    if (CONFIG.GAME_DEBUG || CONFIG.DEBUG) {
+        const timestamp = new Date().toLocaleTimeString('tr-TR');
+        console.log(`[GAME ${timestamp}] ${step}`, data);
+    }
+}
+
 function warnLog(...args) {
     if (['debug', 'info', 'warn'].includes(CONFIG.LOG_LEVEL)) {
         console.warn('[WARN]', ...args);
@@ -80,5 +89,13 @@ if (typeof window !== 'undefined') {
     window.infoLog = infoLog;
     window.warnLog = warnLog;
     window.errorLog = errorLog;
+    window.gameLog = gameLog;
+    
+    // Debug modunu açıp kapatmak için global fonksiyon
+    window.toggleGameDebug = function() {
+        CONFIG.GAME_DEBUG = !CONFIG.GAME_DEBUG;
+        console.log(`[DEBUG] Oyun log modu: ${CONFIG.GAME_DEBUG ? 'AÇIK' : 'KAPALI'}`);
+        return CONFIG.GAME_DEBUG;
+    };
 }
 
