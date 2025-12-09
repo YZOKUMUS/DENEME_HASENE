@@ -3190,11 +3190,11 @@ function showBadgeDetail(badge, isUnlocked) {
         const badgeDetails = getBadgeDetailInfo(badgeNum);
         if (badgeDetails) {
             detailHTML += `
-                <div style="text-align: left; max-width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px);">
-                    <div class="badge-detail-year" style="color: var(--accent-primary); font-weight: 600; margin-bottom: clamp(8px, 2vw, 10px); font-size: clamp(0.85rem, 2.5vw, 1rem);">
+                <div style="text-align: left; max-width: 100%; width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px); box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;">
+                    <div class="badge-detail-year" style="color: var(--accent-primary); font-weight: 600; margin-bottom: clamp(8px, 2vw, 10px); font-size: clamp(0.85rem, 2.5vw, 1rem); word-wrap: break-word; overflow-wrap: break-word;">
                         ${badgeDetails.year}
                     </div>
-                    <div class="badge-detail-description" style="color: var(--text-primary); line-height: 1.6; margin-bottom: clamp(12px, 3vw, 15px); font-size: clamp(0.85rem, 2.5vw, 0.95rem); word-wrap: break-word;">
+                    <div class="badge-detail-description" style="color: var(--text-primary); line-height: 1.8; margin-bottom: clamp(15px, 3vw, 20px); font-size: clamp(0.9rem, 2.5vw, 1rem); word-wrap: break-word; overflow-wrap: break-word; text-align: justify; text-justify: inter-word; width: 100%; box-sizing: border-box;">
                         ${badgeDetails.fullDescription}
                     </div>
                     ${badgeDetails.arabic ? `
@@ -3202,12 +3202,12 @@ function showBadgeDetail(badge, isUnlocked) {
                                     font-size: clamp(1rem, 3vw, 1.2rem); color: var(--accent-primary); 
                                     direction: rtl; text-align: right; 
                                     padding: clamp(10px, 3vw, 15px); background: #f8f9fa; 
-                                    border-radius: 8px; margin-bottom: clamp(12px, 3vw, 15px); word-wrap: break-word; overflow-wrap: break-word;">
+                                    border-radius: 8px; margin-bottom: clamp(12px, 3vw, 15px); word-wrap: break-word; overflow-wrap: break-word; width: 100%; box-sizing: border-box;">
                             ${badgeDetails.arabic}
                         </div>
                     ` : ''}
                     <div class="badge-detail-significance" style="color: var(--text-secondary); font-size: clamp(0.8rem, 2.2vw, 0.9rem); font-style: italic; 
-                                padding-top: clamp(12px, 3vw, 15px); border-top: 1px solid #e5e7eb; word-wrap: break-word;">
+                                padding-top: clamp(12px, 3vw, 15px); border-top: 1px solid #e5e7eb; word-wrap: break-word; overflow-wrap: break-word; text-align: justify; text-justify: inter-word; width: 100%; box-sizing: border-box;">
                         📌 ${badgeDetails.significance}
                     </div>
                 </div>
@@ -3216,8 +3216,8 @@ function showBadgeDetail(badge, isUnlocked) {
     } else {
         // Normal rozetler için basit açıklama
         detailHTML += `
-            <div style="text-align: left; max-width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px);">
-                <div style="color: var(--text-primary); line-height: 1.6; font-size: clamp(0.85rem, 2.5vw, 0.95rem); word-wrap: break-word;">
+            <div style="text-align: left; max-width: 100%; width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px); box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word;">
+                <div style="color: var(--text-primary); line-height: 1.8; font-size: clamp(0.9rem, 2.5vw, 1rem); word-wrap: break-word; overflow-wrap: break-word; text-align: justify; text-justify: inter-word; width: 100%; box-sizing: border-box;">
                     ${badge.description}
                 </div>
             </div>
@@ -3609,10 +3609,16 @@ function showBadgesModal() {
         return difficultyScore;
     }
     
-    // Sadece Asr-ı Saadet rozetlerini filtrele
-    const asrBadgeDefinitions = BADGE_DEFINITIONS.filter(badge => badge.id.startsWith('asr_'));
+    // Sadece Asr-ı Saadet rozetlerini filtrele ve kronolojik sıraya göre sırala
+    const asrBadgeDefinitions = BADGE_DEFINITIONS.filter(badge => badge.id.startsWith('asr_'))
+        .sort((a, b) => {
+            // Kronolojik sıralama: asr_1, asr_2, asr_3, ... asr_41
+            const numA = parseInt(a.id.split('_')[1]);
+            const numB = parseInt(b.id.split('_')[1]);
+            return numA - numB;
+        });
     
-    // Rozetleri zorluk skoruna göre sırala (kolaydan zora, kazanılanlar önce)
+    // Rozetleri kronolojik sıraya göre hazırla (kazanılanlar ve kazanılmayanlar ayrı)
     const badgesWithUnlockInfo = asrBadgeDefinitions.map((badge, originalIndex) => {
         // Yeni ve eski format desteği
         const unlockInfo = unlockedBadges.find(b => {
@@ -3620,29 +3626,33 @@ function showBadgesModal() {
             return b.id === badge.id;
         });
         
+        // Rozet numarasını al (kronolojik sıralama için)
+        const badgeNum = parseInt(badge.id.split('_')[1]);
+        
         return {
             badge: badge,
             originalIndex: originalIndex,
+            badgeNum: badgeNum,
             difficultyScore: calculateBadgeDifficulty(badge),
             isUnlocked: !!unlockInfo,
             unlockedAt: unlockInfo ? (typeof unlockInfo === 'string' ? 0 : unlockInfo.unlockedAt) : null
         };
     });
     
-    // Sırala: Önce kazanılanlar (zorluk skoruna göre kolaydan zora), sonra kazanılmayanlar (zorluk skoruna göre kolaydan zora)
+    // Sırala: Önce kazanılanlar (kronolojik sıraya göre), sonra kazanılmayanlar (kronolojik sıraya göre)
     badgesWithUnlockInfo.sort((a, b) => {
-            if (a.isUnlocked && b.isUnlocked) {
-                // Her ikisi de kazanılmış: zorluk skoruna göre (kolaydan zora)
-                return a.difficultyScore - b.difficultyScore;
-            } else if (a.isUnlocked && !b.isUnlocked) {
-                // A kazanılmış, B kazanılmamış: A önce
-                return -1;
-            } else if (!a.isUnlocked && b.isUnlocked) {
-                // A kazanılmamış, B kazanılmış: B önce
-                return 1;
-            } else {
-                // Her ikisi de kazanılmamış: zorluk skoruna göre (kolaydan zora)
-            return a.difficultyScore - b.difficultyScore;
+        if (a.isUnlocked && b.isUnlocked) {
+            // Her ikisi de kazanılmış: kronolojik sıraya göre (asr_1, asr_2, ...)
+            return a.badgeNum - b.badgeNum;
+        } else if (a.isUnlocked && !b.isUnlocked) {
+            // A kazanılmış, B kazanılmamış: A önce
+            return -1;
+        } else if (!a.isUnlocked && b.isUnlocked) {
+            // A kazanılmamış, B kazanılmış: B önce
+            return 1;
+        } else {
+            // Her ikisi de kazanılmamış: kronolojik sıraya göre (asr_1, asr_2, ...)
+            return a.badgeNum - b.badgeNum;
         }
     });
     
@@ -3766,7 +3776,18 @@ function showBadgesModal() {
          */
         function calculateAchievementDifficulty(achievement) {
             const desc = achievement.description.toLowerCase();
+            const name = achievement.name.toLowerCase();
             let difficultyScore = 0;
+            
+            // "İlk Kelime" başarımı için özel kontrol (en kolay - mutlaka ilk sırada)
+            if (achievement.id === 'first_victory' || (name.includes('ilk') && name.includes('kelime'))) {
+                return 0; // En kolay, ilk sırada olmalı
+            }
+            
+            // "İlk Adım" gibi diğer "ilk" başarımları için de düşük skor
+            if (name.includes('ilk') && (name.includes('adım') || name.includes('zafer'))) {
+                difficultyScore += 0.1; // Çok kolay ama İlk Kelime'den sonra
+            }
             
             // Hasene gereksinimleri (logaritmik skorlama)
             if (desc.includes('hasene')) {
@@ -3777,9 +3798,24 @@ function showBadgesModal() {
                 }
             }
             
-            // Doğru cevap gereksinimleri
-            if (desc.includes('sahih') || desc.includes('doğru')) {
-                difficultyScore += 0.5; // İlk zafer = çok kolay
+            // Doğru cevap gereksinimleri (sayıya göre)
+            if (desc.includes('doğru') || desc.includes('sahih')) {
+                const match = desc.match(/([\d,]+)\s*doğru/i) || desc.match(/([\d,]+)\s*sahih/i);
+                if (match) {
+                    const correct = parseInt(match[1].replace(/,/g, ''));
+                    // 1 doğru = 0, 10 doğru = 1, 50 doğru = 2, 100 doğru = 3, vb.
+                    if (correct === 1) {
+                        difficultyScore += 0; // En kolay
+                    } else {
+                        difficultyScore += Math.log10(correct / 10) * 10 + 1;
+                    }
+                } else if (desc.includes('ilk') && (desc.includes('sahih') || desc.includes('doğru'))) {
+                    // "İlk sahih cevap" gibi ifadeler için
+                    difficultyScore += 0; // En kolay
+                } else {
+                    // Sadece "doğru" veya "sahih" kelimesi geçiyorsa ama sayı yoksa
+                    difficultyScore += 0.5;
+                }
             }
             
             // Günlük vird gereksinimleri
@@ -3843,7 +3879,7 @@ function showBadgesModal() {
             return difficultyScore;
         }
         
-        // Başarımları zorluk skoruna göre sırala (kolaydan zora, kazanılanlar önce)
+        // Başarımları kronolojik sıraya göre hazırla (kazanılanlar ve kazanılmayanlar ayrı)
         const achievementsWithUnlockInfo = ACHIEVEMENTS.map((achievement, originalIndex) => {
             // Yeni ve eski format desteği
             const unlockInfo = unlockedAchievements.find(a => {
@@ -3862,17 +3898,17 @@ function showBadgesModal() {
         
         // Sırala: Önce kazanılanlar (zorluk skoruna göre kolaydan zora), sonra kazanılmayanlar (zorluk skoruna göre kolaydan zora)
         achievementsWithUnlockInfo.sort((a, b) => {
-            if (a.isUnlocked && b.isUnlocked) {
-                // Her ikisi de kazanılmış: zorluk skoruna göre (kolaydan zora)
-                return a.difficultyScore - b.difficultyScore;
-            } else if (a.isUnlocked && !b.isUnlocked) {
-                // A kazanılmış, B kazanılmamış: A önce
-                return -1;
+            // Önce kazanılanlar, sonra kazanılmayanlar
+            if (a.isUnlocked && !b.isUnlocked) {
+                return -1; // A kazanılmış, B kazanılmamış: A önce
             } else if (!a.isUnlocked && b.isUnlocked) {
-                // A kazanılmamış, B kazanılmış: B önce
-                return 1;
+                return 1; // A kazanılmamış, B kazanılmış: B önce
             } else {
-                // Her ikisi de kazanılmamış: zorluk skoruna göre (kolaydan zora)
+                // Aynı durumdaysa (ikisi de kazanılmış veya ikisi de kazanılmamış): zorluk skoruna göre (kolaydan zora)
+                // Eğer zorluk skorları eşitse, originalIndex'e göre (constants.js'teki sıraya göre)
+                if (a.difficultyScore === b.difficultyScore) {
+                    return a.originalIndex - b.originalIndex;
+                }
                 return a.difficultyScore - b.difficultyScore;
             }
         });
@@ -3900,6 +3936,22 @@ function showBadgesModal() {
                 `;
             }
             achievementsGrid.appendChild(achievementItem);
+            
+            // Kazanılan başarımlara tıklama özelliği ekle
+            if (isUnlocked) {
+                achievementItem.style.cursor = 'pointer';
+                achievementItem.title = 'Detayları görmek için tıklayın';
+                achievementItem.addEventListener('click', () => {
+                    // Başarımı badge formatına çevir ve detay göster
+                    const badgeFormat = {
+                        id: achievement.id,
+                        name: achievement.name,
+                        image: badgeImage,
+                        description: achievement.description
+                    };
+                    showBadgeDetail(badgeFormat, isUnlocked);
+                });
+            }
         });
     }
     

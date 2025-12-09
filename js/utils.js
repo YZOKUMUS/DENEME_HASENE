@@ -31,14 +31,25 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
-        // Body scroll'unu tekrar etkinleştir
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
         
-        // Açık modal kaydını temizle
+        // badge-detail-modal kapatıldığında badges-modal açık kalmalı
+        if (modalId === 'badge-detail-modal' && currentOpenModal === 'badges-modal') {
+            // badges-modal zaten açık, sadece badge-detail-modal'ı kapat
+            return;
+        }
+        
+        // Body scroll'unu tekrar etkinleştir (sadece tüm modaller kapandığında)
         if (currentOpenModal === modalId) {
             currentOpenModal = null;
+            // Başka açık modal var mı kontrol et
+            const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => 
+                m.style.display === 'flex' || (m.style.display !== 'none' && m.id !== modalId)
+            );
+            if (!anyModalOpen) {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
         }
     }
 }
@@ -47,15 +58,22 @@ function closeModal(modalId) {
  * Modal'ı açar
  */
 function openModal(modalId) {
-    // Eğer başka bir modal açıksa önce onu kapat
-    if (currentOpenModal && currentOpenModal !== modalId) {
+    // badge-detail-modal badges-modal açıkken açılabilir (üst üste modal desteği)
+    const canStackModal = modalId === 'badge-detail-modal' && currentOpenModal === 'badges-modal';
+    
+    // Eğer başka bir modal açıksa ve üst üste modal desteği yoksa önce onu kapat
+    if (currentOpenModal && currentOpenModal !== modalId && !canStackModal) {
         closeModal(currentOpenModal);
     }
     
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
-        currentOpenModal = modalId;
+        
+        // Üst üste modal desteği varsa currentOpenModal'ı değiştirme
+        if (!canStackModal) {
+            currentOpenModal = modalId;
+        }
         
         // Mobilde body scroll'unu engelle (sadece modal içinde kaydırma)
         if (window.innerWidth <= 600) {

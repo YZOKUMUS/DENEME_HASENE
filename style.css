@@ -1189,6 +1189,30 @@ body {
     animation: fadeIn var(--transition-normal);
 }
 
+/* badge-detail-modal badges-modal üzerinde açılmalı */
+#badge-detail-modal {
+    z-index: 2100;
+}
+
+#badge-detail-modal .modal-content {
+    position: relative;
+    z-index: 2101;
+    box-sizing: border-box;
+}
+
+#badge-detail-modal .modal-header {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(10px, 2vw, 15px);
+}
+
+#badge-detail-modal .modal-body {
+    box-sizing: border-box;
+    width: 100%;
+    padding: clamp(8px, 2vw, var(--spacing-md));
+    overflow-x: hidden;
+}
+
 .modal-content {
     background: #fff;
     border-radius: var(--radius-lg);
@@ -1586,8 +1610,8 @@ body {
 /* Badge Tabs */
 .badge-tabs {
     display: flex;
-    gap: clamp(4px, 1vw, 8px);
-    margin-bottom: var(--spacing-md);
+    gap: clamp(2px, 0.8vw, 6px);
+    margin-bottom: var(--spacing-sm);
     border-bottom: 2px solid #e5e7eb;
     overflow-x: auto;
     overflow-y: hidden;
@@ -1595,6 +1619,9 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(118, 75, 162, 0.3) transparent;
     padding-bottom: 2px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .badge-tabs::-webkit-scrollbar {
@@ -1615,11 +1642,11 @@ body {
 }
 
 .badge-tab-btn {
-    padding: clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px);
+    padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 14px);
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    font-size: clamp(0.7rem, 2vw, 0.9rem);
+    border-bottom: 2px solid transparent;
+    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
@@ -1627,6 +1654,8 @@ body {
     white-space: nowrap;
     flex-shrink: 0;
     min-width: fit-content;
+    box-sizing: border-box;
+    line-height: 1.3;
 }
 
 .badge-tab-btn:hover {
@@ -1638,6 +1667,7 @@ body {
     color: var(--accent-primary);
     border-bottom-color: var(--accent-primary);
     background: rgba(118, 75, 162, 0.1);
+    border-bottom-width: 2px;
 }
 
 .badge-tab-content {
@@ -1651,17 +1681,33 @@ body {
 .badges-section,
 .achievements-section {
     margin-bottom: var(--spacing-md);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* Badge Detail Modal */
 #badge-detail-modal .modal-content {
     max-width: 600px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    margin: auto;
+    padding: clamp(10px, 2vw, 20px);
 }
 
 #badge-detail-content {
     text-align: center;
-    padding: var(--spacing-md);
+    padding: clamp(8px, 2vw, var(--spacing-md));
+    line-height: 1.8;
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 #badge-detail-content h3 {
@@ -1689,11 +1735,15 @@ body {
 
 #badge-detail-content .badge-detail-description {
     color: var(--text-primary);
-    line-height: 1.6;
+    line-height: 1.8;
     margin-bottom: 15px;
-    font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-    text-align: left;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    text-align: justify;
+    text-justify: inter-word;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #badge-detail-content .badge-detail-arabic {
@@ -1708,6 +1758,8 @@ body {
     margin-bottom: 15px;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #badge-detail-content .badge-detail-significance {
@@ -1716,14 +1768,20 @@ body {
     font-style: italic;
     padding-top: 15px;
     border-top: 1px solid #e5e7eb;
-    text-align: left;
+    text-align: justify;
+    text-justify: inter-word;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .badges-section h3,
 .achievements-section h3 {
-    font-size: 1rem;
+    font-size: clamp(0.95rem, 2.5vw, 1rem);
     margin-bottom: var(--spacing-sm);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Kelime İstatistikleri */
@@ -3221,6 +3279,24 @@ body {
         width: clamp(28px, 4vw, 36px);
         height: clamp(28px, 4vw, 36px);
     }
+    
+    /* Kazanılan rozetler için mobil boyutları */
+    .badge-item.unlocked .badge-image,
+    .achievement-item.unlocked .achievement-image {
+        width: clamp(36px, 5.5vw, 44px);
+        height: clamp(36px, 5.5vw, 44px);
+    }
+    
+    .badge-item.unlocked,
+    .achievement-item.unlocked {
+        min-height: 80px;
+        padding: var(--spacing-xs);
+    }
+    
+    .badge-item.unlocked .badge-name,
+    .achievement-item.unlocked .achievement-name {
+        font-size: clamp(0.65rem, 2vw, 0.8rem);
+    }
 
     .badge-item .badge-name,
     .achievement-item .achievement-name {
@@ -3229,19 +3305,25 @@ body {
     
     /* Badge Tabs - Mobil */
     .badge-tabs {
-        gap: 3px;
-        margin-bottom: var(--spacing-sm);
+        gap: 2px;
+        margin-bottom: var(--spacing-xs);
         padding-left: 0;
         padding-right: 0;
         width: 100%;
         max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
     }
     
     .badge-tab-btn {
-        padding: 8px 10px;
-        font-size: clamp(0.65rem, 1.6vw, 0.8rem);
+        padding: 6px clamp(6px, 1.5vw, 10px);
+        font-size: clamp(0.6rem, 1.5vw, 0.75rem);
         flex-shrink: 0;
-        min-width: auto;
+        min-width: fit-content;
+        box-sizing: border-box;
+        line-height: 1.2;
     }
     
     .modal-body {
@@ -3249,25 +3331,68 @@ body {
         overflow-x: hidden;
     }
     
-    .badges-section {
+    #badge-detail-modal .modal-header {
+        padding: clamp(8px, 2vw, 12px);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    #badge-detail-modal .modal-body {
+        padding: clamp(6px, 1.5vw, 10px);
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    .badges-section,
+    .achievements-section {
         overflow-x: hidden;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .achievements-section h3 {
+        font-size: clamp(0.9rem, 2.5vw, 1rem);
+        margin-bottom: var(--spacing-xs);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Badges modal için özel genişlik kontrolü */
+    #badges-modal .modal-content {
+        max-width: calc(100% - 20px);
+        margin: 10px;
+        padding: var(--spacing-sm);
+        box-sizing: border-box;
     }
     
     /* Badge Detail Modal - Mobil */
     #badge-detail-modal .modal-content {
         max-width: calc(100% - 20px);
-        margin: 10px;
-        padding: 15px;
+        width: calc(100% - 20px);
+        margin: 10px auto;
+        padding: clamp(10px, 3vw, 15px);
+        max-height: calc(100vh - 20px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
     }
     
     #badge-detail-content {
-        padding: var(--spacing-sm);
+        padding: clamp(8px, 2vw, var(--spacing-sm));
+        line-height: 1.8;
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     #badge-detail-content h3 {
         font-size: clamp(1.1rem, 3.5vw, 1.3rem);
         margin-bottom: 12px;
+        line-height: 1.4;
     }
     
     #badge-detail-content img {
@@ -3277,14 +3402,17 @@ body {
     }
     
     #badge-detail-content .badge-detail-year {
-        font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-        margin-bottom: 8px;
+        font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+        margin-bottom: 10px;
+        line-height: 1.5;
     }
     
     #badge-detail-content .badge-detail-description {
-        font-size: clamp(0.8rem, 2.2vw, 0.9rem);
-        margin-bottom: 12px;
-        line-height: 1.5;
+        font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+        margin-bottom: 15px;
+        line-height: 1.8;
+        text-align: justify;
+        text-justify: inter-word;
     }
     
     #badge-detail-content .badge-detail-arabic {
@@ -3468,6 +3596,24 @@ body {
         height: clamp(24px, 3.5vw, 32px);
     }
     
+    /* Kazanılan rozetler için çok küçük ekran boyutları */
+    .badge-item.unlocked .badge-image,
+    .achievement-item.unlocked .achievement-image {
+        width: clamp(30px, 4.5vw, 38px);
+        height: clamp(30px, 4.5vw, 38px);
+    }
+    
+    .badge-item.unlocked,
+    .achievement-item.unlocked {
+        min-height: 70px;
+        padding: var(--spacing-xs);
+    }
+    
+    .badge-item.unlocked .badge-name,
+    .achievement-item.unlocked .achievement-name {
+        font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+    }
+    
     .badge-item .badge-name,
     .achievement-item .achievement-name {
         font-size: clamp(0.55rem, 1.5vw, 0.65rem);
@@ -3475,18 +3621,25 @@ body {
     
     /* Badge Tabs - Çok küçük ekranlar */
     .badge-tabs {
-        gap: 2px;
+        gap: 1px;
         margin-bottom: var(--spacing-xs);
         padding-left: 0;
         padding-right: 0;
         width: 100%;
         max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
     }
     
     .badge-tab-btn {
-        padding: 6px 8px;
-        font-size: clamp(0.6rem, 1.4vw, 0.7rem);
-        min-width: auto;
+        padding: 5px clamp(5px, 1.2vw, 8px);
+        font-size: clamp(0.55rem, 1.3vw, 0.65rem);
+        flex-shrink: 0;
+        min-width: fit-content;
+        box-sizing: border-box;
+        line-height: 1.2;
     }
     
     .modal-body {
@@ -3494,26 +3647,69 @@ body {
         overflow-x: hidden;
     }
     
-    .badges-section {
+    .badges-section,
+    .achievements-section {
         padding: 0;
         width: 100%;
+        max-width: 100%;
         overflow-x: hidden;
+        box-sizing: border-box;
+    }
+    
+    .achievements-section h3 {
+        font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+        margin-bottom: var(--spacing-xs);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Badges modal için çok küçük ekranlar */
+    #badges-modal .modal-content {
+        max-width: calc(100% - 10px);
+        margin: 5px;
+        padding: var(--spacing-xs);
+        box-sizing: border-box;
     }
     
     /* Badge Detail Modal - Çok küçük ekranlar */
     #badge-detail-modal .modal-content {
         max-width: calc(100% - 10px);
-        margin: 5px;
-        padding: 10px;
+        width: calc(100% - 10px);
+        margin: 5px auto;
+        padding: clamp(8px, 2vw, 10px);
+        max-height: calc(100vh - 10px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+    
+    #badge-detail-modal .modal-header {
+        padding: clamp(6px, 1.5vw, 10px);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    #badge-detail-modal .modal-body {
+        padding: clamp(5px, 1.2vw, 8px);
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
     
     #badge-detail-content {
-        padding: var(--spacing-xs);
+        padding: clamp(6px, 1.5vw, var(--spacing-xs));
+        line-height: 1.8;
+        width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     #badge-detail-content h3 {
         font-size: clamp(1rem, 3vw, 1.2rem);
         margin-bottom: 10px;
+        line-height: 1.4;
     }
     
     #badge-detail-content img {
@@ -3523,14 +3719,17 @@ body {
     }
     
     #badge-detail-content .badge-detail-year {
-        font-size: clamp(0.75rem, 2vw, 0.85rem);
-        margin-bottom: 6px;
+        font-size: clamp(0.8rem, 2vw, 0.9rem);
+        margin-bottom: 8px;
+        line-height: 1.5;
     }
     
     #badge-detail-content .badge-detail-description {
-        font-size: clamp(0.75rem, 2vw, 0.85rem);
-        margin-bottom: 10px;
-        line-height: 1.4;
+        font-size: clamp(0.8rem, 2vw, 0.9rem);
+        margin-bottom: 12px;
+        line-height: 1.8;
+        text-align: justify;
+        text-justify: inter-word;
     }
     
     #badge-detail-content .badge-detail-arabic {
