@@ -121,10 +121,27 @@
 
 ### Responsive Tasarım
 
-- **Mobil**: Max-width 600px, tek sütun
-- **Tablet**: 2 sütun grid (oyun kartları)
-- **Desktop**: 3 sütun grid (oyun kartları)
-- **Touch-friendly**: Minimum 44x44px buton boyutları
+- **Mobil** (≤600px): 
+  - Tek sütun layout
+  - Kompakt badge tabs (yatay kaydırma)
+  - Responsive modal'lar (max-width: calc(100% - 20px))
+  - Touch-friendly butonlar (minimum 44x44px)
+- **Tablet** (601-900px): 
+  - 2 sütun grid (oyun kartları)
+  - Orta boyut modal'lar
+- **Desktop** (>900px): 
+  - 3 sütun grid (oyun kartları)
+  - Tam genişlik modal'lar
+- **Çok Küçük Ekranlar** (≤360px):
+  - Minimal padding ve margin
+  - Kompakt badge tabs (gap: 1px)
+  - Küçültülmüş font boyutları
+
+**Responsive Özellikler**:
+- `clamp()` fonksiyonu ile dinamik font ve boyut ayarları
+- `box-sizing: border-box` ile taşma önleme
+- `overflow-x: hidden` ile yatay kaydırma engelleme
+- `word-wrap: break-word` ile uzun metinlerin sarılması
 
 ---
 
@@ -272,9 +289,19 @@
 - **Perfect Lesson Bonusu**: Tüm sorular doğru → Session skorunun %50'si ekstra
 
 **Bonus Puanlar**:
-- **Günlük Vird Tamamlama**: +1,000 Hasene
-- **Günlük Görevler Tamamlama**: +2,500 Hasene
-- **Haftalık Görevler Tamamlama**: +5,000 Hasene
+- **Günlük Vird Tamamlama**: Günlük hedefi tamamlayınca bonus Hasene
+- **Günlük Görevler Tamamlama**: Her günlük görev için bonus Hasene
+- **Haftalık Görevler Tamamlama**: Her haftalık görev için bonus Hasene
+
+**Tüm Bonuslar İstatistiklere Kaydedilir**:
+- Günlük istatistikler (günlük, haftalık, aylık)
+- Perfect bonus, combo bonus, görev ödülleri, vird bonusu
+- Detaylı takip ve raporlama
+
+**Tüm Bonuslar İstatistiklere Kaydedilir**:
+- Günlük istatistikler (günlük, haftalık, aylık)
+- Perfect bonus, combo bonus, görev ödülleri, vird bonusu
+- Detaylı takip ve raporlama
 
 **Puan Hesaplama**:
 ```javascript
@@ -339,7 +366,25 @@ LEVELS = {
 
 ## 🏆 ROZET VE BAŞARIM SİSTEMİ
 
-### Rozet Sistemi
+### Rozet Sistemi (Asr-ı Saadet)
+
+**41 Kronolojik Rozet** - Peygamberimizin doğumundan Dört Halife dönemi sonuna kadar:
+
+**Sekme Yapısı**:
+- **Mekke Dönemi** (13 rozet): Doğum'dan İkinci Akabe Biatı'na kadar (asr_1 - asr_13)
+- **Medine Dönemi** (14 rozet): Hicret'ten Vefat'a kadar (asr_14 - asr_27)
+- **İlk İki Halife** (8 rozet): Hz. Ebu Bekir ve Hz. Ömer dönemi (asr_28 - asr_35)
+- **Hz. Osman** (3 rozet): Üçüncü halife dönemi (asr_36 - asr_38)
+- **Hz. Ali** (3 rozet): Dördüncü halife dönemi (asr_39 - asr_41)
+
+**Rozet Özellikleri**:
+- Her rozet kronolojik sırayla kazanılır (önceki rozet kazanılmadan sonraki kazanılamaz)
+- Kazanılan rozetlere tıklanınca detaylı bilgi modalı açılır:
+  - Miladi ve Hicri tarih
+  - Tarihsel olay açıklaması
+  - Arapça terimler ve ifadeler
+  - Olayın önemi ve anlamı
+- Rozetler panel içinde kronolojik sırayla gösterilir (kazanılanlar önce)
 
 **Rozet Türleri**:
 1. **🥉 Bronz**: 5 yıldız = 1 bronz (500 Hasene)
@@ -365,37 +410,39 @@ const badges = {
 
 ### Başarım (Achievement) Sistemi
 
-**Başarımlar**:
+**44 Başarım** - Mantıklı sıralama ile:
 
-#### Günlük Başarımlar
-- **🎯 İlk Zafer**: İlk sahih cevap
-- **⭐ Günlük Kahraman**: Günlük virdi tamamla
+**Sıralama Mantığı**:
+- **Kazanılanlar**: Zorluk skoruna göre (kolaydan zora)
+- **Kazanılmayanlar**: Zorluk skoruna göre (kolaydan zora)
+- **Zorluk Skoru**: Hasene, doğru cevap, seri gün, mükemmel ders, combo, mertebe bazlı hesaplanır
 
-#### Combo Başarımları
-- **🔥 Muvazebet Ustası**: 5x muvazebet yap
+**Başarım Kategorileri**:
+1. **İlk Adımlar** (6 başarım): Tek oturumda tamamlanabilir
+   - 🕌 İlk Kelime (1 doğru cevap)
+   - بِسْمِ اللَّهِ (10 doğru cevap)
+   - 🕌 Muvazebet Ustası (5x combo)
+   - 🌱 İlk Adım (100 Hasene)
+   - 📖 Mübtedi (Mertebe 1)
+   - ✨ Mükemmel Ders (1 mükemmel ders)
 
-#### Seri Başarımları
-- **🔥 7 Gün Muvazebet**: 7 gün üst üste talebe et
-- **🔥 14 Gün Muvazebet**: 14 gün üst üste talebe et
-- **🔥 21 Gün Muvazebet**: 21 gün üst üste talebe et
-- **🔥 30 Gün Muvazebet**: 30 gün üst üste talebe et
+2. **Başlangıç** (11 başarım): Kısa sürede tamamlanabilir
+   - 50 doğru cevap, 500 Hasene, 3 gün vird, vb.
 
-#### Mertebe Başarımları
-- **🏆 Mertebe 5**: Mertebe 5'e ulaş
-- **💎 Mertebe 10**: Mertebe 10'a ulaş
-- **🌟 Mertebe 20**: Mertebe 20'ye ulaş
+3. **İlerleme** (9 başarım): Orta zorluk
+   - 200 doğru cevap, 5,000 Hasene, 7 gün vird, vb.
 
-#### Hasene Başarımları
-- **🌱 İlk Adım**: 500 Hasene topla (~4 dk)
-- **🥉 Mübtedi Yolcu**: 2,000 Hasene (1 Bronz)
-- **⚡ Hızlı Talebe**: 4,000 Hasene topla
-- **🥈 Gümüş Ustası**: 8,500 Hasene (1 Gümüş) (~1 saat)
-- **💯 İkinci Gümüş**: 17,000 Hasene topla
-- **🥇 Altın Ustası**: 25,500 Hasene (1 Altın) (~3 gün)
-- **🔥 İkinci Altın**: 51,000 Hasene topla
-- **💎 Elmas Ustası**: 85,000 Hasene (1 Elmas) (~10 gün)
-- **✨ Ustalar Ustası**: 170,000 Hasene topla
-- **📖 HAFIZ**: 1,000,000 Hasene topla
+4. **Ustalık** (6 başarım): Zor
+   - 1,000 doğru cevap, 25,500 Hasene, 30 gün vird, vb.
+
+5. **Master** (5 başarım): Çok zor
+   - 5,000 doğru cevap, 85,000 Hasene, 100 gün vird, vb.
+
+6. **Efsane** (7 başarım): En zor
+   - 🕋 Kurra Hafız (1,000,000 Hasene)
+   - 100 mükemmel ders
+   - 5,000 doğru cevap
+   - vb.
 
 **Başarım Kontrolü**:
 - `checkAchievements()` fonksiyonu her oyun bitişinde çağrılır
