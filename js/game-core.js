@@ -3079,7 +3079,12 @@ function checkBadges() {
         allModesPlayed: allModesPlayed
     };
     
-    BADGE_DEFINITIONS.forEach(badge => {
+    // Asr-ı Saadet rozetlerini kronolojik sıraya göre ayır
+    const asrBadges = BADGE_DEFINITIONS.filter(badge => badge.id.startsWith('asr_'));
+    const regularBadges = BADGE_DEFINITIONS.filter(badge => !badge.id.startsWith('asr_'));
+    
+    // Önce normal rozetleri kontrol et (kronolojik sıra gerekmez)
+    regularBadges.forEach(badge => {
         // Yeni ve eski format desteği
         const isUnlocked = unlockedBadges.some(b => {
             if (typeof b === 'string') return b === badge.id;
@@ -3090,6 +3095,47 @@ function checkBadges() {
         }
         
         if (badge.check(stats)) {
+            unlockBadge(badge);
+        }
+    });
+    
+    // Asr-ı Saadet rozetlerini kronolojik sıraya göre kontrol et
+    // Rozetleri numaralarına göre sırala (asr_1, asr_2, ... asr_41)
+    asrBadges.sort((a, b) => {
+        const numA = parseInt(a.id.split('_')[1]);
+        const numB = parseInt(b.id.split('_')[1]);
+        return numA - numB;
+    });
+    
+    asrBadges.forEach((badge, index) => {
+        // Yeni ve eski format desteği
+        const isUnlocked = unlockedBadges.some(b => {
+            if (typeof b === 'string') return b === badge.id;
+            return b.id === badge.id;
+        });
+        if (isUnlocked) {
+            return; // Zaten kazanılmış
+        }
+        
+        // Kronolojik kontrol: Önceki tüm rozetler kazanılmış olmalı
+        let canUnlock = true;
+        if (index > 0) {
+            // Önceki rozetlerin hepsinin kazanılmış olup olmadığını kontrol et
+            for (let i = 0; i < index; i++) {
+                const previousBadge = asrBadges[i];
+                const previousUnlocked = unlockedBadges.some(b => {
+                    if (typeof b === 'string') return b === previousBadge.id;
+                    return b.id === previousBadge.id;
+                });
+                if (!previousUnlocked) {
+                    canUnlock = false;
+                    break;
+                }
+            }
+        }
+        
+        // Eğer önceki rozetler kazanılmışsa ve koşullar sağlanmışsa rozeti kazan
+        if (canUnlock && badge.check(stats)) {
             unlockBadge(badge);
         }
     });
@@ -3112,6 +3158,126 @@ function unlockBadge(badge) {
     });
     showBadgeUnlock(badge);
     saveStats();
+}
+
+/**
+ * Rozet detay modalını gösterir
+ */
+function showBadgeDetail(badge, isUnlocked) {
+    if (!badge || !isUnlocked) return;
+    
+    const modal = document.getElementById('badge-detail-modal');
+    const titleEl = document.getElementById('badge-detail-title');
+    const contentEl = document.getElementById('badge-detail-content');
+    
+    if (!modal || !titleEl || !contentEl) return;
+    
+    // Rozet numarasını al (asr_1 -> 1, asr_2 -> 2, vb.)
+    const badgeNum = badge.id.startsWith('asr_') ? parseInt(badge.id.split('_')[1]) : null;
+    
+    // Rozet detay bilgilerini oluştur (responsive inline styles)
+    let detailHTML = `
+        <div style="margin-bottom: clamp(15px, 4vw, 20px);">
+            <img src="assets/badges/${badge.image}" alt="${badge.name}" 
+                 style="width: clamp(80px, 20vw, 120px); height: clamp(80px, 20vw, 120px); object-fit: contain; margin-bottom: clamp(12px, 3vw, 15px); border-radius: var(--radius-md); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                 onerror="this.style.display='none';">
+        </div>
+        <h3 style="color: var(--accent-primary); margin-bottom: clamp(8px, 2vw, 10px); font-size: clamp(1.2rem, 4vw, 1.5rem); word-wrap: break-word;">${badge.name}</h3>
+    `;
+    
+    // Asr-ı Saadet rozetleri için detaylı bilgi
+    if (badgeNum && badgeNum >= 1 && badgeNum <= 41) {
+        const badgeDetails = getBadgeDetailInfo(badgeNum);
+        if (badgeDetails) {
+            detailHTML += `
+                <div style="text-align: left; max-width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px);">
+                    <div class="badge-detail-year" style="color: var(--accent-primary); font-weight: 600; margin-bottom: clamp(8px, 2vw, 10px); font-size: clamp(0.85rem, 2.5vw, 1rem);">
+                        ${badgeDetails.year}
+                    </div>
+                    <div class="badge-detail-description" style="color: var(--text-primary); line-height: 1.6; margin-bottom: clamp(12px, 3vw, 15px); font-size: clamp(0.85rem, 2.5vw, 0.95rem); word-wrap: break-word;">
+                        ${badgeDetails.fullDescription}
+                    </div>
+                    ${badgeDetails.arabic ? `
+                        <div class="badge-detail-arabic" style="font-family: 'KFGQPC Uthmanic Script HAFS', 'Arial', sans-serif; 
+                                    font-size: clamp(1rem, 3vw, 1.2rem); color: var(--accent-primary); 
+                                    direction: rtl; text-align: right; 
+                                    padding: clamp(10px, 3vw, 15px); background: #f8f9fa; 
+                                    border-radius: 8px; margin-bottom: clamp(12px, 3vw, 15px); word-wrap: break-word; overflow-wrap: break-word;">
+                            ${badgeDetails.arabic}
+                        </div>
+                    ` : ''}
+                    <div class="badge-detail-significance" style="color: var(--text-secondary); font-size: clamp(0.8rem, 2.2vw, 0.9rem); font-style: italic; 
+                                padding-top: clamp(12px, 3vw, 15px); border-top: 1px solid #e5e7eb; word-wrap: break-word;">
+                        📌 ${badgeDetails.significance}
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        // Normal rozetler için basit açıklama
+        detailHTML += `
+            <div style="text-align: left; max-width: 100%; margin: 0 auto; padding: 0 clamp(5px, 2vw, 10px);">
+                <div style="color: var(--text-primary); line-height: 1.6; font-size: clamp(0.85rem, 2.5vw, 0.95rem); word-wrap: break-word;">
+                    ${badge.description}
+                </div>
+            </div>
+        `;
+    }
+    
+    titleEl.textContent = badge.name;
+    contentEl.innerHTML = detailHTML;
+    openModal('badge-detail-modal');
+}
+
+/**
+ * Rozet detay bilgilerini döndürür
+ */
+function getBadgeDetailInfo(badgeNum) {
+    const badgeDetails = {
+        1: { year: '571 - Miladi', fullDescription: 'Hz. Muhammed (s.a.v.) Mekke\'de doğdu. Fil Yılı olarak bilinen bu yıl, Ebrehe\'nin Kabe\'yi yıkmak için geldiği yıldır.', arabic: 'وُلِدَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ', significance: 'İslam tarihinin başlangıcı' },
+        2: { year: '575 - Miladi', fullDescription: 'Çocukluğunun ilk yıllarını çöl hayatında, sütannesi Halime bint Ebi Züeyb\'in yanında geçirdi. Bu dönemde göğsünün yarılması mucizesi gerçekleşti.', arabic: 'حَلِيمَةُ السَّعْدِيَّةُ', significance: 'Sağlıklı büyüme ve Arapça\'nın saf halini öğrenme' },
+        3: { year: '578 - Miladi', fullDescription: 'Annesi vefat ettikten sonra dedesi Abdülmuttalib\'in himayesine girdi. Dedesi onu çok sever ve korurdu.', arabic: 'عَبْدُ الْمُطَّلِبِ', significance: 'Kabile liderliği ve Mekke\'nin önemli ailelerini tanıma' },
+        4: { year: '579 - Miladi', fullDescription: 'Dedesi vefat edince amcası Ebu Talib\'in yanına alındı. Ebu Talib onu kendi çocuklarından daha çok severdi.', arabic: 'أَبُو طَالِبٍ', significance: 'Ticaret hayatına giriş ve Şam seyahati' },
+        5: { year: '595 - Miladi', fullDescription: 'Hz. Hatice validemizle evlendi. Bu evlilik 25 yıl sürdü ve Hz. Hatice, İslam\'ın ilk kadın mümini oldu.', arabic: 'خَدِيجَةُ بِنْتُ خُوَيْلِدٍ', significance: 'İlk ve en sadık destekçi, tüm çocuklarının annesi' },
+        6: { year: '610 - Miladi', fullDescription: 'Hira Mağarası\'nda ilk vahiy geldi: "Oku! Yaratan Rabbinin adıyla oku!" (Alak Suresi 1-5). Bu, peygamberliğin başlangıcıdır.', arabic: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ', significance: 'İslam\'ın başlangıcı, ilk ayetlerin inişi' },
+        7: { year: '610 - Miladi', fullDescription: 'Hz. Hatice, Hz. Ebu Bekir, Hz. Ali ve Hz. Zeyd ilk Müslümanlar oldu. İslam gizlice yayılmaya başladı.', arabic: 'أَوَّلُ الْمُسْلِمِينَ', significance: 'İslam toplumunun temelleri' },
+        8: { year: '613 - Miladi', fullDescription: '"En yakın akrabanı uyar" ayeti gelince, Safa Tepesi\'nde açıkça İslam\'a davet başladı. Mekke müşrikleri şiddetli tepki gösterdi.', arabic: 'وَأَنْذِرْ عَشِيرَتَكَ الْأَقْرَبِينَ', significance: 'İslam\'ın açıkça ilan edilmesi' },
+        9: { year: '615 - Miladi', fullDescription: 'Müşriklerin zulmünden kaçan ilk Müslümanlar Habeşistan\'a hicret etti. Necaşi onları korudu.', arabic: 'هِجْرَةُ الْحَبَشَةِ', significance: 'İlk hicret, İslam\'ın yayılması' },
+        10: { year: '619 - Miladi', fullDescription: 'Hz. Hatice ve Ebu Talib\'in vefatı. Peygamberimiz bu yıla "Hüzün Yılı" adını verdi. En büyük destekçilerini kaybetti.', arabic: 'عَامُ الْحُزْنِ', significance: 'En zor dönem, sabır ve metanet' },
+        11: { year: '620 - Miladi', fullDescription: 'Bir gecede Mescid-i Haram\'dan Mescid-i Aksa\'ya (İsra), oradan da göklere yükselme (Miraç) mucizesi. Beş vakit namaz farz kılındı.', arabic: 'الْإِسْرَاءُ وَالْمِعْرَاجُ', significance: 'En büyük mucizelerden biri, namazın farz kılınması' },
+        12: { year: '621 - Miladi', fullDescription: 'Medineli 12 kişi Akabe\'de Peygamberimizle görüştü ve İslam\'ı kabul etti. Medine\'ye İslam\'ı öğretmek için öğretmen gönderildi.', arabic: 'بَيْعَةُ الْعَقَبَةِ الْأُولَى', significance: 'Medine ile ilk bağlantı' },
+        13: { year: '622 - Miladi', fullDescription: '73 Medineli Müslüman Akabe\'de biat etti ve Peygamberimizi Medine\'ye davet ettiler. Hicret için izin verildi.', arabic: 'بَيْعَةُ الْعَقَبَةِ الثَّانِيَةُ', significance: 'Hicret kararı, Medine\'ye davet' },
+        14: { year: '622 - Miladi (Hicri 1)', fullDescription: 'Peygamberimiz ve Hz. Ebu Bekir Mekke\'den Medine\'ye hicret etti. Hicri takvimin başlangıcı. Kuba Mescidi inşa edildi.', arabic: 'الْهِجْرَةُ', significance: 'İslam devletinin kuruluşu, Hicri takvimin başlangıcı' },
+        15: { year: '622 - Miladi (Hicri 1)', fullDescription: 'Medine\'de Mescid-i Nebevi inşa edildi. Aynı zamanda Suffa (eğitim yeri) ve Hz. Aişe\'nin odaları yapıldı.', arabic: 'الْمَسْجِدُ النَّبَوِيُّ', significance: 'İslam\'ın merkezi, eğitim ve ibadet yeri' },
+        16: { year: '622 - Miladi (Hicri 1)', fullDescription: 'Muhacirler (Mekkeli Müslümanlar) ile Ensar (Medineli Müslümanlar) arasında kardeşlik antlaşması yapıldı.', arabic: 'الْمُؤَاخَاةُ بَيْنَ الْمُهَاجِرِينَ وَالْأَنْصَارِ', significance: 'İslam kardeşliğinin temelleri' },
+        17: { year: '624 - Miladi (Hicri 2)', fullDescription: 'İlk büyük savaş. 313 Müslüman, 1000 kişilik müşrik ordusunu yendi. Melekler yardım etti. Zafer kazanıldı.', arabic: 'غَزْوَةُ بَدْرٍ', significance: 'İlk büyük zafer, İslam\'ın gücünün kanıtı' },
+        18: { year: '624 - Miladi (Hicri 2)', fullDescription: 'Ramazan ayında oruç tutmak farz kılındı. Bedir Savaşı\'ndan sonra bu emir geldi.', arabic: 'صَوْمُ رَمَضَانَ', significance: 'İslam\'ın temel ibadetlerinden biri' },
+        19: { year: '625 - Miladi (Hicri 3)', fullDescription: 'Müşrikler intikam için geldi. Okçuların yerlerini terk etmesi sonucu zorlu bir savaş oldu. Hz. Hamza şehit oldu.', arabic: 'غَزْوَةُ أُحُدٍ', significance: 'İtaat ve sabır dersi, şehitler' },
+        20: { year: '627 - Miladi (Hicri 5)', fullDescription: 'Medine\'nin etrafına hendek kazıldı. 10.000 kişilik müşrik ordusu kuşatmayı kaldıramadı. Selman-ı Farisi\'nin önerisi.', arabic: 'غَزْوَةُ الْخَنْدَقِ', significance: 'Strateji zaferi, Medine\'nin korunması' },
+        21: { year: '628 - Miladi (Hicri 6)', fullDescription: 'Mekke\'ye umre için gidildi ama müşrikler engelledi. Hudeybiye\'de 10 yıllık barış antlaşması imzalandı. Görünüşte zor ama stratejik zafer.', arabic: 'صُلْحُ الْحُدَيْبِيَةِ', significance: 'Barış antlaşması, İslam\'ın yayılması için fırsat' },
+        22: { year: '629 - Miladi (Hicri 7)', fullDescription: 'Yahudilerin kalesi Hayber fethedildi. Hz. Ali\'nin kahramanlıkları. Yahudiler Medine\'den çıkarıldıktan sonra buraya yerleşmişlerdi.', arabic: 'فَتْحُ خَيْبَرَ', significance: 'Güçlü kalenin fethi, ganimetler' },
+        23: { year: '630 - Miladi (Hicri 8)', fullDescription: 'Hudeybiye Antlaşması\'nın ihlali üzerine 10.000 kişilik orduyla Mekke fethedildi. Kabe putlardan temizlendi. Genel af ilan edildi.', arabic: 'فَتْحُ مَكَّةَ', significance: 'En büyük zafer, Kabe\'nin temizlenmesi' },
+        24: { year: '630 - Miladi (Hicri 8)', fullDescription: 'Mekke\'nin fethinden sonra Hevazin ve Sakif kabileleri saldırdı. İlk başta zorluk yaşandı ama zafer kazanıldı.', arabic: 'غَزْوَةُ حُنَيْنٍ', significance: 'Son büyük savaş, ganimetlerin dağıtımı' },
+        25: { year: '630 - Miladi (Hicri 9)', fullDescription: 'Bizans\'a karşı son sefer. Çok zorlu bir yolculuk. Münafıklar geri kaldı. Savaş olmadı ama İslam\'ın gücü gösterildi.', arabic: 'غَزْوَةُ تَبُوكَ', significance: 'En uzak sefer, münafıkların ortaya çıkması' },
+        26: { year: '631 - Miladi (Hicri 9)', fullDescription: 'Peygamberimizin son haccı. 100.000\'den fazla Müslüman katıldı. Veda Hutbesi okundu. "Bugün dininizi kemale erdirdim" ayeti indi.', arabic: 'حَجَّةُ الْوَدَاعِ', significance: 'Son hacc, Veda Hutbesi, dinin tamamlanması' },
+        27: { year: '632 - Miladi (Hicri 11)', fullDescription: 'Peygamberimiz 63 yaşında vefat etti. Hz. Aişe\'nin odasında, başı Hz. Aişe\'nin göğsünde. "En yüce dosta" kavuştu.', arabic: 'وَفَاةُ رَسُولِ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ', significance: 'Asr-ı Saadet\'in sonu, tüm Müslümanlar için büyük kayıp' },
+        28: { year: '632 - Miladi (Hicri 11)', fullDescription: 'Peygamberimizin vefatından sonra Sakife\'de toplanıldı. Hz. Ebu Bekir ilk halife seçildi. "Sıddık" lakabıyla bilinir.', arabic: 'خِلَافَةُ أَبِي بَكْرٍ الصِّدِّيقِ', significance: 'İlk halife, İslam devletinin devamı' },
+        29: { year: '632-633 - Miladi (Hicri 11-12)', fullDescription: 'Peygamberimizin vefatından sonra bazı kabileler dinden döndü. Hz. Ebu Bekir bunlarla savaştı ve İslam\'ı korudu.', arabic: 'حُرُوبُ الرِّدَّةِ', significance: 'İslam\'ın korunması, devletin güçlenmesi' },
+        30: { year: '634 - Miladi (Hicri 13)', fullDescription: 'Hz. Ebu Bekir\'in vefatından sonra Hz. Ömer halife oldu. "Faruk" lakabıyla bilinir. Adalet ve cesaret timsali.', arabic: 'خِلَافَةُ عُمَرَ بْنِ الْخَطَّابِ', significance: 'Adalet dönemi, İslam\'ın genişlemesi' },
+        31: { year: '636 - Miladi (Hicri 15)', fullDescription: 'İran Sasani İmparatorluğu\'na karşı büyük zafer. Sa\'d bin Ebi Vakkas komutasında. İran\'ın fethi başladı.', arabic: 'مَعْرَكَةُ الْقَادِسِيَّةِ', significance: 'İran\'ın fethinin başlangıcı' },
+        32: { year: '637 - Miladi (Hicri 16)', fullDescription: 'Hz. Ömer bizzat geldi ve Kudüs\'ü teslim aldı. Mescid-i Aksa\'yı ziyaret etti. Adaletli yönetim örneği.', arabic: 'فَتْحُ بَيْتِ الْمَقْدِسِ', significance: 'Üç kutsal şehirden birinin fethi' },
+        33: { year: '638 - Miladi (Hicri 17)', fullDescription: 'Hz. Ömer, Hicri takvimi resmi takvim olarak kabul etti. Hicret yılı (622) başlangıç kabul edildi.', arabic: 'التَّقْوِيمُ الْهِجْرِيُّ', significance: 'İslam takvimi, tarihleme sistemi' },
+        34: { year: '644 - Miladi (Hicri 23)', fullDescription: 'Ebu Lü\'lü adlı bir köle tarafından sabah namazında şehit edildi. 10 yıl halifelik yaptı. Adalet dönemi sona erdi.', arabic: 'اسْتِشْهَادُ عُمَرَ بْنِ الْخَطَّابِ', significance: 'Büyük halifenin şehit olması' },
+        35: { year: '644 - Miladi (Hicri 23)', fullDescription: 'Şura heyeti Hz. Osman\'ı halife seçti. "Zinnureyn" (iki nur sahibi) lakabıyla bilinir. Kuran\'ın çoğaltılması.', arabic: 'خِلَافَةُ عُثْمَانَ بْنِ عَفَّانَ', significance: 'Kuran\'ın çoğaltılması, donanma kurulması' },
+        36: { year: '650 - Miladi (Hicri 30)', fullDescription: 'Hz. Osman döneminde Kuran-ı Kerim çoğaltıldı ve farklı bölgelere gönderildi. Standart Mushaf oluşturuldu.', arabic: 'جَمْعُ الْقُرْآنِ', significance: 'Kuran\'ın korunması, standart nüsha' },
+        37: { year: '656 - Miladi (Hicri 35)', fullDescription: 'Fitne dönemi. Asiler Medine\'yi kuşattı. Hz. Osman Kuran okurken şehit edildi. 12 yıl halifelik yaptı.', arabic: 'اسْتِشْهَادُ عُثْمَانَ بْنِ عَفَّانَ', significance: 'Fitne döneminin başlangıcı' },
+        38: { year: '656 - Miladi (Hicri 35)', fullDescription: 'Hz. Osman\'ın şehit edilmesinden sonra Hz. Ali halife seçildi. "Esedullah" (Allah\'ın Aslanı) lakabıyla bilinir.', arabic: 'خِلَافَةُ عَلِيِّ بْنِ أَبِي طَالِبٍ', significance: 'Dördüncü halife, ilim ve cesaret' },
+        39: { year: '656 - Miladi (Hicri 36)', fullDescription: 'Hz. Aişe, Talha ve Zübeyr ile Hz. Ali arasında savaş. Hz. Ali galip geldi. İslam tarihinde ilk iç savaş.', arabic: 'وَقْعَةُ الْجَمَلِ', significance: 'İlk iç savaş, fitne dönemi' },
+        40: { year: '657 - Miladi (Hicri 37)', fullDescription: 'Hz. Ali ile Muaviye arasında savaş. Hakem olayı gerçekleşti. İslam dünyasında ayrılık başladı.', arabic: 'مَعْرَكَةُ صِفِّينَ', significance: 'Büyük iç savaş, hakem olayı' },
+        41: { year: '661 - Miladi (Hicri 40)', fullDescription: 'Haricilerden İbn Mülcem tarafından sabah namazında zehirli kılıçla şehit edildi. Dört halife dönemi sona erdi.', arabic: 'اسْتِشْهَادُ عَلِيِّ بْنِ أَبِي طَالِبٍ', significance: 'Dört halife döneminin sonu, Emevi döneminin başlangıcı' }
+    };
+    
+    return badgeDetails[badgeNum] || null;
 }
 
 /**
@@ -3282,13 +3448,52 @@ function showStatsModal() {
  */
 function showBadgesModal() {
     // Rozetler - Her rozet için ilerleme göster
-    // Rozetleri 5 sekmeye eşit dağıt (35 rozet / 5 sekme = 7 rozet per sekme)
+    // Asr-ı Saadet rozetlerini kategorilere göre filtrele
+    const asrBadges = BADGE_DEFINITIONS.filter(badge => badge.id.startsWith('asr_'));
+    const regularBadges = BADGE_DEFINITIONS.filter(badge => !badge.id.startsWith('asr_'));
+    
+    // Sekmelere göre Asr-ı Saadet rozetlerini dağıt
     const badgeTabs = [
-        { id: 'asr-saadet', gridId: 'badges-grid-asr-saadet', startIndex: 0, endIndex: 7 },
-        { id: 'dort-halife', gridId: 'badges-grid-dort-halife', startIndex: 7, endIndex: 14 },
-        { id: 'uhud-sehitleri', gridId: 'badges-grid-uhud-sehitleri', startIndex: 14, endIndex: 21 },
-        { id: 'osmanli', gridId: 'badges-grid-osmanli', startIndex: 21, endIndex: 28 },
-        { id: 'selcuklu', gridId: 'badges-grid-selcuklu', startIndex: 28, endIndex: 35 }
+        { 
+            id: 'asr-saadet', 
+            gridId: 'badges-grid-asr-saadet', 
+            badgeIds: asrBadges.filter(b => {
+                const num = parseInt(b.id.split('_')[1]);
+                return num >= 1 && num <= 13; // Mekke dönemi
+            }).map(b => b.id)
+        },
+        { 
+            id: 'dort-halife', 
+            gridId: 'badges-grid-dort-halife', 
+            badgeIds: asrBadges.filter(b => {
+                const num = parseInt(b.id.split('_')[1]);
+                return num >= 14 && num <= 27; // Medine dönemi
+            }).map(b => b.id)
+        },
+        { 
+            id: 'uhud-sehitleri', 
+            gridId: 'badges-grid-uhud-sehitleri', 
+            badgeIds: asrBadges.filter(b => {
+                const num = parseInt(b.id.split('_')[1]);
+                return num >= 28 && num <= 35; // Hz. Ebu Bekir ve Hz. Ömer dönemi
+            }).map(b => b.id)
+        },
+        { 
+            id: 'osmanli', 
+            gridId: 'badges-grid-osmanli', 
+            badgeIds: asrBadges.filter(b => {
+                const num = parseInt(b.id.split('_')[1]);
+                return num >= 36 && num <= 38; // Hz. Osman dönemi
+            }).map(b => b.id)
+        },
+        { 
+            id: 'selcuklu', 
+            gridId: 'badges-grid-selcuklu', 
+            badgeIds: asrBadges.filter(b => {
+                const num = parseInt(b.id.split('_')[1]);
+                return num >= 39 && num <= 41; // Hz. Ali dönemi
+            }).map(b => b.id)
+        }
     ];
     
     if (!BADGE_DEFINITIONS) {
@@ -3307,13 +3512,13 @@ function showBadgesModal() {
     
     // Stats değerlerini güvenli hale getir (NaN, undefined, null kontrolü)
     const stats = {
-            totalPoints: totalPoints || 0,
-            totalCorrect: gameStats.totalCorrect || 0,
-            totalWrong: gameStats.totalWrong || 0,
-            level: calculateLevel(totalPoints || 0),
-            currentStreak: streakData.currentStreak || 0,
-            maxCombo: maxCombo || 0,
-            perfectLessons: perfectLessonsCount || 0,
+        totalPoints: totalPoints || 0,
+        totalCorrect: gameStats.totalCorrect || 0,
+        totalWrong: gameStats.totalWrong || 0,
+        level: calculateLevel(totalPoints || 0),
+        currentStreak: streakData.currentStreak || 0,
+        maxCombo: maxCombo || 0,
+        perfectLessons: perfectLessonsCount || 0,
         allModesPlayed: allModesPlayed || 0
     };
     
@@ -3321,102 +3526,105 @@ function showBadgesModal() {
      * Rozet zorluk skorunu hesaplar (düşük skor = kolay, yüksek skor = zor)
      */
     function calculateBadgeDifficulty(badge) {
-            const desc = badge.description.toLowerCase();
-            let difficultyScore = 0;
-            
-            // Hasene gereksinimleri (logaritmik skorlama)
-            if (desc.includes('hasene')) {
-                const match = desc.match(/([\d,]+)\s*hasene/i);
-                if (match) {
-                    const points = parseInt(match[1].replace(/,/g, ''));
-                    // Logaritmik skorlama: 100=1, 500=2, 1000=3, 10000=4, 100000=5, 1000000=6
-                    difficultyScore += Math.log10(points / 100) * 10 + 1;
+        const desc = badge.description.toLowerCase();
+        let difficultyScore = 0;
+        
+        // Hasene gereksinimleri (logaritmik skorlama)
+        if (desc.includes('hasene')) {
+            const match = desc.match(/([\d,]+)\s*hasene/i);
+            if (match) {
+                const points = parseInt(match[1].replace(/,/g, ''));
+                // Logaritmik skorlama: 100=1, 500=2, 1000=3, 10000=4, 100000=5, 1000000=6
+                difficultyScore += Math.log10(points / 100) * 10 + 1;
+            }
+        }
+        
+        // Doğru cevap gereksinimleri
+        if (desc.includes('doğru')) {
+            const match = desc.match(/([\d,]+)\s*doğru/i);
+            if (match) {
+                const correct = parseInt(match[1].replace(/,/g, ''));
+                // 10=1, 50=2, 100=3, 500=4, 1000=5, 5000=6
+                difficultyScore += Math.log10(correct / 10) * 10 + 1;
+            }
+        }
+        
+        // Seri gün gereksinimleri
+        if (desc.includes('gün') || desc.includes('seri')) {
+            const match = desc.match(/(\d+)\s*gün/i);
+            if (match) {
+                const days = parseInt(match[1]);
+                // 3=1, 7=2, 14=3, 21=4, 30=5, 50=6, 100=7
+                difficultyScore += Math.log10(days / 3) * 10 + 1;
+            }
+        }
+        
+        // Combo gereksinimleri
+        if (desc.includes('combo') || desc.includes('x')) {
+            const match = desc.match(/(\d+)x/i);
+            if (match) {
+                const combo = parseInt(match[1]);
+                // 5=1, 10=2, 20=3
+                difficultyScore += Math.log10(combo / 5) * 10 + 1;
+            }
+        }
+        
+        // Mükemmel ders gereksinimleri
+        if (desc.includes('mükemmel')) {
+            const match = desc.match(/(\d+)\s*mükemmel/i);
+            if (match) {
+                const perfect = parseInt(match[1]);
+                // 1=1, 5=2, 10=3, 100=4
+                difficultyScore += Math.log10(perfect) * 10 + 1;
+            }
+        }
+        
+        // Mertebe gereksinimleri (Hasene bazlı hesaplama)
+        if (desc.includes('mertebe')) {
+            const match = desc.match(/mertebe\s*(\d+)/i);
+            if (match) {
+                const level = parseInt(match[1]);
+                let requiredPoints = 0;
+                
+                // Mertebe için gereken Hasene miktarını hesapla
+                if (level <= 5) {
+                    requiredPoints = LEVELS.THRESHOLDS[5] || 13000; // 13,000 Hasene
+                } else if (level <= 10) {
+                    requiredPoints = LEVELS.THRESHOLDS[10] || 46000; // 46,000 Hasene
+                } else {
+                    // Level 10'dan sonra her seviye için 15,000 Hasene eklenir
+                    requiredPoints = (LEVELS.THRESHOLDS[10] || 46000) + (level - 10) * (LEVELS.INCREMENT_AFTER_10 || 15000);
                 }
+                
+                // Hasene bazlı logaritmik skorlama (diğer Hasene rozetleriyle aynı mantık)
+                difficultyScore += Math.log10(requiredPoints / 100) * 10 + 1;
             }
-            
-            // Doğru cevap gereksinimleri
-            if (desc.includes('doğru')) {
-                const match = desc.match(/([\d,]+)\s*doğru/i);
-                if (match) {
-                    const correct = parseInt(match[1].replace(/,/g, ''));
-                    // 10=1, 50=2, 100=3, 500=4, 1000=5, 5000=6
-                    difficultyScore += Math.log10(correct / 10) * 10 + 1;
-                }
-            }
-            
-            // Seri gün gereksinimleri
-            if (desc.includes('gün') || desc.includes('seri')) {
-                const match = desc.match(/(\d+)\s*gün/i);
-                if (match) {
-                    const days = parseInt(match[1]);
-                    // 3=1, 7=2, 14=3, 21=4, 30=5, 50=6, 100=7
-                    difficultyScore += Math.log10(days / 3) * 10 + 1;
-                }
-            }
-            
-            // Combo gereksinimleri
-            if (desc.includes('combo') || desc.includes('x')) {
-                const match = desc.match(/(\d+)x/i);
-                if (match) {
-                    const combo = parseInt(match[1]);
-                    // 5=1, 10=2, 20=3
-                    difficultyScore += Math.log10(combo / 5) * 10 + 1;
-                }
-            }
-            
-            // Mükemmel ders gereksinimleri
-            if (desc.includes('mükemmel')) {
-                const match = desc.match(/(\d+)\s*mükemmel/i);
-                if (match) {
-                    const perfect = parseInt(match[1]);
-                    // 1=1, 5=2, 10=3, 100=4
-                    difficultyScore += Math.log10(perfect) * 10 + 1;
-                }
-            }
-            
-            // Mertebe gereksinimleri (Hasene bazlı hesaplama)
-            if (desc.includes('mertebe')) {
-                const match = desc.match(/mertebe\s*(\d+)/i);
-                if (match) {
-                    const level = parseInt(match[1]);
-                    let requiredPoints = 0;
-                    
-                    // Mertebe için gereken Hasene miktarını hesapla
-                    if (level <= 5) {
-                        requiredPoints = LEVELS.THRESHOLDS[5] || 13000; // 13,000 Hasene
-                    } else if (level <= 10) {
-                        requiredPoints = LEVELS.THRESHOLDS[10] || 46000; // 46,000 Hasene
-                    } else {
-                        // Level 10'dan sonra her seviye için 15,000 Hasene eklenir
-                        requiredPoints = (LEVELS.THRESHOLDS[10] || 46000) + (level - 10) * (LEVELS.INCREMENT_AFTER_10 || 15000);
-                    }
-                    
-                    // Hasene bazlı logaritmik skorlama (diğer Hasene rozetleriyle aynı mantık)
-                    difficultyScore += Math.log10(requiredPoints / 100) * 10 + 1;
-                }
-            }
-            
-            // Oyun modu gereksinimleri (6 mod = orta zorluk)
-            if (desc.includes('mod')) {
-                difficultyScore += 3;
-            }
-            
+        }
+        
+        // Oyun modu gereksinimleri (6 mod = orta zorluk)
+        if (desc.includes('mod')) {
+            difficultyScore += 3;
+        }
+        
         return difficultyScore;
     }
     
+    // Sadece Asr-ı Saadet rozetlerini filtrele
+    const asrBadgeDefinitions = BADGE_DEFINITIONS.filter(badge => badge.id.startsWith('asr_'));
+    
     // Rozetleri zorluk skoruna göre sırala (kolaydan zora, kazanılanlar önce)
-    const badgesWithUnlockInfo = BADGE_DEFINITIONS.map((badge, originalIndex) => {
-            // Yeni ve eski format desteği
-            const unlockInfo = unlockedBadges.find(b => {
-                if (typeof b === 'string') return b === badge.id;
-                return b.id === badge.id;
-            });
-            
-            return {
-                badge: badge,
-                originalIndex: originalIndex,
-                difficultyScore: calculateBadgeDifficulty(badge),
-                isUnlocked: !!unlockInfo,
+    const badgesWithUnlockInfo = asrBadgeDefinitions.map((badge, originalIndex) => {
+        // Yeni ve eski format desteği
+        const unlockInfo = unlockedBadges.find(b => {
+            if (typeof b === 'string') return b === badge.id;
+            return b.id === badge.id;
+        });
+        
+        return {
+            badge: badge,
+            originalIndex: originalIndex,
+            difficultyScore: calculateBadgeDifficulty(badge),
+            isUnlocked: !!unlockInfo,
             unlockedAt: unlockInfo ? (typeof unlockInfo === 'string' ? 0 : unlockInfo.unlockedAt) : null
         };
     });
@@ -3439,10 +3647,10 @@ function showBadgesModal() {
     });
     
     // Rozetleri sekmelere dağıt
-    badgesWithUnlockInfo.forEach(({badge, isUnlocked}, index) => {
-        // Hangi sekmede olduğunu bul
-        const tabInfo = badgeTabs.find(tab => index >= tab.startIndex && index < tab.endIndex);
-        if (!tabInfo) return; // Index sınırları dışındaysa atla
+    badgesWithUnlockInfo.forEach(({badge, isUnlocked}) => {
+        // Hangi sekmede olduğunu bul (badge ID'sine göre)
+        const tabInfo = badgeTabs.find(tab => tab.badgeIds.includes(badge.id));
+        if (!tabInfo) return; // Bu sekmede değilse atla
         
         const badgesGrid = document.getElementById(tabInfo.gridId);
         if (!badgesGrid) return;
@@ -3486,6 +3694,15 @@ function showBadgesModal() {
             `;
         }
         badgesGrid.appendChild(badgeItem);
+        
+        // Kazanılan rozetlere tıklama özelliği ekle
+        if (isUnlocked) {
+            badgeItem.style.cursor = 'pointer';
+            badgeItem.title = 'Detayları görmek için tıklayın';
+            badgeItem.addEventListener('click', () => {
+                showBadgeDetail(badge, isUnlocked);
+            });
+        }
         
         // Rozet görseli yüklendiğinde fallback icon'u gizle
         const badgeImg = badgeItem.querySelector('.badge-image');

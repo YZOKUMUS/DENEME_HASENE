@@ -25,138 +25,254 @@ const LEVELS = {
 
 // Başarımlar
 const ACHIEVEMENTS = [
-    // Günlük Başarımlar
+    // İslami Başlangıç Başarımları
     {
         id: 'first_victory',
-        name: '🎯 İlk Zafer',
-        description: 'İlk sahih cevap',
+        name: '🕌 İlk Kelime',
+        description: 'İlk sahih cevap - "Bismillah" ile başla',
         check: (stats) => stats.totalCorrect >= 1
     },
     {
         id: 'daily_hero',
-        name: '⭐ Günlük Kahraman',
-        description: 'Günlük virdi tamamla',
+        name: '📿 Günlük Vird',
+        description: 'Günlük virdi tamamla - Sabır ve sebat',
         check: (stats) => {
             const dailyGoal = parseInt(localStorage.getItem('dailyGoalHasene') || '2700');
             const todayXP = parseInt(localStorage.getItem('dailyXP') || '0');
             return todayXP >= dailyGoal;
         }
     },
-    
-    // Combo Başarımları
     {
-        id: 'combo_master',
-        name: '🔥 Muvazebet Ustası',
-        description: '5x muvazebet yap',
-        check: (stats) => stats.maxCombo >= 5
+        id: 'bismillah',
+        name: 'بِسْمِ اللَّهِ',
+        description: 'İlk 10 doğru cevap - Allah\'ın adıyla başla',
+        check: (stats) => stats.totalCorrect >= 10
+    },
+    {
+        id: 'alhamdulillah',
+        name: 'الْحَمْدُ لِلَّهِ',
+        description: '50 doğru cevap - Şükür ve hamd',
+        check: (stats) => stats.totalCorrect >= 50
+    },
+    {
+        id: 'mashallah',
+        name: 'مَا شَاءَ اللَّهُ',
+        description: '100 doğru cevap - Allah\'ın dilediği gibi',
+        check: (stats) => stats.totalCorrect >= 100
     },
     
-    // Seri Başarımları
+    // İslami Combo Başarımları
+    {
+        id: 'combo_master',
+        name: '🕌 Muvazebet Ustası',
+        description: '5x muvazebet yap - İstikrar ve devamlılık',
+        check: (stats) => stats.maxCombo >= 5
+    },
+    {
+        id: 'combo_10',
+        name: '🕋 On Muvazebet',
+        description: '10x muvazebet - On güzel hasene',
+        check: (stats) => stats.maxCombo >= 10
+    },
+    {
+        id: 'combo_20',
+        name: '☪️ Yirmi Muvazebet',
+        description: '20x muvazebet - İhlas ve samimiyet',
+        check: (stats) => stats.maxCombo >= 20
+    },
+    
+    // İslami Seri Başarımları (Günlük İbadet Teması)
+    {
+        id: 'streak_3',
+        name: '📿 Üç Gün Vird',
+        description: '3 gün üst üste talebe et - Sabır başlangıcı',
+        check: (stats) => stats.currentStreak >= 3
+    },
     {
         id: 'streak_7',
-        name: '🔥 7 Gün Muvazebet',
-        description: '7 gün üst üste talebe et',
+        name: '🕌 Haftalık Vird',
+        description: '7 gün üst üste talebe et - Bir hafta istikrar',
         check: (stats) => stats.currentStreak >= 7
     },
     {
         id: 'streak_14',
-        name: '🔥 14 Gün Muvazebet',
-        description: '14 gün üst üste talebe et',
+        name: '🌙 İki Hafta Vird',
+        description: '14 gün üst üste talebe et - İki hafta sebat',
         check: (stats) => stats.currentStreak >= 14
     },
     {
         id: 'streak_21',
-        name: '🔥 21 Gün Muvazebet',
-        description: '21 gün üst üste talebe et',
+        name: '☪️ Üç Hafta Vird',
+        description: '21 gün üst üste talebe et - Alışkanlık oluşumu',
         check: (stats) => stats.currentStreak >= 21
     },
     {
         id: 'streak_30',
-        name: '🔥 30 Gün Muvazebet',
-        description: '30 gün üst üste talebe et',
+        name: '🕋 Ramazan Virdi',
+        description: '30 gün üst üste talebe et - Ramazan gibi sebat',
         check: (stats) => stats.currentStreak >= 30
     },
+    {
+        id: 'streak_40',
+        name: '🌟 Kırk Gün Vird',
+        description: '40 gün üst üste talebe et - Kırk günlük nafile',
+        check: (stats) => stats.currentStreak >= 40
+    },
+    {
+        id: 'streak_100',
+        name: '💎 Yüz Gün Vird',
+        description: '100 gün üst üste talebe et - Yüz günlük ibadet',
+        check: (stats) => stats.currentStreak >= 100
+    },
     
-    // Mertebe Başarımları
+    // İslami Mertebe Başarımları
+    {
+        id: 'level_1',
+        name: '📖 Mübtedi',
+        description: 'Mertebe 1 - İlim yolunda ilk adım',
+        check: (stats) => stats.level >= 1
+    },
     {
         id: 'level_5',
-        name: '🏆 Mertebe 5',
-        description: 'Mertebe 5\'e ulaş',
+        name: '🕌 Mütebahhir',
+        description: 'Mertebe 5 - İlimde derinleşme',
         check: (stats) => stats.level >= 5
     },
     {
         id: 'level_10',
-        name: '💎 Mertebe 10',
-        description: 'Mertebe 10\'a ulaş',
+        name: '🕋 Alim',
+        description: 'Mertebe 10 - İlim sahibi olma',
         check: (stats) => stats.level >= 10
     },
     {
+        id: 'level_15',
+        name: '☪️ Fakih',
+        description: 'Mertebe 15 - Fıkıh bilgisi',
+        check: (stats) => stats.level >= 15
+    },
+    {
         id: 'level_20',
-        name: '🌟 Mertebe 20',
-        description: 'Mertebe 20\'ye ulaş',
+        name: '🌟 Muhaddis',
+        description: 'Mertebe 20 - Hadis ilmi',
         check: (stats) => stats.level >= 20
     },
+    {
+        id: 'level_25',
+        name: '💎 Müfessir',
+        description: 'Mertebe 25 - Tefsir ilmi',
+        check: (stats) => stats.level >= 25
+    },
+    {
+        id: 'level_30',
+        name: '✨ Hafız',
+        description: 'Mertebe 30 - Hafızlık mertebesi',
+        check: (stats) => stats.level >= 30
+    },
     
-    // Hasene Başarımları
+    // İslami Hasene Başarımları
     {
         id: 'first_step',
         name: '🌱 İlk Adım',
-        description: '500 Hasene topla (~4 dk)',
+        description: '500 Hasene topla - Bismillah ile başlangıç',
         check: (stats) => stats.totalPoints >= 500
     },
     {
         id: 'bronze_traveler',
-        name: '🥉 Mübtedi Yolcu',
-        description: '2,000 Hasene (1 Bronz)',
+        name: '📿 Mübtedi Talebe',
+        description: '2,000 Hasene - İlim yolunda ilerleme',
         check: (stats) => stats.totalPoints >= 2000
     },
     {
         id: 'fast_student',
-        name: '⚡ Hızlı Talebe',
-        description: '4,000 Hasene topla',
+        name: '🕌 Hızlı Talebe',
+        description: '4,000 Hasene - İlim aşkı',
         check: (stats) => stats.totalPoints >= 4000
     },
     {
         id: 'silver_master',
-        name: '🥈 Gümüş Ustası',
-        description: '8,500 Hasene (1 Gümüş) (~1 saat)',
+        name: '🕋 Gümüş Mertebe',
+        description: '8,500 Hasene - İlimde derinleşme',
         check: (stats) => stats.totalPoints >= 8500
     },
     {
         id: 'second_silver',
-        name: '💯 İkinci Gümüş',
-        description: '17,000 Hasene topla',
+        name: '☪️ İkinci Gümüş',
+        description: '17,000 Hasene - İstikrar ve sebat',
         check: (stats) => stats.totalPoints >= 17000
     },
     {
         id: 'gold_master',
-        name: '🥇 Altın Ustası',
-        description: '25,500 Hasene (1 Altın) (~3 gün)',
+        name: '🌟 Altın Mertebe',
+        description: '25,500 Hasene - İlim sahibi olma',
         check: (stats) => stats.totalPoints >= 25500
     },
     {
         id: 'second_gold',
-        name: '🔥 İkinci Altın',
-        description: '51,000 Hasene topla',
+        name: '💎 İkinci Altın',
+        description: '51,000 Hasene - Fıkıh bilgisi',
         check: (stats) => stats.totalPoints >= 51000
     },
     {
         id: 'diamond_master',
-        name: '💎 Elmas Ustası',
-        description: '85,000 Hasene (1 Elmas) (~10 gün)',
+        name: '✨ Elmas Mertebe',
+        description: '85,000 Hasene - Hadis ilmi',
         check: (stats) => stats.totalPoints >= 85000
     },
     {
         id: 'master_of_masters',
-        name: '✨ Ustalar Ustası',
-        description: '170,000 Hasene topla',
+        name: '📖 Ustalar Ustası',
+        description: '170,000 Hasene - Tefsir ilmi',
         check: (stats) => stats.totalPoints >= 170000
     },
     {
         id: 'hafiz',
-        name: '📖 HAFIZ',
-        description: '1,000,000 Hasene topla',
+        name: '🕋 HAFIZ',
+        description: '1,000,000 Hasene - Hafızlık mertebesi',
         check: (stats) => stats.totalPoints >= 1000000
+    },
+    
+    // İslami Özel Başarımlar
+    {
+        id: 'perfect_lesson_1',
+        name: '✨ Mükemmel Ders',
+        description: '1 mükemmel ders (0 yanlış) - İhlas ve dikkat',
+        check: (stats) => stats.perfectLessons >= 1
+    },
+    {
+        id: 'perfect_lesson_5',
+        name: '🌟 Beş Mükemmel',
+        description: '5 mükemmel ders - İstikrar ve titizlik',
+        check: (stats) => stats.perfectLessons >= 5
+    },
+    {
+        id: 'perfect_lesson_10',
+        name: '💎 On Mükemmel',
+        description: '10 mükemmel ders - Mükemmellik arayışı',
+        check: (stats) => stats.perfectLessons >= 10
+    },
+    {
+        id: 'perfect_lesson_100',
+        name: '🕋 Yüz Mükemmel',
+        description: '100 mükemmel ders - İhlas ve samimiyet',
+        check: (stats) => stats.perfectLessons >= 100
+    },
+    {
+        id: 'all_modes',
+        name: '📚 Tüm Modlar',
+        description: 'Tüm 6 oyun modunu oyna - Kapsamlı öğrenme',
+        check: (stats) => stats.allModesPlayed >= 6
+    },
+    {
+        id: 'thousand_correct',
+        name: '🕌 Bin Doğru',
+        description: '1,000 doğru cevap - Bin hasene',
+        check: (stats) => stats.totalCorrect >= 1000
+    },
+    {
+        id: 'five_thousand_correct',
+        name: '🕋 Beş Bin Doğru',
+        description: '5,000 doğru cevap - Beş bin hasene',
+        check: (stats) => stats.totalCorrect >= 5000
     }
 ];
 
@@ -641,6 +757,351 @@ const BADGE_DEFINITIONS = [
         description: '1,000,000 Hasene kazan',
         check: (stats) => stats.totalPoints >= 1000000,
         progress: (stats) => Math.min(100, (stats.totalPoints / 1000000) * 100)
+    },
+    
+    // ============================================
+    // ASR-I SAADET ROZETLERİ (41 Rozet)
+    // Kronolojik sırayla: Doğumdan Dört Halife Dönemi Sonuna Kadar
+    // ============================================
+    
+    // MEKKE DÖNEMİ (1-13)
+    {
+        id: 'asr_1',
+        name: 'Doğum',
+        image: 'rozet1.png',
+        description: '571 - Hz. Muhammed (s.a.v.) Mekke\'de doğdu. Fil Yılı. 100 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 100,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 100) * 100),
+        detail: {
+            year: '571 - Miladi',
+            fullDescription: 'Hz. Muhammed (s.a.v.) Mekke\'de doğdu. Fil Yılı olarak bilinen bu yıl, Ebrehe\'nin Kabe\'yi yıkmak için geldiği yıldır.',
+            arabic: 'وُلِدَ رَسُولُ اللَّهِ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ',
+            significance: 'İslam tarihinin başlangıcı'
+        }
+    },
+    {
+        id: 'asr_2',
+        name: 'Sütannesi Halime',
+        image: 'rozet2.png',
+        description: '575 - Çocukluğunun ilk yılları. 200 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 200,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 200) * 100)
+    },
+    {
+        id: 'asr_3',
+        name: 'Dedesi Abdülmuttalib',
+        image: 'rozet3.png',
+        description: '578 - Dedesi Abdülmuttalib\'in himayesi. 10 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 10,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 10) * 100)
+    },
+    {
+        id: 'asr_4',
+        name: 'Amcası Ebu Talib',
+        image: 'rozet4.png',
+        description: '579 - Amcası Ebu Talib\'in yanında. 3 gün seri yap',
+        check: (stats) => stats.currentStreak >= 3,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 3) * 100)
+    },
+    {
+        id: 'asr_5',
+        name: 'Hz. Hatice ile Evlilik',
+        image: 'rozet5.png',
+        description: '595 - Hz. Hatice validemizle evlilik. 500 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 500,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 500) * 100)
+    },
+    {
+        id: 'asr_6',
+        name: 'İlk Vahiy',
+        image: 'rozet6.png',
+        description: '610 - Hira Mağarası\'nda ilk vahiy. "Oku! Yaratan Rabbinin adıyla oku!" 1 mükemmel ders yap',
+        check: (stats) => stats.perfectLessons >= 1,
+        progress: (stats) => Math.min(100, ((stats.perfectLessons || 0) / 1) * 100)
+    },
+    {
+        id: 'asr_7',
+        name: 'İlk Müslümanlar',
+        image: 'rozet7.png',
+        description: '610 - Hz. Hatice, Hz. Ebu Bekir, Hz. Ali ve Hz. Zeyd. 7 gün seri yap',
+        check: (stats) => stats.currentStreak >= 7,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 7) * 100)
+    },
+    {
+        id: 'asr_8',
+        name: 'Açık Davet',
+        image: 'rozet8.png',
+        description: '613 - Safa Tepesi\'nde açıkça İslam\'a davet. 50 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 50,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 50) * 100)
+    },
+    {
+        id: 'asr_9',
+        name: 'Habeşistan Hicreti',
+        image: 'rozet9.png',
+        description: '615 - İlk hicret, Habeşistan\'a. 1,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 1000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 1000) * 100)
+    },
+    {
+        id: 'asr_10',
+        name: 'Hüzün Yılı',
+        image: 'rozet10.png',
+        description: '619 - Hz. Hatice ve Ebu Talib\'in vefatı. Tüm 6 oyun modunu oyna',
+        check: (stats) => stats.allModesPlayed >= 6,
+        progress: (stats) => Math.min(100, ((stats.allModesPlayed || 0) / 6) * 100)
+    },
+    {
+        id: 'asr_11',
+        name: 'İsra ve Miraç',
+        image: 'rozet11.png',
+        description: '620 - Mescid-i Haram\'dan Mescid-i Aksa\'ya, göklere yükselme. Beş vakit namaz farz kılındı. 14 gün seri yap',
+        check: (stats) => stats.currentStreak >= 14,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 14) * 100)
+    },
+    {
+        id: 'asr_12',
+        name: 'Birinci Akabe Biatı',
+        image: 'rozet12.png',
+        description: '621 - Medineli 12 kişi Akabe\'de biat etti. 2,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 2000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 2000) * 100)
+    },
+    {
+        id: 'asr_13',
+        name: 'İkinci Akabe Biatı',
+        image: 'rozet14.png',
+        description: '622 - 73 Medineli Müslüman biat etti. Hicret için izin verildi. 10x combo yap',
+        check: (stats) => stats.maxCombo >= 10,
+        progress: (stats) => Math.min(100, ((stats.maxCombo || 0) / 10) * 100)
+    },
+    
+    // MEDİNE DÖNEMİ (14-27)
+    {
+        id: 'asr_14',
+        name: 'Hicret',
+        image: 'rozet15.png',
+        description: '622 (Hicri 1) - Mekke\'den Medine\'ye hicret. Hicri takvimin başlangıcı. 100 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 100,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 100) * 100)
+    },
+    {
+        id: 'asr_15',
+        name: 'Mescid-i Nebevi İnşası',
+        image: 'rozet16.png',
+        description: '622 (Hicri 1) - Medine\'de Mescid-i Nebevi inşa edildi. 21 gün seri yap',
+        check: (stats) => stats.currentStreak >= 21,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 21) * 100)
+    },
+    {
+        id: 'asr_16',
+        name: 'Kardeşlik Antlaşması',
+        image: 'rozet17.png',
+        description: '622 (Hicri 1) - Muhacirler ile Ensar arasında kardeşlik. 5 mükemmel ders yap',
+        check: (stats) => stats.perfectLessons >= 5,
+        progress: (stats) => Math.min(100, ((stats.perfectLessons || 0) / 5) * 100)
+    },
+    {
+        id: 'asr_17',
+        name: 'Bedir Savaşı',
+        image: 'rozet18.png',
+        description: '624 (Hicri 2) - İlk büyük zafer. 313 Müslüman, 1000 kişilik orduyu yendi. 5,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 5000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 5000) * 100)
+    },
+    {
+        id: 'asr_18',
+        name: 'Ramazan Orucu',
+        image: 'rozet19.png',
+        description: '624 (Hicri 2) - Ramazan orucu farz kılındı. 30 gün seri yap',
+        check: (stats) => stats.currentStreak >= 30,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 30) * 100)
+    },
+    {
+        id: 'asr_19',
+        name: 'Uhud Savaşı',
+        image: 'rozet20.png',
+        description: '625 (Hicri 3) - Okçuların yerlerini terk etmesi sonucu zorlu savaş. Hz. Hamza şehit oldu. 250 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 250,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 250) * 100)
+    },
+    {
+        id: 'asr_20',
+        name: 'Hendek Savaşı',
+        image: 'rozet21.png',
+        description: '627 (Hicri 5) - Medine\'nin etrafına hendek kazıldı. Strateji zaferi. Mertebe 5\'e ulaş',
+        check: (stats) => stats.level >= 5,
+        progress: (stats) => stats.level >= 5 ? 100 : 0
+    },
+    {
+        id: 'asr_21',
+        name: 'Hudeybiye Antlaşması',
+        image: 'rozet22.png',
+        description: '628 (Hicri 6) - 10 yıllık barış antlaşması. Stratejik zafer. 10,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 10000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 10000) * 100)
+    },
+    {
+        id: 'asr_22',
+        name: 'Hayber\'in Fethi',
+        image: 'rozet23.png',
+        description: '629 (Hicri 7) - Yahudilerin kalesi fethedildi. Hz. Ali\'nin kahramanlıkları. 20x combo yap',
+        check: (stats) => stats.maxCombo >= 20,
+        progress: (stats) => Math.min(100, ((stats.maxCombo || 0) / 20) * 100)
+    },
+    {
+        id: 'asr_23',
+        name: 'Mekke\'nin Fethi',
+        image: 'rozet24.png',
+        description: '630 (Hicri 8) - En büyük zafer. Kabe putlardan temizlendi. Genel af. 500 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 500,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 500) * 100)
+    },
+    {
+        id: 'asr_24',
+        name: 'Huneyn Savaşı',
+        image: 'rozet25.png',
+        description: '630 (Hicri 8) - Mekke\'nin fethinden sonra zafer. 10 mükemmel ders yap',
+        check: (stats) => stats.perfectLessons >= 10,
+        progress: (stats) => Math.min(100, ((stats.perfectLessons || 0) / 10) * 100)
+    },
+    {
+        id: 'asr_25',
+        name: 'Tebük Seferi',
+        image: 'rozet26.png',
+        description: '630 (Hicri 9) - Bizans\'a karşı son sefer. En uzak sefer. Mertebe 10\'a ulaş',
+        check: (stats) => stats.level >= 10,
+        progress: (stats) => stats.level >= 10 ? 100 : 0
+    },
+    {
+        id: 'asr_26',
+        name: 'Veda Haccı',
+        image: 'rozet27.png',
+        description: '631 (Hicri 9) - Son hacc. Veda Hutbesi. "Bugün dininizi kemale erdirdim". 25,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 25000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 25000) * 100)
+    },
+    {
+        id: 'asr_27',
+        name: 'Vefat',
+        image: 'rozet28.png',
+        description: '632 (Hicri 11) - Peygamberimiz 63 yaşında vefat etti. Asr-ı Saadet\'in sonu. 1,000 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 1000,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 1000) * 100)
+    },
+    
+    // DÖRT HALİFE DÖNEMİ (28-41)
+    {
+        id: 'asr_28',
+        name: 'Hz. Ebu Bekir\'in Halife Seçilmesi',
+        image: 'rozet29.png',
+        description: '632 (Hicri 11) - İlk halife. "Sıddık" lakabı. 50 gün seri yap',
+        check: (stats) => stats.currentStreak >= 50,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 50) * 100)
+    },
+    {
+        id: 'asr_29',
+        name: 'Ridde Savaşları',
+        image: 'rozet30.png',
+        description: '632-633 (Hicri 11-12) - Dinden dönen kabilelerle savaş. İslam\'ın korunması. 50,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 50000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 50000) * 100)
+    },
+    {
+        id: 'asr_30',
+        name: 'Hz. Ömer\'in Halife Seçilmesi',
+        image: 'rozet32.png',
+        description: '634 (Hicri 13) - İkinci halife. "Faruk" lakabı. Adalet timsali. Mertebe 20\'ye ulaş',
+        check: (stats) => stats.level >= 20,
+        progress: (stats) => stats.level >= 20 ? 100 : 0
+    },
+    {
+        id: 'asr_31',
+        name: 'Kadisiyye Savaşı',
+        image: 'rozet33.png',
+        description: '636 (Hicri 15) - İran Sasani İmparatorluğu\'na karşı zafer. İran\'ın fethi başladı. 100 mükemmel ders yap',
+        check: (stats) => stats.perfectLessons >= 100,
+        progress: (stats) => Math.min(100, ((stats.perfectLessons || 0) / 100) * 100)
+    },
+    {
+        id: 'asr_32',
+        name: 'Kudüs\'ün Fethi',
+        image: 'rozet34.png',
+        description: '637 (Hicri 16) - Hz. Ömer bizzat geldi ve Kudüs\'ü teslim aldı. 100 gün seri yap',
+        check: (stats) => stats.currentStreak >= 100,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 100) * 100)
+    },
+    {
+        id: 'asr_33',
+        name: 'Hicri Takvim Başlangıcı',
+        image: 'rozet35.png',
+        description: '638 (Hicri 17) - Hicri takvim resmi takvim olarak kabul edildi. 5,000 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 5000,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 5000) * 100)
+    },
+    {
+        id: 'asr_34',
+        name: 'Hz. Ömer\'in Şehit Edilmesi',
+        image: 'rozet36.png',
+        description: '644 (Hicri 23) - Ebu Lü\'lü tarafından şehit edildi. 10 yıl halifelik. 100,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 100000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 100000) * 100)
+    },
+    {
+        id: 'asr_35',
+        name: 'Hz. Osman\'ın Halife Seçilmesi',
+        image: 'rozet42.png',
+        description: '644 (Hicri 23) - Üçüncü halife. "Zinnureyn" lakabı. 1,000,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 1000000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 1000000) * 100)
+    },
+    {
+        id: 'asr_36',
+        name: 'Kuran\'ın Çoğaltılması',
+        image: 'rozet1.png',
+        description: '650 (Hicri 30) - Kuran-ı Kerim çoğaltıldı ve farklı bölgelere gönderildi. Standart Mushaf. 2,000 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 2000,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 2000) * 100)
+    },
+    {
+        id: 'asr_37',
+        name: 'Hz. Osman\'ın Şehit Edilmesi',
+        image: 'rozet2.png',
+        description: '656 (Hicri 35) - Fitne dönemi. Kuran okurken şehit edildi. 12 yıl halifelik. 200 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 200,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 200) * 100)
+    },
+    {
+        id: 'asr_38',
+        name: 'Hz. Ali\'nin Halife Seçilmesi',
+        image: 'rozet3.png',
+        description: '656 (Hicri 35) - Dördüncü halife. "Esedullah" lakabı. İlim ve cesaret. 10 doğru cevap ver',
+        check: (stats) => stats.totalCorrect >= 10,
+        progress: (stats) => Math.min(100, ((stats.totalCorrect || 0) / 10) * 100)
+    },
+    {
+        id: 'asr_39',
+        name: 'Cemel (Deve) Vakası',
+        image: 'rozet4.png',
+        description: '656 (Hicri 36) - İlk iç savaş. Hz. Aişe, Talha ve Zübeyr ile Hz. Ali. 3 gün seri yap',
+        check: (stats) => stats.currentStreak >= 3,
+        progress: (stats) => Math.min(100, ((stats.currentStreak || 0) / 3) * 100)
+    },
+    {
+        id: 'asr_40',
+        name: 'Sıffin Savaşı',
+        image: 'rozet5.png',
+        description: '657 (Hicri 37) - Hz. Ali ile Muaviye arasında savaş. Hakem olayı. 500 Hasene kazan',
+        check: (stats) => stats.totalPoints >= 500,
+        progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 500) * 100)
+    },
+    {
+        id: 'asr_41',
+        name: 'Hz. Ali\'nin Şehit Edilmesi',
+        image: 'rozet6.png',
+        description: '661 (Hicri 40) - Haricilerden İbn Mülcem tarafından şehit edildi. Dört halife dönemi sona erdi. 1 mükemmel ders yap',
+        check: (stats) => stats.perfectLessons >= 1,
+        progress: (stats) => Math.min(100, ((stats.perfectLessons || 0) / 1) * 100)
     }
 ];
 
