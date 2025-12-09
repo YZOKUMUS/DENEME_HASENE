@@ -14,14 +14,17 @@ Kuran-ı Kerim kelimelerini eğlenceli bir şekilde öğrenerek hem bilginizi ar
 ## ✨ Özellikler
 
 - 📚 6 Farklı Oyun Modu
-- 💰 Hasene Puan Sistemi
-- 🏆 Rozet ve Başarım Sistemi
+- 💰 Hasene Puan Sistemi (tüm bonuslar dahil)
+- 🏆 41 Kronolojik Rozet (Asr-ı Saadet)
+- 🎖️ 44 Başarım (mantıklı sıralama)
 - 📅 Günlük ve Haftalık Görevler
 - 🔥 Seri (Streak) Takibi
-- 📊 Detaylı İstatistikler
+- 📊 Detaylı İstatistikler (günlük, haftalık, aylık)
 - 🎯 Günlük Vird Sistemi
-- 📱 Responsive Tasarım
+- 📱 Tam Responsive Tasarım (mobil, tablet, desktop)
 - 💾 Offline Çalışma (PWA)
+- 🎨 Modern ve Kullanıcı Dostu Arayüz
+- 📖 Rozet Detay Modalı (tarihsel bilgiler, Arapça terimler)
 
 ## 🚀 Kurulum
 
@@ -67,15 +70,40 @@ deneme_hasene/
 
 ## 📊 Puan Sistemi
 
-- Doğru cevap: 10 Hasene
-- Her 3 doğru cevapta: +5 Hasene (Combo Bonus)
-- Mükemmel ders: %50 ekstra bonus
+### Temel Puanlar
+- **Doğru cevap**: 10 Hasene
+- **Her 3 doğru cevapta**: +5 Hasene (Combo Bonus)
+- **Mükemmel ders** (0 yanlış): %50 ekstra bonus
+
+### Bonuslar
+- **Günlük Görev Ödülleri**: Her görev için bonus Hasene
+- **Haftalık Görev Ödülleri**: Haftalık görevler için bonus Hasene
+- **Günlük Vird Bonusu**: Günlük hedefi tamamlayınca bonus Hasene
+
+Tüm bonuslar detaylı istatistiklere kaydedilir (günlük, haftalık, aylık).
 
 ## 🏆 Rozetler ve Başarımlar
 
-Rozetler ve başarımlar zorluk seviyelerine göre mantıklı bir sırayla gösterilir:
-- Kazanılanlar önce (kolaydan zora)
-- Kazanılmayanlar sonra (kolaydan zora)
+### Rozetler (Asr-ı Saadet)
+41 kronolojik rozet sistemi - Peygamberimizin doğumundan Dört Halife dönemi sonuna kadar:
+- **Mekke Dönemi** (13 rozet): Doğum'dan İkinci Akabe Biatı'na kadar
+- **Medine Dönemi** (14 rozet): Hicret'ten Vefat'a kadar
+- **İlk İki Halife** (8 rozet): Hz. Ebu Bekir ve Hz. Ömer dönemi
+- **Hz. Osman** (3 rozet): Üçüncü halife dönemi
+- **Hz. Ali** (3 rozet): Dördüncü halife dönemi
+
+Her rozet tıklanabilir ve detaylı tarihsel bilgi gösterir (Miladi/Hicri tarih, Arapça terimler, önemi).
+
+### Başarımlar
+44 başarım mantıklı sırayla gösterilir:
+- **İlk Adımlar**: Tek oturumda tamamlanabilir (İlk Kelime, Bismillah, vb.)
+- **Başlangıç**: Kısa sürede tamamlanabilir
+- **İlerleme**: Orta zorluk
+- **Ustalık**: Zor
+- **Master**: Çok zor
+- **Efsane**: En zor (Kurra Hafız: 1,000,000 Hasene)
+
+Sıralama: Kolaydan zora, hızlıdan yavaşa doğru mantıklı ilerleme.
 
 ## 📅 Takvim Sistemi
 

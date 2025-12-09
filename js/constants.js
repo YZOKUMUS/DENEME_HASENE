@@ -299,7 +299,7 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.totalCorrect >= 5000
     },
     {
-        id: 'diamond_master',
+        id: 'diamond_master_final',
         name: '✨ Elmas Mertebe',
         description: '85,000 Hasene - Hadis ilmi',
         check: (stats) => stats.totalPoints >= 85000
