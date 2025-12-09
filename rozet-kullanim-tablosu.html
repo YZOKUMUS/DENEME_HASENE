@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rozet Kullanım Tablosu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid #764ba2;
+        }
+        
+        .info-box h3 {
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+        
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge-id {
+            font-weight: 600;
+            color: #764ba2;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .badge-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .badge-image {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .badge-description {
+            color: #555;
+            font-size: 0.85rem;
+        }
+        
+        .badge-category {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .category-normal {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .category-asr {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .category-achievement {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #764ba2;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #764ba2;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            table {
+                font-size: 0.8rem;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Rozet Kullanım Tablosu</h1>
+        <p class="subtitle">Hangi rozet görseli nerede kullanılıyor? İstediğiniz rozeti istediğiniz yerde kullanabilirsiniz.</p>
+        
+        <div class="info-box">
+            <h3>📌 Kullanım Kılavuzu</h3>
+            <p>
+                Bu tablo, oyundaki tüm rozetlerin hangi görsel dosyasını kullandığını gösterir.<br>
+                <strong>Değiştirmek için:</strong> <code>js/constants.js</code> dosyasında ilgili rozetin <code>image</code> değerini değiştirin.<br>
+                Örnek: <code>image: 'rozet1.png'</code> → <code>image: 'rozet30.png'</code>
+            </p>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Rozet adı, ID veya görsel adı ile ara...">
+        </div>
+        
+        <!-- NORMAL ROZETLER -->
+        <h2 class="section-title">🎮 Normal Rozetler (Oyun Performansı)</h2>
+        <div class="table-container">
+            <table id="normalBadgesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Rozet Adı</th>
+                        <th>Görsel Dosyası</th>
+                        <th>Açıklama</th>
+                        <th>Kategori</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="badge-id">badge_1</td>
+                        <td class="badge-name">İlk Adım</td>
+                        <td><span class="badge-image">rozet1.png</span></td>
+                        <td class="badge-description">100 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_2</td>
+                        <td class="badge-name">Başlangıç</td>
+                        <td><span class="badge-image">rozet2.png</span></td>
+                        <td class="badge-description">10 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_3</td>
+                        <td class="badge-name">İlk Seri</td>
+                        <td><span class="badge-image">rozet3.png</span></td>
+                        <td class="badge-description">3 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_4</td>
+                        <td class="badge-name">Hızlı Öğrenci</td>
+                        <td><span class="badge-image">rozet4.png</span></td>
+                        <td class="badge-description">500 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_5</td>
+                        <td class="badge-name">Combo Ustası</td>
+                        <td><span class="badge-image">rozet5.png</span></td>
+                        <td class="badge-description">5x combo yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_6</td>
+                        <td class="badge-name">Mükemmel Ders</td>
+                        <td><span class="badge-image">rozet6.png</span></td>
+                        <td class="badge-description">1 mükemmel ders yap (0 yanlış)</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_7</td>
+                        <td class="badge-name">Haftalık Kahraman</td>
+                        <td><span class="badge-image">rozet7.png</span></td>
+                        <td class="badge-description">7 gün seri yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_8</td>
+                        <td class="badge-name">Kelime Ustası</td>
+                        <td><span class="badge-image">rozet8.png</span></td>
+                        <td class="badge-description">50 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_9</td>
+                        <td class="badge-name">İlerleme</td>
+                        <td><span class="badge-image">rozet9.png</span></td>
+                        <td class="badge-description">1,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_10</td>
+                        <td class="badge-name">Çoklu Mod</td>
+                        <td><span class="badge-image">rozet10.png</span></td>
+                        <td class="badge-description">Tüm 6 oyun modunu oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_11</td>
+                        <td class="badge-name">2 Hafta Seri</td>
+                        <td><span class="badge-image">rozet11.png</span></td>
+                        <td class="badge-description">14 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_12</td>
+                        <td class="badge-name">Bronz Yolcu</td>
+                        <td><span class="badge-image">rozet12.png</span></td>
+                        <td class="badge-description">2,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_14</td>
+                        <td class="badge-name">10x Combo</td>
+                        <td><span class="badge-image">rozet14.png</span></td>
+                        <td class="badge-description">10x combo yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_15</td>
+                        <td class="badge-name">100 Doğru</td>
+                        <td><span class="badge-image">rozet15.png</span></td>
+                        <td class="badge-description">100 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_16</td>
+                        <td class="badge-name">3 Hafta Seri</td>
+                        <td><span class="badge-image">rozet16.png</span></td>
+                        <td class="badge-description">21 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_17</td>
+                        <td class="badge-name">5 Mükemmel</td>
+                        <td><span class="badge-image">rozet17.png</span></td>
+                        <td class="badge-description">5 mükemmel ders yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_18</td>
+                        <td class="badge-name">Gümüş Yolcu</td>
+                        <td><span class="badge-image">rozet18.png</span></td>
+                        <td class="badge-description">5,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_19</td>
+                        <td class="badge-name">Ay Boyunca</td>
+                        <td><span class="badge-image">rozet19.png</span></td>
+                        <td class="badge-description">30 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_20</td>
+                        <td class="badge-name">250 Doğru</td>
+                        <td><span class="badge-image">rozet20.png</span></td>
+                        <td class="badge-description">250 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_21</td>
+                        <td class="badge-name">Mertebe 5</td>
+                        <td><span class="badge-image">rozet21.png</span></td>
+                        <td class="badge-description">Mertebe 5'e ulaş</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_22</td>
+                        <td class="badge-name">Altın Yolcu</td>
+                        <td><span class="badge-image">rozet22.png</span></td>
+                        <td class="badge-description">10,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_23</td>
+                        <td class="badge-name">20x Combo</td>
+                        <td><span class="badge-image">rozet23.png</span></td>
+                        <td class="badge-description">20x combo yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_24</td>
+                        <td class="badge-name">500 Doğru</td>
+                        <td><span class="badge-image">rozet24.png</span></td>
+                        <td class="badge-description">500 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_25</td>
+                        <td class="badge-name">10 Mükemmel</td>
+                        <td><span class="badge-image">rozet25.png</span></td>
+                        <td class="badge-description">10 mükemmel ders yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_26</td>
+                        <td class="badge-name">Mertebe 10</td>
+                        <td><span class="badge-image">rozet26.png</span></td>
+                        <td class="badge-description">Mertebe 10'a ulaş</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_27</td>
+                        <td class="badge-name">Elmas Yolcu</td>
+                        <td><span class="badge-image">rozet27.png</span></td>
+                        <td class="badge-description">25,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_28</td>
+                        <td class="badge-name">1000 Doğru</td>
+                        <td><span class="badge-image">rozet28.png</span></td>
+                        <td class="badge-description">1,000 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_29</td>
+                        <td class="badge-name">50 Gün Seri</td>
+                        <td><span class="badge-image">rozet29.png</span></td>
+                        <td class="badge-description">50 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_30</td>
+                        <td class="badge-name">Ustalar Ustası</td>
+                        <td><span class="badge-image">rozet30.png</span></td>
+                        <td class="badge-description">50,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_32</td>
+                        <td class="badge-name">Mertebe 20</td>
+                        <td><span class="badge-image">rozet32.png</span></td>
+                        <td class="badge-description">Mertebe 20'ye ulaş</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_33</td>
+                        <td class="badge-name">100 Mükemmel</td>
+                        <td><span class="badge-image">rozet33.png</span></td>
+                        <td class="badge-description">100 mükemmel ders yap</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_34</td>
+                        <td class="badge-name">100 Gün Seri</td>
+                        <td><span class="badge-image">rozet34.png</span></td>
+                        <td class="badge-description">100 gün üst üste oyna</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_35</td>
+                        <td class="badge-name">5000 Doğru</td>
+                        <td><span class="badge-image">rozet35.png</span></td>
+                        <td class="badge-description">5,000 doğru cevap ver</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_36</td>
+                        <td class="badge-name">HAFIZ</td>
+                        <td><span class="badge-image">rozet36.png</span></td>
+                        <td class="badge-description">100,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">badge_42</td>
+                        <td class="badge-name">Efsane</td>
+                        <td><span class="badge-image">rozet42.png</span></td>
+                        <td class="badge-description">1,000,000 Hasene kazan</td>
+                        <td><span class="badge-category category-normal">Normal</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- ASR-I SAADET ROZETLERİ -->
+        <h2 class="section-title">🕌 Asr-ı Saadet Rozetleri (Tarihi Kronoloji)</h2>
+        <div class="table-container">
+            <table id="asrBadgesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Rozet Adı</th>
+                        <th>Görsel Dosyası</th>
+                        <th>Açıklama</th>
+                        <th>Kategori</th>
+                        <th>Sekme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="badge-id">asr_1</td>
+                        <td class="badge-name">Doğum</td>
+                        <td><span class="badge-image">rozet1.png</span></td>
+                        <td class="badge-description">571 - Hz. Muhammed (s.a.v.) Mekke'de doğdu. Fil Yılı. 100 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_2</td>
+                        <td class="badge-name">Sütannesi Halime</td>
+                        <td><span class="badge-image">rozet2.png</span></td>
+                        <td class="badge-description">575 - Çocukluğunun ilk yılları. 200 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_3</td>
+                        <td class="badge-name">Dedesi Abdülmuttalib</td>
+                        <td><span class="badge-image">rozet3.png</span></td>
+                        <td class="badge-description">578 - Dedesi Abdülmuttalib'in himayesi. 10 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_4</td>
+                        <td class="badge-name">Amcası Ebu Talib</td>
+                        <td><span class="badge-image">rozet4.png</span></td>
+                        <td class="badge-description">579 - Amcası Ebu Talib'in yanında. 3 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_5</td>
+                        <td class="badge-name">Hz. Hatice ile Evlilik</td>
+                        <td><span class="badge-image">rozet5.png</span></td>
+                        <td class="badge-description">595 - Hz. Hatice validemizle evlilik. 500 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_6</td>
+                        <td class="badge-name">İlk Vahiy</td>
+                        <td><span class="badge-image">rozet6.png</span></td>
+                        <td class="badge-description">610 - Hira Mağarası'nda ilk vahiy. "Oku! Yaratan Rabbinin adıyla oku!" 1 mükemmel ders yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_7</td>
+                        <td class="badge-name">İlk Müslümanlar</td>
+                        <td><span class="badge-image">rozet7.png</span></td>
+                        <td class="badge-description">610 - Hz. Hatice, Hz. Ebu Bekir, Hz. Ali ve Hz. Zeyd. 7 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_8</td>
+                        <td class="badge-name">Açık Davet</td>
+                        <td><span class="badge-image">rozet8.png</span></td>
+                        <td class="badge-description">613 - Safa Tepesi'nde açıkça İslam'a davet. 50 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_9</td>
+                        <td class="badge-name">Habeşistan Hicreti</td>
+                        <td><span class="badge-image">rozet9.png</span></td>
+                        <td class="badge-description">615 - İlk hicret, Habeşistan'a. 1,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_10</td>
+                        <td class="badge-name">Hüzün Yılı</td>
+                        <td><span class="badge-image">rozet10.png</span></td>
+                        <td class="badge-description">619 - Hz. Hatice ve Ebu Talib'in vefatı. Tüm 6 oyun modunu oyna</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_11</td>
+                        <td class="badge-name">İsra ve Miraç</td>
+                        <td><span class="badge-image">rozet11.png</span></td>
+                        <td class="badge-description">620 - Mescid-i Haram'dan Mescid-i Aksa'ya, göklere yükselme. Beş vakit namaz farz kılındı. 14 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_12</td>
+                        <td class="badge-name">Birinci Akabe Biatı</td>
+                        <td><span class="badge-image">rozet12.png</span></td>
+                        <td class="badge-description">621 - Medineli 12 kişi Akabe'de biat etti. 2,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_13</td>
+                        <td class="badge-name">İkinci Akabe Biatı</td>
+                        <td><span class="badge-image">rozet14.png</span></td>
+                        <td class="badge-description">622 - 73 Medineli Müslüman biat etti. Hicret için izin verildi. 10x combo yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Asr-ı Saadet</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_14</td>
+                        <td class="badge-name">Hicret</td>
+                        <td><span class="badge-image">rozet15.png</span></td>
+                        <td class="badge-description">622 (Hicri 1) - Mekke'den Medine'ye hicret. Hicri takvimin başlangıcı. 100 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_15</td>
+                        <td class="badge-name">Mescid-i Nebevi İnşası</td>
+                        <td><span class="badge-image">rozet16.png</span></td>
+                        <td class="badge-description">622 (Hicri 1) - Medine'de Mescid-i Nebevi inşa edildi. 21 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_16</td>
+                        <td class="badge-name">Kardeşlik Antlaşması</td>
+                        <td><span class="badge-image">rozet17.png</span></td>
+                        <td class="badge-description">622 (Hicri 1) - Muhacirler ile Ensar arasında kardeşlik. 5 mükemmel ders yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_17</td>
+                        <td class="badge-name">Bedir Savaşı</td>
+                        <td><span class="badge-image">rozet18.png</span></td>
+                        <td class="badge-description">624 (Hicri 2) - İlk büyük zafer. 313 Müslüman, 1000 kişilik orduyu yendi. 5,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_18</td>
+                        <td class="badge-name">Ramazan Orucu</td>
+                        <td><span class="badge-image">rozet19.png</span></td>
+                        <td class="badge-description">624 (Hicri 2) - Ramazan orucu farz kılındı. 30 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_19</td>
+                        <td class="badge-name">Uhud Savaşı</td>
+                        <td><span class="badge-image">rozet20.png</span></td>
+                        <td class="badge-description">625 (Hicri 3) - Okçuların yerlerini terk etmesi sonucu zorlu savaş. Hz. Hamza şehit oldu. 250 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_20</td>
+                        <td class="badge-name">Hendek Savaşı</td>
+                        <td><span class="badge-image">rozet21.png</span></td>
+                        <td class="badge-description">627 (Hicri 5) - Medine'nin etrafına hendek kazıldı. Strateji zaferi. Mertebe 5'e ulaş</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_21</td>
+                        <td class="badge-name">Hudeybiye Antlaşması</td>
+                        <td><span class="badge-image">rozet22.png</span></td>
+                        <td class="badge-description">628 (Hicri 6) - 10 yıllık barış antlaşması. Stratejik zafer. 10,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_22</td>
+                        <td class="badge-name">Hayber'in Fethi</td>
+                        <td><span class="badge-image">rozet23.png</span></td>
+                        <td class="badge-description">629 (Hicri 7) - Yahudilerin kalesi fethedildi. Hz. Ali'nin kahramanlıkları. 20x combo yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_23</td>
+                        <td class="badge-name">Mekke'nin Fethi</td>
+                        <td><span class="badge-image">rozet24.png</span></td>
+                        <td class="badge-description">630 (Hicri 8) - En büyük zafer. Kabe putlardan temizlendi. Genel af. 500 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_24</td>
+                        <td class="badge-name">Huneyn Savaşı</td>
+                        <td><span class="badge-image">rozet25.png</span></td>
+                        <td class="badge-description">630 (Hicri 8) - Mekke'nin fethinden sonra zafer. 10 mükemmel ders yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_25</td>
+                        <td class="badge-name">Tebük Seferi</td>
+                        <td><span class="badge-image">rozet26.png</span></td>
+                        <td class="badge-description">630 (Hicri 9) - Bizans'a karşı son sefer. En uzak sefer. Mertebe 10'a ulaş</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_26</td>
+                        <td class="badge-name">Veda Haccı</td>
+                        <td><span class="badge-image">rozet27.png</span></td>
+                        <td class="badge-description">631 (Hicri 9) - Son hacc. Veda Hutbesi. "Bugün dininizi kemale erdirdim". 25,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_27</td>
+                        <td class="badge-name">Vefat</td>
+                        <td><span class="badge-image">rozet28.png</span></td>
+                        <td class="badge-description">632 (Hicri 11) - Peygamberimiz 63 yaşında vefat etti. Asr-ı Saadet'in sonu. 1,000 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Medine Dönemi</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_28</td>
+                        <td class="badge-name">Hz. Ebu Bekir'in Halife Seçilmesi</td>
+                        <td><span class="badge-image">rozet29.png</span></td>
+                        <td class="badge-description">632 (Hicri 11) - İlk halife. "Sıddık" lakabı. 50 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_29</td>
+                        <td class="badge-name">Ridde Savaşları</td>
+                        <td><span class="badge-image">rozet30.png</span></td>
+                        <td class="badge-description">632-633 (Hicri 11-12) - Dinden dönen kabilelerle savaş. İslam'ın korunması. 50,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_30</td>
+                        <td class="badge-name">Hz. Ömer'in Halife Seçilmesi</td>
+                        <td><span class="badge-image">rozet32.png</span></td>
+                        <td class="badge-description">634 (Hicri 13) - İkinci halife. "Faruk" lakabı. Adalet timsali. Mertebe 20'ye ulaş</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_31</td>
+                        <td class="badge-name">Kadisiyye Savaşı</td>
+                        <td><span class="badge-image">rozet33.png</span></td>
+                        <td class="badge-description">636 (Hicri 15) - İran Sasani İmparatorluğu'na karşı zafer. İran'ın fethi başladı. 100 mükemmel ders yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_32</td>
+                        <td class="badge-name">Kudüs'ün Fethi</td>
+                        <td><span class="badge-image">rozet34.png</span></td>
+                        <td class="badge-description">637 (Hicri 16) - Hz. Ömer bizzat geldi ve Kudüs'ü teslim aldı. 100 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_33</td>
+                        <td class="badge-name">Hicri Takvim Başlangıcı</td>
+                        <td><span class="badge-image">rozet35.png</span></td>
+                        <td class="badge-description">638 (Hicri 17) - Hicri takvim resmi takvim olarak kabul edildi. 5,000 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_34</td>
+                        <td class="badge-name">Hz. Ömer'in Şehit Edilmesi</td>
+                        <td><span class="badge-image">rozet36.png</span></td>
+                        <td class="badge-description">644 (Hicri 23) - Ebu Lü'lü tarafından şehit edildi. 10 yıl halifelik. 100,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_35</td>
+                        <td class="badge-name">Hz. Osman'ın Halife Seçilmesi</td>
+                        <td><span class="badge-image">rozet42.png</span></td>
+                        <td class="badge-description">644 (Hicri 23) - Üçüncü halife. "Zinnureyn" lakabı. 1,000,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>İlk İki Halife</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_36</td>
+                        <td class="badge-name">Kuran'ın Çoğaltılması</td>
+                        <td><span class="badge-image">rozet1.png</span></td>
+                        <td class="badge-description">650 (Hicri 30) - Kuran-ı Kerim çoğaltıldı ve farklı bölgelere gönderildi. Standart Mushaf. 2,000 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Osman</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_37</td>
+                        <td class="badge-name">Hz. Osman'ın Şehit Edilmesi</td>
+                        <td><span class="badge-image">rozet2.png</span></td>
+                        <td class="badge-description">656 (Hicri 35) - Fitne dönemi. Kuran okurken şehit edildi. 12 yıl halifelik. 200 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Osman</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_38</td>
+                        <td class="badge-name">Hz. Ali'nin Halife Seçilmesi</td>
+                        <td><span class="badge-image">rozet3.png</span></td>
+                        <td class="badge-description">656 (Hicri 35) - Dördüncü halife. "Esedullah" lakabı. İlim ve cesaret. 10 doğru cevap ver</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Osman</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_39</td>
+                        <td class="badge-name">Cemel (Deve) Vakası</td>
+                        <td><span class="badge-image">rozet4.png</span></td>
+                        <td class="badge-description">656 (Hicri 36) - İlk iç savaş. Hz. Aişe, Talha ve Zübeyr ile Hz. Ali. 3 gün seri yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Ali</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_40</td>
+                        <td class="badge-name">Sıffin Savaşı</td>
+                        <td><span class="badge-image">rozet5.png</span></td>
+                        <td class="badge-description">657 (Hicri 37) - Hz. Ali ile Muaviye arasında savaş. Hakem olayı. 500 Hasene kazan</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Ali</td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">asr_41</td>
+                        <td class="badge-name">Hz. Ali'nin Şehit Edilmesi</td>
+                        <td><span class="badge-image">rozet6.png</span></td>
+                        <td class="badge-description">661 (Hicri 40) - Haricilerden İbn Mülcem tarafından şehit edildi. Dört halife dönemi sona erdi. 1 mükemmel ders yap</td>
+                        <td><span class="badge-category category-asr">Asr-ı Saadet</span></td>
+                        <td>Hz. Ali</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- BAŞARIMLAR -->
+        <h2 class="section-title">🏆 Başarımlar (Dinamik Rozet Ataması)</h2>
+        <div class="table-container">
+            <table id="achievementsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Başarım Adı</th>
+                        <th>Görsel Ataması</th>
+                        <th>Açıklama</th>
+                        <th>Kategori</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="badge-id">first_victory</td>
+                        <td class="badge-name">🕌 İlk Kelime</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">İlk sahih cevap - "Bismillah" ile başla</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">daily_hero</td>
+                        <td class="badge-name">📿 Günlük Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Günlük virdi tamamla - Sabır ve sebat</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">bismillah</td>
+                        <td class="badge-name">بِسْمِ اللَّهِ</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">İlk 10 doğru cevap - Allah'ın adıyla başla</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">alhamdulillah</td>
+                        <td class="badge-name">الْحَمْدُ لِلَّهِ</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">50 doğru cevap - Şükür ve hamd</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">mashallah</td>
+                        <td class="badge-name">مَا شَاءَ اللَّهُ</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">100 doğru cevap - Allah'ın dilediği gibi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">combo_master</td>
+                        <td class="badge-name">🕌 Muvazebet Ustası</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">5x muvazebet yap - İstikrar ve devamlılık</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">combo_10</td>
+                        <td class="badge-name">🕋 On Muvazebet</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">10x muvazebet - On güzel hasene</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">combo_20</td>
+                        <td class="badge-name">☪️ Yirmi Muvazebet</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">20x muvazebet - İhlas ve samimiyet</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_3</td>
+                        <td class="badge-name">📿 Üç Gün Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">3 gün üst üste talebe et - Sabır başlangıcı</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_7</td>
+                        <td class="badge-name">🕌 Haftalık Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">7 gün üst üste talebe et - Bir hafta istikrar</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_14</td>
+                        <td class="badge-name">🌙 İki Hafta Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">14 gün üst üste talebe et - İki hafta sebat</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_21</td>
+                        <td class="badge-name">☪️ Üç Hafta Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">21 gün üst üste talebe et - Alışkanlık oluşumu</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_30</td>
+                        <td class="badge-name">🕋 Ramazan Virdi</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">30 gün üst üste talebe et - Ramazan gibi sebat</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_40</td>
+                        <td class="badge-name">🌟 Kırk Gün Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">40 gün üst üste talebe et - Kırk günlük nafile</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">streak_100</td>
+                        <td class="badge-name">💎 Yüz Gün Vird</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">100 gün üst üste talebe et - Yüz günlük ibadet</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_1</td>
+                        <td class="badge-name">📖 Mübtedi</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 1 - İlim yolunda ilk adım</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_5</td>
+                        <td class="badge-name">🕌 Mütebahhir</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 5 - İlimde derinleşme</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_10</td>
+                        <td class="badge-name">🕋 Alim</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 10 - İlim sahibi olma</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_15</td>
+                        <td class="badge-name">☪️ Fakih</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 15 - Fıkıh bilgisi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_20</td>
+                        <td class="badge-name">🌟 Muhaddis</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 20 - Hadis ilmi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_25</td>
+                        <td class="badge-name">💎 Müfessir</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 25 - Tefsir ilmi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">level_30</td>
+                        <td class="badge-name">✨ Hafız</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Mertebe 30 - Hafızlık mertebesi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">first_step</td>
+                        <td class="badge-name">🌱 İlk Adım</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">500 Hasene topla - Bismillah ile başlangıç</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">bronze_traveler</td>
+                        <td class="badge-name">📿 Mübtedi Talebe</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">2,000 Hasene - İlim yolunda ilerleme</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">fast_student</td>
+                        <td class="badge-name">🕌 Hızlı Talebe</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">4,000 Hasene - İlim aşkı</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">silver_master</td>
+                        <td class="badge-name">🕋 Gümüş Mertebe</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">8,500 Hasene - İlimde derinleşme</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">second_silver</td>
+                        <td class="badge-name">☪️ İkinci Gümüş</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">17,000 Hasene - İstikrar ve sebat</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">gold_master</td>
+                        <td class="badge-name">🌟 Altın Mertebe</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">25,500 Hasene - İlim sahibi olma</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">second_gold</td>
+                        <td class="badge-name">💎 İkinci Altın</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">51,000 Hasene - Fıkıh bilgisi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">diamond_master</td>
+                        <td class="badge-name">✨ Elmas Mertebe</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">85,000 Hasene - Hadis ilmi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">master_of_masters</td>
+                        <td class="badge-name">📖 Ustalar Ustası</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">170,000 Hasene - Tefsir ilmi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">hafiz</td>
+                        <td class="badge-name">🕋 HAFIZ</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">1,000,000 Hasene - Hafızlık mertebesi</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">perfect_lesson_1</td>
+                        <td class="badge-name">✨ Mükemmel Ders</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">1 mükemmel ders (0 yanlış) - İhlas ve dikkat</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">perfect_lesson_5</td>
+                        <td class="badge-name">🌟 Beş Mükemmel</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">5 mükemmel ders - İstikrar ve titizlik</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">perfect_lesson_10</td>
+                        <td class="badge-name">💎 On Mükemmel</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">10 mükemmel ders - Mükemmellik arayışı</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">perfect_lesson_100</td>
+                        <td class="badge-name">🕋 Yüz Mükemmel</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">100 mükemmel ders - İhlas ve samimiyet</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">all_modes</td>
+                        <td class="badge-name">📚 Tüm Modlar</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">Tüm 6 oyun modunu oyna - Kapsamlı öğrenme</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">thousand_correct</td>
+                        <td class="badge-name">🕌 Bin Doğru</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">1,000 doğru cevap - Bin hasene</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                    <tr>
+                        <td class="badge-id">five_thousand_correct</td>
+                        <td class="badge-name">🕋 Beş Bin Doğru</td>
+                        <td><span class="badge-image">Dinamik (rozet6-42)</span></td>
+                        <td class="badge-description">5,000 doğru cevap - Beş bin hasene</td>
+                        <td><span class="badge-category category-achievement">Başarım</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- ROZET GÖRSEL LİSTESİ -->
+        <h2 class="section-title">🖼️ Mevcut Rozet Görselleri</h2>
+        <div class="info-box">
+            <h3>📁 assets/badges/ Klasöründeki Dosyalar</h3>
+            <p style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.8;">
+                rozet1.png, rozet2.png, rozet3.png, rozet4.png, rozet5.png, rozet6.png, rozet7.png, rozet8.png, rozet9.png, rozet10.png,<br>
+                rozet11.png, rozet12.png, rozet14.png, rozet15.png, rozet16.png, rozet17.png, rozet18.png, rozet19.png, rozet20.png,<br>
+                rozet21.png, rozet22.png, rozet23.png, rozet24.png, rozet25.png, rozet26.png, rozet27.png, rozet28.png, rozet29.png,<br>
+                rozet30.png, rozet32.png, rozet33.png, rozet34.png, rozet35.png, rozet36.png, rozet42.png
+            </p>
+            <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
+                <strong>Not:</strong> Başarımlar için rozet görselleri dinamik olarak atanır (rozet6-42 arası döngüsel kullanım).
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Arama fonksiyonu
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const tables = ['normalBadgesTable', 'asrBadgesTable', 'achievementsTable'];
+            
+            tables.forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
