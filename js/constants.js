@@ -25,7 +25,9 @@ const LEVELS = {
 
 // Başarımlar
 const ACHIEVEMENTS = [
-    // İLK ADIMLAR (En Kolay)
+    // ============================================
+    // İLK ADIMLAR (En Kolay - Tek Oturumda Tamamlanabilir)
+    // ============================================
     {
         id: 'first_victory',
         name: '🕌 İlk Kelime',
@@ -39,16 +41,16 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.totalCorrect >= 10
     },
     {
-        id: 'first_step',
-        name: '🌱 İlk Adım',
-        description: '100 Hasene topla - Bismillah ile başlangıç',
-        check: (stats) => stats.totalPoints >= 100
-    },
-    {
         id: 'combo_master',
         name: '🕌 Muvazebet Ustası',
         description: '5x muvazebet yap - İstikrar ve devamlılık',
         check: (stats) => stats.maxCombo >= 5
+    },
+    {
+        id: 'first_step',
+        name: '🌱 İlk Adım',
+        description: '100 Hasene topla - Bismillah ile başlangıç',
+        check: (stats) => stats.totalPoints >= 100
     },
     {
         id: 'level_1',
@@ -56,8 +58,16 @@ const ACHIEVEMENTS = [
         description: 'Mertebe 1 - İlim yolunda ilk adım',
         check: (stats) => stats.level >= 1
     },
+    {
+        id: 'perfect_lesson_1',
+        name: '✨ Mükemmel Ders',
+        description: '1 mükemmel ders (0 yanlış) - İhlas ve dikkat',
+        check: (stats) => stats.perfectLessons >= 1
+    },
     
-    // BAŞLANGIÇ (Kolay)
+    // ============================================
+    // BAŞLANGIÇ (Kolay - Kısa Sürede Tamamlanabilir)
+    // ============================================
     {
         id: 'alhamdulillah',
         name: 'الْحَمْدُ لِلَّهِ',
@@ -65,16 +75,22 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.totalCorrect >= 50
     },
     {
+        id: 'combo_10',
+        name: '🕋 On Muvazebet',
+        description: '10x muvazebet - On güzel hasene',
+        check: (stats) => stats.maxCombo >= 10
+    },
+    {
+        id: 'bronze_traveler',
+        name: '📿 Mübtedi Talebe',
+        description: '500 Hasene - İlim yolunda ilerleme',
+        check: (stats) => stats.totalPoints >= 500
+    },
+    {
         id: 'streak_3',
         name: '📿 Üç Gün Vird',
         description: '3 gün üst üste talebe et - Sabır başlangıcı',
         check: (stats) => stats.currentStreak >= 3
-    },
-    {
-        id: 'perfect_lesson_1',
-        name: '✨ Mükemmel Ders',
-        description: '1 mükemmel ders (0 yanlış) - İhlas ve dikkat',
-        check: (stats) => stats.perfectLessons >= 1
     },
     {
         id: 'daily_hero',
@@ -87,30 +103,16 @@ const ACHIEVEMENTS = [
         }
     },
     {
-        id: 'combo_10',
-        name: '🕋 On Muvazebet',
-        description: '10x muvazebet - On güzel hasene',
-        check: (stats) => stats.maxCombo >= 10
-    },
-    
-    // İLERLEME (Orta)
-    {
         id: 'mashallah',
         name: 'مَا شَاءَ اللَّهُ',
         description: '100 doğru cevap - Allah\'ın dilediği gibi',
         check: (stats) => stats.totalCorrect >= 100
     },
     {
-        id: 'bronze_traveler',
-        name: '📿 Mübtedi Talebe',
-        description: '500 Hasene - İlim yolunda ilerleme',
-        check: (stats) => stats.totalPoints >= 500
-    },
-    {
-        id: 'streak_7',
-        name: '🕌 Haftalık Vird',
-        description: '7 gün üst üste talebe et - Bir hafta istikrar',
-        check: (stats) => stats.currentStreak >= 7
+        id: 'fast_student',
+        name: '🕌 Hızlı Talebe',
+        description: '1,000 Hasene - İlim aşkı',
+        check: (stats) => stats.totalPoints >= 1000
     },
     {
         id: 'perfect_lesson_5',
@@ -125,42 +127,26 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.allModesPlayed >= 6
     },
     {
+        id: 'streak_7',
+        name: '🕌 Haftalık Vird',
+        description: '7 gün üst üste talebe et - Bir hafta istikrar',
+        check: (stats) => stats.currentStreak >= 7
+    },
+    {
         id: 'level_5',
         name: '🕌 Mütebahhir',
         description: 'Mertebe 5 - İlimde derinleşme',
         check: (stats) => stats.level >= 5
     },
-    {
-        id: 'fast_student',
-        name: '🕌 Hızlı Talebe',
-        description: '1,000 Hasene - İlim aşkı',
-        check: (stats) => stats.totalPoints >= 1000
-    },
-    {
-        id: 'streak_14',
-        name: '🌙 İki Hafta Vird',
-        description: '14 gün üst üste talebe et - İki hafta sebat',
-        check: (stats) => stats.currentStreak >= 14
-    },
     
-    // GELİŞME (Orta-Zor)
+    // ============================================
+    // İLERLEME (Orta Zorluk)
+    // ============================================
     {
-        id: 'combo_20',
-        name: '☪️ Yirmi Muvazebet',
-        description: '20x muvazebet - İhlas ve samimiyet',
-        check: (stats) => stats.maxCombo >= 20
-    },
-    {
-        id: 'streak_21',
-        name: '☪️ Üç Hafta Vird',
-        description: '21 gün üst üste talebe et - Alışkanlık oluşumu',
-        check: (stats) => stats.currentStreak >= 21
-    },
-    {
-        id: 'perfect_lesson_10',
-        name: '💎 On Mükemmel',
-        description: '10 mükemmel ders - Mükemmellik arayışı',
-        check: (stats) => stats.perfectLessons >= 10
+        id: 'thousand_correct_250',
+        name: '🕌 İki Yüz Elli Doğru',
+        description: '250 doğru cevap - İki yüz elli hasene',
+        check: (stats) => stats.totalCorrect >= 250
     },
     {
         id: 'silver_master',
@@ -169,16 +155,40 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.totalPoints >= 2000
     },
     {
+        id: 'combo_20',
+        name: '☪️ Yirmi Muvazebet',
+        description: '20x muvazebet - İhlas ve samimiyet',
+        check: (stats) => stats.maxCombo >= 20
+    },
+    {
+        id: 'perfect_lesson_10',
+        name: '💎 On Mükemmel',
+        description: '10 mükemmel ders - Mükemmellik arayışı',
+        check: (stats) => stats.perfectLessons >= 10
+    },
+    {
+        id: 'streak_14',
+        name: '🌙 İki Hafta Vird',
+        description: '14 gün üst üste talebe et - İki hafta sebat',
+        check: (stats) => stats.currentStreak >= 14
+    },
+    {
+        id: 'thousand_correct_500',
+        name: '🕌 Beş Yüz Doğru',
+        description: '500 doğru cevap - Beş yüz hasene',
+        check: (stats) => stats.totalCorrect >= 500
+    },
+    {
         id: 'level_10',
         name: '🕋 Alim',
         description: 'Mertebe 10 - İlim sahibi olma',
         check: (stats) => stats.level >= 10
     },
     {
-        id: 'thousand_correct_250',
-        name: '🕌 İki Yüz Elli Doğru',
-        description: '250 doğru cevap - İki yüz elli hasene',
-        check: (stats) => stats.totalCorrect >= 250
+        id: 'streak_21',
+        name: '☪️ Üç Hafta Vird',
+        description: '21 gün üst üste talebe et - Alışkanlık oluşumu',
+        check: (stats) => stats.currentStreak >= 21
     },
     {
         id: 'streak_30',
@@ -187,12 +197,26 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.currentStreak >= 30
     },
     
+    // ============================================
     // USTALIK (Zor)
+    // ============================================
     {
         id: 'second_silver',
         name: '☪️ İkinci Gümüş',
         description: '4,000 Hasene - İstikrar ve sebat',
         check: (stats) => stats.totalPoints >= 4000
+    },
+    {
+        id: 'thousand_correct',
+        name: '🕌 Bin Doğru',
+        description: '1,000 doğru cevap - Bin hasene',
+        check: (stats) => stats.totalCorrect >= 1000
+    },
+    {
+        id: 'gold_master',
+        name: '🌟 Altın Mertebe',
+        description: '8,500 Hasene - İlim sahibi olma',
+        check: (stats) => stats.totalPoints >= 8500
     },
     {
         id: 'level_15',
@@ -207,25 +231,15 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.currentStreak >= 40
     },
     {
-        id: 'gold_master',
-        name: '🌟 Altın Mertebe',
-        description: '8,500 Hasene - İlim sahibi olma',
-        check: (stats) => stats.totalPoints >= 8500
-    },
-    {
-        id: 'thousand_correct_500',
-        name: '🕌 Beş Yüz Doğru',
-        description: '500 doğru cevap - Beş yüz hasene',
-        check: (stats) => stats.totalCorrect >= 500
-    },
-    {
         id: 'level_20',
         name: '🌟 Muhaddis',
         description: 'Mertebe 20 - Hadis ilmi',
         check: (stats) => stats.level >= 20
     },
     
+    // ============================================
     // MASTER (Çok Zor)
+    // ============================================
     {
         id: 'second_gold',
         name: '💎 İkinci Altın',
@@ -237,12 +251,6 @@ const ACHIEVEMENTS = [
         name: '🌟 Elli Mükemmel',
         description: '50 mükemmel ders - İhlas ve samimiyet',
         check: (stats) => stats.perfectLessons >= 50
-    },
-    {
-        id: 'streak_100',
-        name: '💎 Yüz Gün Vird',
-        description: '100 gün üst üste talebe et - Yüz günlük ibadet',
-        check: (stats) => stats.currentStreak >= 100
     },
     {
         id: 'diamond_master',
@@ -257,13 +265,15 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.level >= 25
     },
     {
-        id: 'thousand_correct',
-        name: '🕌 Bin Doğru',
-        description: '1,000 doğru cevap - Bin hasene',
-        check: (stats) => stats.totalCorrect >= 1000
+        id: 'streak_100',
+        name: '💎 Yüz Gün Vird',
+        description: '100 gün üst üste talebe et - Yüz günlük ibadet',
+        check: (stats) => stats.currentStreak >= 100
     },
     
+    // ============================================
     // EFSANE (En Zor)
+    // ============================================
     {
         id: 'master_of_masters',
         name: '📖 Ustalar Ustası',
@@ -283,6 +293,12 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.perfectLessons >= 100
     },
     {
+        id: 'five_thousand_correct',
+        name: '🕋 Beş Bin Doğru',
+        description: '5,000 doğru cevap - Beş bin hasene',
+        check: (stats) => stats.totalCorrect >= 5000
+    },
+    {
         id: 'diamond_master',
         name: '✨ Elmas Mertebe',
         description: '85,000 Hasene - Hadis ilmi',
@@ -295,15 +311,9 @@ const ACHIEVEMENTS = [
         check: (stats) => stats.totalPoints >= 170000
     },
     {
-        id: 'five_thousand_correct',
-        name: '🕋 Beş Bin Doğru',
-        description: '5,000 doğru cevap - Beş bin hasene',
-        check: (stats) => stats.totalCorrect >= 5000
-    },
-    {
         id: 'hafiz',
-        name: '🕋 HAFIZ',
-        description: '1,000,000 Hasene - Hafızlık mertebesi',
+        name: '🕋 Kurra Hafız',
+        description: '1,000,000 Hasene - Kurra Hafızlık mertebesi',
         check: (stats) => stats.totalPoints >= 1000000
     }
 ];
