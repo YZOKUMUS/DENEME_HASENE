@@ -124,7 +124,7 @@ let lives = 3;
 // ============================================
 
 const elements = {
-    loadingScreen: document.getElementById('loading-screen'),
+    loadingScreen: document.getElementById('loadingScreen'),
     totalPointsEl: document.getElementById('total-points'),
     starPointsEl: document.getElementById('star-points'),
     currentLevelEl: document.getElementById('current-level'),
