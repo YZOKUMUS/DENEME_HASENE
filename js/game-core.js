@@ -2037,8 +2037,10 @@ async function endGame() {
     });
     // Oyun sayısını artır (her soru zaten kaydedildi, sadece oyun sayısı eksik)
     dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    // Perfect bonus'u detaylı istatistiklere ekle
     if (perfectBonus > 0) {
         dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
+        dailyData.points = (dailyData.points || 0) + perfectBonus;
     }
     safeSetItem(dailyKey, dailyData);
     
@@ -2057,8 +2059,10 @@ async function endGame() {
         playedDates: []
     });
     weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
+    // Perfect bonus'u detaylı istatistiklere ekle
     if (perfectBonus > 0) {
         weeklyData.perfectLessons = (weeklyData.perfectLessons || 0) + 1;
+        weeklyData.hasene = (weeklyData.hasene || 0) + perfectBonus;
     }
     safeSetItem(weeklyKey, weeklyData);
     
@@ -2077,8 +2081,10 @@ async function endGame() {
         playedDates: []
     });
     monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
+    // Perfect bonus'u detaylı istatistiklere ekle
     if (perfectBonus > 0) {
         monthlyData.perfectLessons = (monthlyData.perfectLessons || 0) + 1;
+        monthlyData.hasene = (monthlyData.hasene || 0) + perfectBonus;
     }
     safeSetItem(monthlyKey, monthlyData);
     
