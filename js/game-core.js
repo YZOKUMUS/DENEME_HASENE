@@ -579,7 +579,10 @@ function updateDailyGoalDisplay() {
     // Günlük hedef tamamlandı mı?
     if (dailyXP >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
         localStorage.setItem('dailyGoalCompleted', 'true');
-        addToGlobalPoints(1000, 0); // Bonus
+        const dailyGoalBonus = 1000;
+        addToGlobalPoints(dailyGoalBonus, 0); // Bonus
+        // Günlük vird bonusunu detaylı istatistiklere ekle
+        saveDetailedStats(dailyGoalBonus, 0, 0, 0, 0);
         showSuccessMessage('🎉 Günlük virdi tamamladınız! +1,000 Hasene');
     }
 }
@@ -2639,7 +2642,10 @@ async function claimDailyRewards() {
     if (dailyTasks.rewardsClaimed) return;
     
     dailyTasks.rewardsClaimed = true;
-    await addToGlobalPoints(2500, 0);
+    const rewardPoints = 2500;
+    await addToGlobalPoints(rewardPoints, 0);
+    // Görev ödülünü detaylı istatistiklere ekle
+    saveDetailedStats(rewardPoints, 0, 0, 0, 0);
     showSuccessMessage('🎉 Günlük görevler tamamlandı! +2,500 Hasene');
     updateTasksDisplay();
     saveStats();
@@ -2652,7 +2658,10 @@ async function claimWeeklyRewards() {
     if (weeklyTasks.rewardsClaimed) return;
     
     weeklyTasks.rewardsClaimed = true;
-    await addToGlobalPoints(5000, 0);
+    const rewardPoints = 5000;
+    await addToGlobalPoints(rewardPoints, 0);
+    // Görev ödülünü detaylı istatistiklere ekle
+    saveDetailedStats(rewardPoints, 0, 0, 0, 0);
     showSuccessMessage('🎉 Haftalık görevler tamamlandı! +5,000 Hasene');
     updateTasksDisplay();
     saveStats();
