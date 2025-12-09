@@ -3282,15 +3282,31 @@ function showStatsModal() {
  */
 function showBadgesModal() {
     // Rozetler - Her rozet için ilerleme göster
-    const badgesGrid = document.getElementById('badges-grid');
-    if (badgesGrid && BADGE_DEFINITIONS) {
-        badgesGrid.innerHTML = '';
-        
-        // Tüm oyun modlarını say
-        const allModesPlayed = Object.values(gameStats.gameModeCounts || {}).filter(count => count > 0).length;
-        
-        // Stats değerlerini güvenli hale getir (NaN, undefined, null kontrolü)
-        const stats = {
+    // Rozetleri 5 sekmeye eşit dağıt (35 rozet / 5 sekme = 7 rozet per sekme)
+    const badgeTabs = [
+        { id: 'asr-saadet', gridId: 'badges-grid-asr-saadet', startIndex: 0, endIndex: 7 },
+        { id: 'dort-halife', gridId: 'badges-grid-dort-halife', startIndex: 7, endIndex: 14 },
+        { id: 'uhud-sehitleri', gridId: 'badges-grid-uhud-sehitleri', startIndex: 14, endIndex: 21 },
+        { id: 'osmanli', gridId: 'badges-grid-osmanli', startIndex: 21, endIndex: 28 },
+        { id: 'selcuklu', gridId: 'badges-grid-selcuklu', startIndex: 28, endIndex: 35 }
+    ];
+    
+    if (!BADGE_DEFINITIONS) {
+        openModal('badges-modal');
+        return;
+    }
+    
+    // Tüm badge grid'lerini temizle
+    badgeTabs.forEach(tab => {
+        const grid = document.getElementById(tab.gridId);
+        if (grid) grid.innerHTML = '';
+    });
+    
+    // Tüm oyun modlarını say
+    const allModesPlayed = Object.values(gameStats.gameModeCounts || {}).filter(count => count > 0).length;
+    
+    // Stats değerlerini güvenli hale getir (NaN, undefined, null kontrolü)
+    const stats = {
             totalPoints: totalPoints || 0,
             totalCorrect: gameStats.totalCorrect || 0,
             totalWrong: gameStats.totalWrong || 0,
@@ -3298,13 +3314,13 @@ function showBadgesModal() {
             currentStreak: streakData.currentStreak || 0,
             maxCombo: maxCombo || 0,
             perfectLessons: perfectLessonsCount || 0,
-            allModesPlayed: allModesPlayed || 0
-        };
-        
-        /**
-         * Rozet zorluk skorunu hesaplar (düşük skor = kolay, yüksek skor = zor)
-         */
-        function calculateBadgeDifficulty(badge) {
+        allModesPlayed: allModesPlayed || 0
+    };
+    
+    /**
+     * Rozet zorluk skorunu hesaplar (düşük skor = kolay, yüksek skor = zor)
+     */
+    function calculateBadgeDifficulty(badge) {
             const desc = badge.description.toLowerCase();
             let difficultyScore = 0;
             
@@ -3385,11 +3401,11 @@ function showBadgesModal() {
                 difficultyScore += 3;
             }
             
-            return difficultyScore;
-        }
-        
-        // Rozetleri zorluk skoruna göre sırala (kolaydan zora, kazanılanlar önce)
-        const badgesWithUnlockInfo = BADGE_DEFINITIONS.map((badge, originalIndex) => {
+        return difficultyScore;
+    }
+    
+    // Rozetleri zorluk skoruna göre sırala (kolaydan zora, kazanılanlar önce)
+    const badgesWithUnlockInfo = BADGE_DEFINITIONS.map((badge, originalIndex) => {
             // Yeni ve eski format desteği
             const unlockInfo = unlockedBadges.find(b => {
                 if (typeof b === 'string') return b === badge.id;
@@ -3401,12 +3417,12 @@ function showBadgesModal() {
                 originalIndex: originalIndex,
                 difficultyScore: calculateBadgeDifficulty(badge),
                 isUnlocked: !!unlockInfo,
-                unlockedAt: unlockInfo ? (typeof unlockInfo === 'string' ? 0 : unlockInfo.unlockedAt) : null
-            };
-        });
-        
-        // Sırala: Önce kazanılanlar (zorluk skoruna göre kolaydan zora), sonra kazanılmayanlar (zorluk skoruna göre kolaydan zora)
-        badgesWithUnlockInfo.sort((a, b) => {
+            unlockedAt: unlockInfo ? (typeof unlockInfo === 'string' ? 0 : unlockInfo.unlockedAt) : null
+        };
+    });
+    
+    // Sırala: Önce kazanılanlar (zorluk skoruna göre kolaydan zora), sonra kazanılmayanlar (zorluk skoruna göre kolaydan zora)
+    badgesWithUnlockInfo.sort((a, b) => {
             if (a.isUnlocked && b.isUnlocked) {
                 // Her ikisi de kazanılmış: zorluk skoruna göre (kolaydan zora)
                 return a.difficultyScore - b.difficultyScore;
@@ -3418,72 +3434,107 @@ function showBadgesModal() {
                 return 1;
             } else {
                 // Her ikisi de kazanılmamış: zorluk skoruna göre (kolaydan zora)
-                return a.difficultyScore - b.difficultyScore;
-            }
-        });
+            return a.difficultyScore - b.difficultyScore;
+        }
+    });
+    
+    // Rozetleri sekmelere dağıt
+    badgesWithUnlockInfo.forEach(({badge, isUnlocked}, index) => {
+        // Hangi sekmede olduğunu bul
+        const tabInfo = badgeTabs.find(tab => index >= tab.startIndex && index < tab.endIndex);
+        if (!tabInfo) return; // Index sınırları dışındaysa atla
         
-        badgesWithUnlockInfo.forEach(({badge, isUnlocked}) => {
-            let progress = 0;
-            if (badge.progress) {
-                const calculatedProgress = badge.progress(stats);
-                // NaN, undefined veya negatif değerleri 0 yap
-                progress = (isNaN(calculatedProgress) || calculatedProgress === undefined || calculatedProgress < 0) 
-                    ? 0 
-                    : Math.round(Math.min(100, Math.max(0, calculatedProgress)));
-            }
+        const badgesGrid = document.getElementById(tabInfo.gridId);
+        if (!badgesGrid) return;
+        
+        let progress = 0;
+        if (badge.progress) {
+            const calculatedProgress = badge.progress(stats);
+            // NaN, undefined veya negatif değerleri 0 yap
+            progress = (isNaN(calculatedProgress) || calculatedProgress === undefined || calculatedProgress < 0) 
+                ? 0 
+                : Math.round(Math.min(100, Math.max(0, calculatedProgress)));
+        }
+        
+        const badgeItem = document.createElement('div');
+        badgeItem.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
+        
+        // Kazanılan rozetler için minimal görünüm (sadece ikon ve isim)
+        if (isUnlocked) {
+            badgeItem.innerHTML = `
+                <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
+                <div class="badge-name">${badge.name}</div>
+            `;
+        } else {
+            // Kilitli rozetler için tam bilgi (açıklama ve ilerleme)
+            const progressBar = (progress > 0 && progress < 100) ? `
+                <div class="badge-progress-bar">
+                    <div class="badge-progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div class="badge-progress-text">${progress}%</div>
+            ` : '';
             
-            const badgeItem = document.createElement('div');
-            badgeItem.className = `badge-item ${isUnlocked ? 'unlocked' : ''}`;
-            
-            // Kazanılan rozetler için minimal görünüm (sadece ikon ve isim)
-            if (isUnlocked) {
-                badgeItem.innerHTML = `
-                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
-                    <div class="badge-name">${badge.name}</div>
-                `;
+            badgeItem.innerHTML = `
+                <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
+                <div class="badge-name">${badge.name}</div>
+                <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badge.description}</div>
+                ${progressBar}
+            `;
+        }
+        badgesGrid.appendChild(badgeItem);
+        
+        // Rozet görseli yüklendiğinde fallback icon'u gizle
+        const badgeImg = badgeItem.querySelector('.badge-image');
+        if (badgeImg) {
+            // Eğer görsel zaten yüklenmişse (cache'den)
+            if (badgeImg.complete && badgeImg.naturalHeight !== 0) {
+                const fallbackIcon = badgeImg.nextElementSibling;
+                if (fallbackIcon && fallbackIcon.classList.contains('achievement-icon')) {
+                    fallbackIcon.style.display = 'none';
+                }
             } else {
-                // Kilitli rozetler için tam bilgi (açıklama ve ilerleme)
-                const progressBar = (progress > 0 && progress < 100) ? `
-                    <div class="badge-progress-bar">
-                        <div class="badge-progress-fill" style="width: ${progress}%"></div>
-                    </div>
-                    <div class="badge-progress-text">${progress}%</div>
-                ` : '';
-                
-                badgeItem.innerHTML = `
-                    <img src="assets/badges/${badge.image}" alt="${badge.name}" class="badge-image" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="achievement-icon" style="font-size: 3rem; display: none;">${badge.name.charAt(0)}</div>
-                    <div class="badge-name">${badge.name}</div>
-                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 2px; line-height: 1.2;">${badge.description}</div>
-                    ${progressBar}
-                `;
-            }
-            badgesGrid.appendChild(badgeItem);
-            
-            // Rozet görseli yüklendiğinde fallback icon'u gizle
-            const badgeImg = badgeItem.querySelector('.badge-image');
-            if (badgeImg) {
-                // Eğer görsel zaten yüklenmişse (cache'den)
-                if (badgeImg.complete && badgeImg.naturalHeight !== 0) {
-                    const fallbackIcon = badgeImg.nextElementSibling;
+                // Görsel yükleniyor, onload event'i ekle
+                badgeImg.onload = function() {
+                    const fallbackIcon = this.nextElementSibling;
                     if (fallbackIcon && fallbackIcon.classList.contains('achievement-icon')) {
                         fallbackIcon.style.display = 'none';
                     }
-                } else {
-                    // Görsel yükleniyor, onload event'i ekle
-                    badgeImg.onload = function() {
-                        const fallbackIcon = this.nextElementSibling;
-                        if (fallbackIcon && fallbackIcon.classList.contains('achievement-icon')) {
-                            fallbackIcon.style.display = 'none';
-                        }
-                    };
-                }
+                };
+            }
+        }
+    });
+    
+    // Sekme değiştirme işlevselliği
+    const badgeTabButtons = document.querySelectorAll('.badge-tab-btn');
+    const badgeTabContents = document.querySelectorAll('.badge-tab-content');
+    
+    badgeTabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.tab;
+            
+            // Tüm butonlardan active class'ını kaldır
+            badgeTabButtons.forEach(b => b.classList.remove('active'));
+            // Tıklanan butona active class'ı ekle
+            btn.classList.add('active');
+            
+            // Tüm tab içeriklerini gizle
+            badgeTabContents.forEach(content => {
+                content.style.display = 'none';
+                content.classList.remove('active');
+            });
+            
+            // Hedef tab içeriğini göster
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+                targetContent.classList.add('active');
             }
         });
-    }
+    });
     
     // Başarımlar - PNG dosyalarını kullan
     const achievementsGrid = document.getElementById('achievements-grid');
