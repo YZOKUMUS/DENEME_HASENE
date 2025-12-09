@@ -117,3 +117,4 @@ Testleri düzenli olarak çalıştırarak:
 - Yeni eklenen kodların etkisini ölçün
 - Veri tutarlılığını garanti altına alın
 
+
