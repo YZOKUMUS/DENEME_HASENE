@@ -14,6 +14,23 @@ function showOnboarding() {
     openModal('onboarding-modal');
 }
 
+// Onboarding elementleri cache'le (duplikasyon önleme)
+let onboardingElementsCache = null;
+
+/**
+ * Onboarding elementlerini alır (cache'lenmiş)
+ */
+function getOnboardingElements() {
+    if (!onboardingElementsCache) {
+        onboardingElementsCache = {
+            prevBtn: document.getElementById('onboarding-prev'),
+            nextBtn: document.getElementById('onboarding-next'),
+            skipBtn: document.getElementById('onboarding-skip')
+        };
+    }
+    return onboardingElementsCache;
+}
+
 /**
  * Onboarding slide'ını günceller
  */
@@ -29,19 +46,18 @@ function updateOnboardingSlide() {
         currentSlide.style.display = 'block';
     }
     
-    // Butonları güncelle
-    const prevBtn = document.getElementById('onboarding-prev');
-    const nextBtn = document.getElementById('onboarding-next');
+    // Butonları güncelle (cache'lenmiş elementleri kullan)
+    const elements = getOnboardingElements();
     
-    if (prevBtn) {
-        prevBtn.style.display = currentOnboardingSlide === 0 ? 'none' : 'block';
+    if (elements.prevBtn) {
+        elements.prevBtn.style.display = currentOnboardingSlide === 0 ? 'none' : 'block';
     }
     
-    if (nextBtn) {
+    if (elements.nextBtn) {
         if (currentOnboardingSlide === totalOnboardingSlides - 1) {
-            nextBtn.textContent = 'Başla!';
+            elements.nextBtn.textContent = 'Başla!';
         } else {
-            nextBtn.textContent = 'İleri →';
+            elements.nextBtn.textContent = 'İleri →';
         }
     }
 }
@@ -84,22 +100,20 @@ function skipOnboarding() {
     finishOnboarding();
 }
 
-// Event listeners
+// Event listeners (cache'lenmiş elementleri kullan)
 if (typeof document !== 'undefined') {
-    const nextBtn = document.getElementById('onboarding-next');
-    const prevBtn = document.getElementById('onboarding-prev');
-    const skipBtn = document.getElementById('onboarding-skip');
+    const elements = getOnboardingElements();
     
-    if (nextBtn) {
-        nextBtn.addEventListener('click', nextOnboardingSlide);
+    if (elements.nextBtn) {
+        elements.nextBtn.addEventListener('click', nextOnboardingSlide);
     }
     
-    if (prevBtn) {
-        prevBtn.addEventListener('click', prevOnboardingSlide);
+    if (elements.prevBtn) {
+        elements.prevBtn.addEventListener('click', prevOnboardingSlide);
     }
     
-    if (skipBtn) {
-        skipBtn.addEventListener('click', skipOnboarding);
+    if (elements.skipBtn) {
+        elements.skipBtn.addEventListener('click', skipOnboarding);
     }
 }
 

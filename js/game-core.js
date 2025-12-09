@@ -1577,6 +1577,121 @@ let shuffledAyet = [];
 let shuffledDua = [];
 let shuffledHadis = [];
 
+// ============================================
+// ORTAK YARDIMCI FONKSİYONLAR
+// ============================================
+
+/**
+ * Navigasyon butonlarını ayarlar (Ayet, Dua, Hadis için ortak)
+ * @param {string} prevBtnId - Önceki buton ID'si
+ * @param {string} nextBtnId - Sonraki buton ID'si
+ * @param {number} currentIndex - Mevcut index
+ * @param {Array} allItems - Tüm öğeler dizisi
+ * @param {Function} displayFunction - Gösterim fonksiyonu (item, allItems) => void
+ * @param {Object} indexRef - Index referansı { get: () => number, set: (val) => void }
+ */
+function setupNavigationButtons(prevBtnId, nextBtnId, currentIndex, allItems, displayFunction, indexRef) {
+    const prevBtn = document.getElementById(prevBtnId);
+    const nextBtn = document.getElementById(nextBtnId);
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentIndex === 0;
+        prevBtn.onclick = () => {
+            if (currentIndex > 0) {
+                const newIndex = currentIndex - 1;
+                indexRef.set(newIndex);
+                displayFunction(allItems[newIndex], allItems);
+            }
+        };
+    }
+    
+    if (nextBtn) {
+        // Her zaman bir sonraki rastgele öğeyi göster
+        nextBtn.disabled = false;
+        nextBtn.onclick = () => {
+            // Yeni rastgele bir öğe seç
+            const randomIndex = Math.floor(Math.random() * allItems.length);
+            indexRef.set(randomIndex);
+            displayFunction(allItems[randomIndex], allItems);
+        };
+    }
+}
+
+/**
+ * Audio butonunu ayarlar (Ayet, Dua, Hadis için ortak)
+ * @param {string} buttonId - Buton ID'si
+ * @param {string} audioUrl - Ses dosyası URL'si
+ * @param {number|null} startTime - Başlangıç zamanı (opsiyonel)
+ */
+function setupAudioButtonForContent(buttonId, audioUrl, startTime = null) {
+    const playAudioBtn = document.getElementById(buttonId);
+    
+    if (!playAudioBtn) return;
+    
+    if (typeof setupAudioButton === 'function') {
+        // Audio Manager kullan
+        setupAudioButton(playAudioBtn, audioUrl, {
+            onEnded: () => {
+                // Ses bittiğinde özel işlemler (gerekirse)
+            },
+            onError: () => {
+                // Hata durumunda özel işlemler (gerekirse)
+            }
+        });
+        
+        // Başlangıç zamanı varsa ayarla
+        if (startTime && typeof window.currentAudio !== 'undefined' && window.currentAudio) {
+            // Not: Bu durumda playAudio çağrıldıktan sonra currentTime ayarlanmalı
+            // Bu özellik audio-manager.js'e eklenebilir
+        }
+    } else if (audioUrl) {
+        // Fallback: Eski yöntem
+        playAudioBtn.onclick = () => {
+            if (typeof playAudio === 'function') {
+                playAudio(audioUrl, playAudioBtn);
+                // Başlangıç zamanı varsa ayarla
+                if (startTime && window.currentAudio) {
+                    window.currentAudio.currentTime = startTime;
+                }
+            } else {
+                // Fallback fallback: Manuel audio handling
+                if (window.currentAudio) {
+                    window.currentAudio.pause();
+                    window.currentAudio.currentTime = 0;
+                }
+                window.currentAudio = new Audio(audioUrl);
+                if (startTime) {
+                    window.currentAudio.currentTime = startTime;
+                }
+                playAudioBtn.disabled = true;
+                playAudioBtn.style.opacity = '0.6';
+                window.currentAudio.play().catch(err => {
+                    errorLog('Ses çalınamadı:', err);
+                    showErrorMessage('Ses dosyası çalınamadı.');
+                    playAudioBtn.disabled = false;
+                    playAudioBtn.style.opacity = '1';
+                    window.currentAudio = null;
+                });
+                window.currentAudio.onended = () => {
+                    playAudioBtn.disabled = false;
+                    playAudioBtn.style.opacity = '1';
+                    window.currentAudio = null;
+                };
+                window.currentAudio.onerror = () => {
+                    playAudioBtn.disabled = false;
+                    playAudioBtn.style.opacity = '1';
+                    window.currentAudio = null;
+                };
+            }
+        };
+        playAudioBtn.disabled = false;
+        playAudioBtn.style.opacity = '1';
+    } else {
+        playAudioBtn.disabled = true;
+        playAudioBtn.style.opacity = '0.5';
+    }
+}
+
 /**
  * Ayet Oku modunu başlatır
  */
@@ -1631,50 +1746,21 @@ function displayAyet(ayet, allAyet) {
         }
     }
     
-    // Ses çal butonu - Audio Manager kullan
-    const playAudioBtn = document.getElementById('ayet-play-audio-btn');
-    if (playAudioBtn && typeof setupAudioButton === 'function') {
-        setupAudioButton(playAudioBtn, ayet.ayet_ses_dosyasi);
-    } else if (playAudioBtn) {
-        // Fallback: Eski yöntem
-        if (ayet.ayet_ses_dosyasi) {
-            playAudioBtn.onclick = () => {
-                if (typeof playAudio === 'function') {
-                    playAudio(ayet.ayet_ses_dosyasi, playAudioBtn);
-                }
-            };
-            playAudioBtn.disabled = false;
-            playAudioBtn.style.opacity = '1';
-        } else {
-            playAudioBtn.disabled = true;
-            playAudioBtn.style.opacity = '0.5';
+    // Ses çal butonu - Ortak fonksiyon kullan
+    setupAudioButtonForContent('ayet-play-audio-btn', ayet.ayet_ses_dosyasi);
+    
+    // Navigasyon butonları - Ortak fonksiyon kullan
+    setupNavigationButtons(
+        'ayet-prev-btn',
+        'ayet-next-btn',
+        currentAyetIndex,
+        allAyet,
+        displayAyet,
+        {
+            get: () => currentAyetIndex,
+            set: (val) => { currentAyetIndex = val; }
         }
-    }
-    
-    // Navigasyon butonları
-    const prevBtn = document.getElementById('ayet-prev-btn');
-    const nextBtn = document.getElementById('ayet-next-btn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = currentAyetIndex === 0;
-        prevBtn.onclick = () => {
-            if (currentAyetIndex > 0) {
-                currentAyetIndex--;
-                displayAyet(allAyet[currentAyetIndex], allAyet);
-            }
-        };
-    }
-    
-    if (nextBtn) {
-        // Her zaman bir sonraki rastgele ayeti göster
-        nextBtn.disabled = false;
-        nextBtn.onclick = () => {
-            // Yeni rastgele bir ayet seç
-            const randomIndex = Math.floor(Math.random() * allAyet.length);
-            currentAyetIndex = randomIndex;
-            displayAyet(allAyet[currentAyetIndex], allAyet);
-        };
-    }
+    );
 }
 
 /**
@@ -1728,95 +1814,21 @@ function displayDua(dua, allDua) {
         }
     }
     
-    // Ses çal butonu - Audio Manager kullan
-    const playAudioBtn = document.getElementById('dua-play-audio-btn');
-    if (playAudioBtn && typeof setupAudioButton === 'function') {
-        setupAudioButton(playAudioBtn, dua.ses_url, {
-            onEnded: () => {
-                // Ses bittiğinde özel işlemler (gerekirse)
-            },
-            onError: () => {
-                // Hata durumunda özel işlemler (gerekirse)
-            }
-        });
-        // Dua için özel başlangıç zamanı varsa ayarla
-        if (dua.start && typeof window.currentAudio !== 'undefined' && window.currentAudio) {
-            // Not: Bu durumda playAudio çağrıldıktan sonra currentTime ayarlanmalı
-            // Bu özellik audio-manager.js'e eklenebilir
+    // Ses çal butonu - Ortak fonksiyon kullan (dua.start zamanı ile)
+    setupAudioButtonForContent('dua-play-audio-btn', dua.ses_url, dua.start || null);
+    
+    // Navigasyon butonları - Ortak fonksiyon kullan
+    setupNavigationButtons(
+        'dua-prev-btn',
+        'dua-next-btn',
+        currentDuaIndex,
+        allDua,
+        displayDua,
+        {
+            get: () => currentDuaIndex,
+            set: (val) => { currentDuaIndex = val; }
         }
-    } else if (playAudioBtn) {
-        // Fallback: Eski yöntem
-        if (dua.ses_url) {
-            playAudioBtn.onclick = () => {
-                if (typeof playAudio === 'function') {
-                    playAudio(dua.ses_url, playAudioBtn);
-                    // Dua için özel başlangıç zamanı
-                    if (dua.start && window.currentAudio) {
-                        window.currentAudio.currentTime = dua.start;
-                    }
-                } else {
-                    // Fallback fallback: Manuel audio handling
-                    if (window.currentAudio) {
-                        window.currentAudio.pause();
-                        window.currentAudio.currentTime = 0;
-                    }
-                    window.currentAudio = new Audio(dua.ses_url);
-                    if (dua.start) {
-                        window.currentAudio.currentTime = dua.start;
-                    }
-                    playAudioBtn.disabled = true;
-                    playAudioBtn.style.opacity = '0.6';
-                    window.currentAudio.play().catch(err => {
-                        errorLog('Ses çalınamadı:', err);
-                        showErrorMessage('Ses dosyası çalınamadı.');
-                        playAudioBtn.disabled = false;
-                        playAudioBtn.style.opacity = '1';
-                        window.currentAudio = null;
-                    });
-                    window.currentAudio.onended = () => {
-                        playAudioBtn.disabled = false;
-                        playAudioBtn.style.opacity = '1';
-                        window.currentAudio = null;
-                    };
-                    window.currentAudio.onerror = () => {
-                        playAudioBtn.disabled = false;
-                        playAudioBtn.style.opacity = '1';
-                        window.currentAudio = null;
-                    };
-                }
-            };
-            playAudioBtn.disabled = false;
-            playAudioBtn.style.opacity = '1';
-        } else {
-            playAudioBtn.disabled = true;
-            playAudioBtn.style.opacity = '0.5';
-        }
-    }
-    
-    // Navigasyon
-    const prevBtn = document.getElementById('dua-prev-btn');
-    const nextBtn = document.getElementById('dua-next-btn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = currentDuaIndex === 0;
-        prevBtn.onclick = () => {
-            if (currentDuaIndex > 0) {
-                currentDuaIndex--;
-                displayDua(allDua[currentDuaIndex], allDua);
-            }
-        };
-    }
-    
-    if (nextBtn) {
-        // Her zaman bir sonraki rastgele duayı göster
-        nextBtn.disabled = false;
-        nextBtn.onclick = () => {
-            // Yeni rastgele bir dua seç
-            const randomIndex = Math.floor(Math.random() * allDua.length);
-            currentDuaIndex = randomIndex;
-            displayDua(allDua[currentDuaIndex], allDua);
-        };
-    }
+    );
 }
 
 /**
@@ -1863,30 +1875,18 @@ function displayHadis(hadis, allHadis) {
     if (textEl) textEl.textContent = hadis.text || '';
     if (refEl) refEl.textContent = hadis.refno || '';
     
-    // Navigasyon
-    const prevBtn = document.getElementById('hadis-prev-btn');
-    const nextBtn = document.getElementById('hadis-next-btn');
-    
-    if (prevBtn) {
-        prevBtn.disabled = currentHadisIndex === 0;
-        prevBtn.onclick = () => {
-            if (currentHadisIndex > 0) {
-                currentHadisIndex--;
-                displayHadis(allHadis[currentHadisIndex], allHadis);
-            }
-        };
-    }
-    
-    if (nextBtn) {
-        // Her zaman bir sonraki rastgele hadisi göster
-        nextBtn.disabled = false;
-        nextBtn.onclick = () => {
-            // Yeni rastgele bir hadis seç
-            const randomIndex = Math.floor(Math.random() * allHadis.length);
-            currentHadisIndex = randomIndex;
-            displayHadis(allHadis[currentHadisIndex], allHadis);
-        };
-    }
+    // Navigasyon butonları - Ortak fonksiyon kullan
+    setupNavigationButtons(
+        'hadis-prev-btn',
+        'hadis-next-btn',
+        currentHadisIndex,
+        allHadis,
+        displayHadis,
+        {
+            get: () => currentHadisIndex,
+            set: (val) => { currentHadisIndex = val; }
+        }
+    );
 }
 
 // ============================================
@@ -4454,16 +4454,14 @@ function syncDifficultyFromHTML() {
     }
 }
 
-// Hem DOMContentLoaded hem de load event'lerinde çalıştır
+// Zorluk seviyesini senkronize et (tek bir event listener ile)
+// DOMContentLoaded veya load event'inde çalıştır
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncDifficultyFromHTML);
+    document.addEventListener('DOMContentLoaded', syncDifficultyFromHTML, { once: true });
 } else {
     // DOM zaten yüklüyse hemen çalıştır
     syncDifficultyFromHTML();
 }
-
-// window.load event'inde de çalıştır (tüm kaynaklar yüklendikten sonra)
-window.addEventListener('load', syncDifficultyFromHTML);
 
 // Kelime Çevir alt mod seçimi
 document.querySelectorAll('.submode-btn').forEach(btn => {
