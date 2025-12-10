@@ -56,7 +56,7 @@ INSERT INTO league_config (league_name, league_order, promotion_top_percent, dem
 ('talib', 2, 25, 30, '📚', '#CD7F32', 'Talib', 'طالب', 'Öğrenen - İlme talip olan'),
 ('mutavassit', 3, 20, 25, '📘', '#4682B4', 'Mutavassıt', 'متوسط', 'Orta seviye - Yolun ortasında'),
 ('mutebahhir', 4, 20, 25, '📗', '#228B22', 'Mütebahhir', 'متبحر', 'Derinleşen - İlme daldınız'),
-('hafiz', 5, 15, 20, '📙', '#FFD700', 'Hafız', 'حافظ', 'Koruyan - Kur\'an-ı ezberleyen'),
+('hafiz', 5, 15, 20, '📙', '#FFD700', 'Hafız', 'حافظ', 'Koruyan - Kur''an-ı ezberleyen'),
 ('kurra', 6, 15, 20, '📕', '#DC143C', 'Kurra', 'قراء', 'Okuyucu - Kıraat ilmine sahip'),
 ('alim', 7, 12, 18, '📓', '#4B0082', 'Alim', 'عالم', 'Bilgin - İlim sahibi'),
 ('mujtahid', 8, 12, 18, '📔', '#4169E1', 'Müctehid', 'مجتهد', 'İçtihad Eden - Hüküm çıkarabilen'),
@@ -66,12 +66,14 @@ INSERT INTO league_config (league_name, league_order, promotion_top_percent, dem
 ('ulama', 12, 0, 10, '✨', '#FFD700', 'Ulema', 'علماء', 'Alimler Zümresi - En yüksek mertebe')
 ON CONFLICT (league_name) DO NOTHING;
 
--- 6. Updated_at Trigger
+-- 6. Updated_at Trigger (Önce varsa sil, sonra oluştur)
+DROP TRIGGER IF EXISTS update_weekly_leaderboard_updated_at ON weekly_leaderboard;
 CREATE TRIGGER update_weekly_leaderboard_updated_at 
     BEFORE UPDATE ON weekly_leaderboard 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_leagues_updated_at ON user_leagues;
 CREATE TRIGGER update_user_leagues_updated_at 
     BEFORE UPDATE ON user_leagues 
     FOR EACH ROW 
@@ -82,35 +84,40 @@ ALTER TABLE weekly_leaderboard ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_leagues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE league_config ENABLE ROW LEVEL SECURITY;
 
--- Herkes leaderboard'u görebilir
+-- Weekly Leaderboard Policies
+DROP POLICY IF EXISTS "Anyone can view weekly_leaderboard" ON weekly_leaderboard;
 CREATE POLICY "Anyone can view weekly_leaderboard" 
     ON weekly_leaderboard FOR SELECT 
     USING (true);
 
--- Kullanıcılar kendi kayıtlarını güncelleyebilir
+DROP POLICY IF EXISTS "Users can update own weekly_leaderboard" ON weekly_leaderboard;
 CREATE POLICY "Users can update own weekly_leaderboard" 
     ON weekly_leaderboard FOR UPDATE 
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own weekly_leaderboard" ON weekly_leaderboard;
 CREATE POLICY "Users can insert own weekly_leaderboard" 
     ON weekly_leaderboard FOR INSERT 
     WITH CHECK (auth.uid() = user_id);
 
--- Herkes lig config'i görebilir
+-- League Config Policies
+DROP POLICY IF EXISTS "Anyone can view league_config" ON league_config;
 CREATE POLICY "Anyone can view league_config" 
     ON league_config FOR SELECT 
     USING (true);
 
--- Herkes user_leagues görebilir (public leaderboard için)
+-- User Leagues Policies
+DROP POLICY IF EXISTS "Anyone can view user_leagues" ON user_leagues;
 CREATE POLICY "Anyone can view user_leagues" 
     ON user_leagues FOR SELECT 
     USING (true);
 
--- Kullanıcılar kendi lig bilgilerini güncelleyebilir
+DROP POLICY IF EXISTS "Users can update own user_leagues" ON user_leagues;
 CREATE POLICY "Users can update own user_leagues" 
     ON user_leagues FOR UPDATE 
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own user_leagues" ON user_leagues;
 CREATE POLICY "Users can insert own user_leagues" 
     ON user_leagues FOR INSERT 
     WITH CHECK (auth.uid() = user_id);
