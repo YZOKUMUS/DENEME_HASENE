@@ -450,8 +450,10 @@ async function loadStats() {
  */
 async function saveStats() {
     try {
+        console.log('🟣 saveStats çağrıldı');
         // Backend API'ye kaydet (eğer mevcut ve kullanıcı giriş yapmışsa)
         if (typeof window.saveUserStats === 'function') {
+            console.log('🟣 saveUserStats fonksiyonu mevcut, çağrılıyor...');
             try {
                 await window.saveUserStats({
                     total_points: totalPoints,
@@ -460,10 +462,14 @@ async function saveStats() {
                     game_stats: gameStats,
                     perfect_lessons_count: perfectLessonsCount
                 });
-                debugLog('İstatistikler backend\'e kaydedildi');
+                console.log('✅ Backend\'e istatistikler kaydedildi');
+                infoLog('İstatistikler backend\'e kaydedildi');
             } catch (apiError) {
+                console.error('❌ Backend kaydetme hatası:', apiError);
                 console.warn('Backend kaydetme hatası, localStorage kullanılıyor:', apiError);
             }
+        } else {
+            console.warn('⚠️ saveUserStats fonksiyonu bulunamadı');
         }
         
         // Günlük görevleri backend'e kaydet
