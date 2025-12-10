@@ -158,20 +158,41 @@ async function loginUser(email, password) {
  */
 async function loginWithGoogle() {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        // GitHub Pages URL'ini kullan (production)
-        const redirectUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? window.location.origin + window.location.pathname
-            : 'https://yzokumus.github.io/DENEME_HASENE';
-        
-        const { data, error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: redirectUrl
+        try {
+            // Dinamik redirect URL - mobil ve desktop için
+            const redirectUrl = window.location.origin + window.location.pathname;
+            
+            console.log('🔐 Google OAuth başlatılıyor...');
+            console.log('📍 Redirect URL:', redirectUrl);
+            
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
+                }
+            });
+            
+            if (error) {
+                console.error('❌ Google OAuth hatası:', error);
+                throw error;
             }
-        });
-        
-        if (error) throw error;
-        return data;
+            
+            console.log('✅ Google OAuth başarıyla başlatıldı');
+            return data;
+        } catch (error) {
+            console.error('❌ Google login hatası:', error);
+            
+            // Kullanıcı dostu hata mesajı
+            if (error.message && error.message.includes('500')) {
+                throw new Error('Google girişi yapılandırılmamış. Lütfen Supabase Dashboard\'da Google OAuth provider\'ını yapılandırın.');
+            }
+            
+            throw error;
+        }
     }
     
     throw new Error('Google login not available');

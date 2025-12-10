@@ -264,14 +264,28 @@ async function handleRegister() {
 async function handleGoogleLogin() {
     try {
         if (typeof window.loginWithGoogle === 'function') {
+            showAuthMessage('Google ile giriş yapılıyor...', 'info');
+            
             await window.loginWithGoogle();
             // OAuth redirect sonrası sayfa yenilenecek
+            // Başarılı olduğunda kullanıcı Google'a yönlendirilir
         } else {
-            showAuthMessage('Google girişi şu an kullanılamıyor', 'error');
+            showAuthMessage('Google girişi şu an kullanılamıyor. Lütfen sayfayı yenileyin.', 'error');
         }
     } catch (error) {
         console.error('Google login hatası:', error);
-        showAuthMessage('Google ile giriş yapılamadı', 'error');
+        
+        let errorMessage = 'Google ile giriş yapılamadı.';
+        
+        if (error.message && error.message.includes('yapılandırılmamış')) {
+            errorMessage = 'Google girişi yapılandırılmamış. Lütfen Supabase Dashboard\'da Google OAuth provider\'ını yapılandırın. Detaylar için: backend/GOOGLE_OAUTH_AYARLARI.md';
+        } else if (error.message && error.message.includes('500')) {
+            errorMessage = 'Google giriş hatası (500). Lütfen Supabase Dashboard\'da Google OAuth ayarlarını kontrol edin.';
+        } else if (error.message) {
+            errorMessage = `Google giriş hatası: ${error.message}`;
+        }
+        
+        showAuthMessage(errorMessage, 'error');
     }
 }
 
