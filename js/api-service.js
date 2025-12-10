@@ -218,21 +218,28 @@ async function logoutUser() {
 async function getCurrentUser() {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            // Önce session'ı kontrol et (localStorage'dan hızlı)
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session && session.user) {
-                return session.user;
-            }
+            // Önce session'ı kontrol et
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
             
-            // Session yoksa server'dan kontrol et
-            const { data: { user }, error } = await supabaseClient.auth.getUser();
-            if (error) {
-                console.warn('getUser hatası:', error);
+            // Session yoksa direkt null döndür (getUser() çağırma)
+            if (sessionError || !session || !session.user) {
+                // Session yok, localStorage'ı temizle
+                localStorage.removeItem('hasene_user_email');
                 return null;
             }
-            return user;
+            
+            // Session varsa user'ı döndür
+            if (session.user.email) {
+                localStorage.setItem('hasene_user_email', session.user.email);
+            }
+            
+            return session.user;
         } catch (error) {
-            console.warn('getCurrentUser hatası:', error);
+            // Hata durumunda sessizce null döndür (console spam'ini önle)
+            if (error.message && !error.message.includes('Auth session missing')) {
+                console.warn('getCurrentUser hatası:', error);
+            }
+            localStorage.removeItem('hasene_user_email');
             return null;
         }
     }
