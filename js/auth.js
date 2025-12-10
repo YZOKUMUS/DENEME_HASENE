@@ -442,8 +442,7 @@ async function updateUserUI() {
     const userProfileBtn = document.getElementById('user-profile-btn');
     const userEmailEl = document.getElementById('user-email');
     const authNavBtn = document.getElementById('auth-nav-btn');
-    const registerTabBtn = document.getElementById('register-tab-btn');
-    const registerBenefitsInfo = document.getElementById('register-benefits-info');
+    // registerTabBtn ve registerBenefitsInfo kaldırıldı (sadece Google ile giriş)
     
     console.log('🔍 Elementler:', {
         userProfileBtn: !!userProfileBtn,
