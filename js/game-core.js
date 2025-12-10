@@ -564,7 +564,13 @@ const debouncedSaveStats = debounce(saveStats, CONFIG.DEBOUNCE_DELAY);
  * Anında kaydetme (oyun bitişinde)
  */
 async function saveStatsImmediate() {
-    await saveStats();
+    console.log('🟡 saveStatsImmediate çağrıldı');
+    try {
+        await saveStats();
+        console.log('🟢 saveStatsImmediate tamamlandı');
+    } catch (error) {
+        console.error('❌ saveStatsImmediate hatası:', error);
+    }
 }
 
 // ============================================
