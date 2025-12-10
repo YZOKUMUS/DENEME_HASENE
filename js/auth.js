@@ -72,11 +72,18 @@ function switchAuthTab(tab) {
  * Giriş yap
  */
 async function handleLogin() {
-    const email = document.getElementById('login-email').value.trim();
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
     const password = document.getElementById('login-password').value;
     
     if (!email || !password) {
         showAuthMessage('Lütfen tüm alanları doldurun', 'error');
+        return;
+    }
+    
+    // Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showAuthMessage('Geçerli bir email adresi girin (örn: kullanici@example.com)', 'error');
         return;
     }
     
@@ -121,12 +128,19 @@ async function handleLogin() {
  */
 async function handleRegister() {
     const username = document.getElementById('register-username').value.trim();
-    const email = document.getElementById('register-email').value.trim();
+    const email = document.getElementById('register-email').value.trim().toLowerCase();
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
     
     if (!username || !email || !password || !passwordConfirm) {
         showAuthMessage('Lütfen tüm alanları doldurun', 'error');
+        return;
+    }
+    
+    // Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showAuthMessage('Geçerli bir email adresi girin (örn: kullanici@example.com)', 'error');
         return;
     }
     
@@ -180,8 +194,14 @@ async function handleRegister() {
         
         if (error.message && error.message.includes('Email signups are disabled')) {
             errorMessage = 'Email kayıtları şu an devre dışı. Lütfen Supabase Dashboard\'da Authentication → Providers → Email bölümünden email signup\'ları açın.';
+        } else if (error.message && error.message.includes('Unable to validate email address: invalid format')) {
+            errorMessage = 'Geçersiz email formatı. Lütfen geçerli bir email adresi girin (örn: kullanici@example.com)';
+        } else if (error.message && error.message.includes('invalid format')) {
+            errorMessage = 'Email formatı geçersiz. Lütfen doğru formatta bir email adresi girin.';
         } else if (error.message && error.message.includes('Email not confirmed')) {
             errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın veya Supabase ayarlarından email confirmation\'ı kapatın.';
+        } else if (error.message && error.message.includes('User already registered')) {
+            errorMessage = 'Bu email adresi ile zaten bir hesap var. Lütfen giriş yapın.';
         } else if (error.message) {
             errorMessage = error.message;
         }
