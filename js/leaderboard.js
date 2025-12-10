@@ -26,6 +26,23 @@ async function showLeaderboardModal() {
  */
 async function loadLeaderboardData() {
     try {
+        // Önce kullanıcının giriş yapıp yapmadığını kontrol et
+        let user = null;
+        if (typeof window.getCurrentUser === 'function') {
+            try {
+                user = await window.getCurrentUser();
+                console.log('🔍 Leaderboard - Kullanıcı durumu:', user ? 'Giriş yapmış' : 'Giriş yapmamış');
+            } catch (error) {
+                console.warn('⚠️ Kullanıcı kontrolü başarısız:', error);
+            }
+        }
+        
+        if (!user) {
+            // Kullanıcı giriş yapmamış
+            showError('Liderlik tablosunu görmek için Google ile giriş yapmalısınız.');
+            return;
+        }
+        
         if (typeof window.getUserLeaguePosition !== 'function') {
             console.warn('getUserLeaguePosition fonksiyonu bulunamadı');
             showError('Liderlik tablosu yüklenirken bir hata oluştu.');
@@ -34,8 +51,8 @@ async function loadLeaderboardData() {
         
         const position = await window.getUserLeaguePosition();
         if (!position) {
-            // Kullanıcı giriş yapmamış veya henüz haftalık kayıt yok
-            showNoLeaderboardData();
+            // Kullanıcı giriş yapmış ama henüz haftalık kayıt yok (oyun oynamamış)
+            showNoLeaderboardData(user);
             return;
         }
         
@@ -169,10 +186,16 @@ function displayRankings(rankings, userPosition) {
 /**
  * Veri yok mesajı göster
  */
-function showNoLeaderboardData() {
+function showNoLeaderboardData(user = null) {
     const container = document.getElementById('league-rankings-list');
     if (container) {
-        container.innerHTML = '<div class="loading-text">Liderlik tablosu için giriş yapmalısınız.</div>';
+        if (user) {
+            // Kullanıcı giriş yapmış ama henüz oyun oynamamış
+            container.innerHTML = '<div class="loading-text" style="padding: 20px; text-align: center;">🎮 Henüz bu hafta oyun oynamadınız.<br><br>Liderlik tablosunda görünmek için en az bir oyun oynamanız gerekiyor.</div>';
+        } else {
+            // Kullanıcı giriş yapmamış
+            container.innerHTML = '<div class="loading-text">Liderlik tablosunu görmek için Google ile giriş yapmalısınız.</div>';
+        }
     }
     
     // Kullanıcı kartını gizle veya varsayılan göster
