@@ -2255,6 +2255,9 @@ async function endGame() {
     }
     safeSetItem(dailyKey, dailyData);
     
+    // Backend'e kaydet
+    await saveStatsImmediate();
+    
     // Haftalık ve aylık için de oyun sayısını güncelle
     const weekStartStr = getWeekStartDateString(new Date());
     const weeklyKey = `hasene_weekly_${weekStartStr}`;
