@@ -2276,6 +2276,45 @@ function checkDailyTasks() {
 }
 
 /**
+ * Gece yarısı kontrolü için zamanlayıcı ayarlar
+ * Gece 24:00'da otomatik olarak günlük görevleri sıfırlar
+ */
+function setupMidnightReset() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Gece yarısı
+    
+    // Gece yarısına kadar kalan süre (milisaniye)
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+    
+    // Gece yarısında görevleri sıfırla
+    setTimeout(() => {
+        console.log('🌙 Gece yarısı - Günlük görevler sıfırlanıyor...');
+        checkDailyTasks();
+        checkWeeklyTasks();
+        
+        // Bir sonraki gece yarısı için zamanlayıcıyı tekrar ayarla
+        setupMidnightReset();
+    }, msUntilMidnight);
+    
+    // Ayrıca her dakika kontrol et (daha güvenilir, sayfa açıkken)
+    // Bu, kullanıcı sayfayı gece yarısından önce açtıysa ve gece yarısı geçtiyse yakalamak için
+    if (window.midnightCheckInterval) {
+        clearInterval(window.midnightCheckInterval);
+    }
+    
+    window.midnightCheckInterval = setInterval(() => {
+        const currentDate = getLocalDateString();
+        if (dailyTasks.lastTaskDate !== currentDate) {
+            console.log('🌙 Tarih değişti - Günlük görevler sıfırlanıyor...');
+            checkDailyTasks();
+            checkWeeklyTasks();
+        }
+    }, 60000); // Her 1 dakikada bir kontrol et
+}
+
+/**
  * Mevcut görevleri template ile senkronize eder (ad, açıklama ve target güncellemeleri için)
  */
 function syncTasksWithTemplate() {
@@ -4570,6 +4609,9 @@ window.addEventListener('load', async () => {
     
     // İstatistikleri yükle
     await loadStats();
+    
+    // Gece yarısı otomatik sıfırlama zamanlayıcısını başlat
+    setupMidnightReset();
     
     // Arka planda JSON verilerini önceden yükle (non-blocking)
     if (typeof preloadAllDataBackground === 'function') {
