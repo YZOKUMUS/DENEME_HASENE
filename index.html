@@ -318,6 +318,18 @@
 
     <!-- Main Container -->
     <div class="container" id="main-container">
+        <!-- User Profile Button (Top Right - Giriş yapmış kullanıcılar için) -->
+        <div id="user-profile-btn" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 1000; background: rgba(118, 75, 162, 0.9); padding: 8px 12px; border-radius: 20px; color: white; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            <span id="user-email" style="margin-right: 8px;"></span>
+            <span id="logout-span" onclick="handleLogout()" style="cursor: pointer; opacity: 0.8;">Çıkış</span>
+        </div>
+
+        <!-- Auth Nav Button (Top Right - Giriş yapmamış kullanıcılar için) -->
+        <button id="auth-nav-btn" onclick="showAuthModal()" style="display: flex; position: fixed; top: 10px; right: 10px; z-index: 1000; background: rgba(118, 75, 162, 0.9); padding: 8px 16px; border: none; border-radius: 20px; color: white; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); align-items: center; gap: 6px;">
+            <span>🔐</span>
+            <span>Giriş Yap</span>
+        </button>
+
         <!-- Ana Menü -->
         <div id="main-menu" class="main-menu">
             <!-- Hero Section -->
@@ -688,6 +700,10 @@
             <span>🏆</span>
             <span>Muvaffakiyetler</span>
         </button>
+        <button class="nav-btn" onclick="showLeaderboardModal()">
+            <span>🏅</span>
+            <span>Ligler</span>
+        </button>
         <button class="nav-btn" data-page="calendar">
             <span>📅</span>
             <span>Takvim</span>
@@ -701,6 +717,76 @@
     </nav>
 
     <!-- Modals -->
+    
+    <!-- Auth Modal (Giriş/Kayıt) -->
+    <div id="auth-modal" class="modal" style="display:none;">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header">
+                <h2>Giriş Yap / Kayıt Ol</h2>
+                <button class="modal-close" onclick="closeAuthModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Giriş Yap</button>
+                    <button class="auth-tab-btn" data-tab="register" id="register-tab-btn" onclick="switchAuthTab('register')">Kayıt Ol</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form" style="display: flex;">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Şifre</label>
+                        <input type="password" id="login-password" autocomplete="current-password" required>
+                    </div>
+                    <div id="auth-message" class="auth-message" style="display:none;"></div>
+                    <button type="button" class="btn-primary" onclick="handleLogin()">Giriş Yap</button>
+                    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+                        <span>🔐</span>
+                        Google ile Giriş Yap
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-username">Kullanıcı Adı</label>
+                        <input type="text" id="register-username" autocomplete="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Şifre</label>
+                        <input type="password" id="register-password" autocomplete="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password-confirm">Şifre Tekrar</label>
+                        <input type="password" id="register-password-confirm" autocomplete="new-password" required>
+                    </div>
+                    <div id="register-benefits-info" class="register-benefits" style="display: block; margin: 15px 0; padding: 15px; background: rgba(118, 75, 162, 0.1); border-radius: 8px; font-size: 14px;">
+                        <strong>📝 Kayıt olmanın avantajları:</strong>
+                        <ul style="margin: 10px 0 0 20px; padding: 0;">
+                            <li>✅ Verileriniz bulutta güvenle saklanır</li>
+                            <li>✅ Tüm cihazlardan erişim sağlayabilirsiniz</li>
+                            <li>✅ Liderlik tablosunda yer alabilirsiniz</li>
+                            <li>✅ İlerlemeniz kaybolmaz</li>
+                        </ul>
+                    </div>
+                    <div id="auth-message-register" class="auth-message" style="display:none;"></div>
+                    <button type="button" class="btn-primary" onclick="handleRegister()">Kayıt Ol</button>
+                    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+                        <span>🔐</span>
+                        Google ile Kayıt Ol
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
     
     <!-- Onboarding Modal -->
     <div id="onboarding-modal" class="modal" style="display:none;">
@@ -1059,6 +1145,51 @@
                         <!-- Haftalık görevler buraya dinamik olarak eklenecek -->
                     </div>
                     <button class="btn-primary" id="claim-weekly-reward" onclick="claimWeeklyRewards()" disabled>Haftalık Ödülü Al (+5,000 Hasene)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal" style="display:none;">
+        <div class="modal-content leaderboard-modal-content">
+            <div class="modal-header">
+                <h2>🏅 Haftalık Ligler</h2>
+                <button class="modal-close" onclick="closeModal('leaderboard-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Kullanıcı Lig Bilgileri -->
+                <div id="user-league-info" class="user-league-info">
+                    <div class="user-league-header">
+                        <div class="user-league-icon-text">
+                            <span id="user-league-icon" class="league-icon">📖</span>
+                            <div class="user-league-names">
+                                <div id="user-league-name" class="league-name">Mübtedi</div>
+                                <div id="user-league-arabic" class="league-arabic">مبتدئ</div>
+                            </div>
+                        </div>
+                        <div id="user-league-position" class="user-position">#1</div>
+                    </div>
+                    <div class="user-league-stats">
+                        <div class="user-xp-stat">
+                            <span class="xp-label">Bu Hafta:</span>
+                            <span id="user-weekly-xp" class="xp-value">0 XP</span>
+                        </div>
+                    </div>
+                    <div class="league-progress-container">
+                        <div class="league-progress-bar">
+                            <div id="user-position-marker" class="position-marker"></div>
+                        </div>
+                        <div id="position-info" class="position-info">1 / 1</div>
+                    </div>
+                </div>
+
+                <!-- Lig Sıralaması -->
+                <div class="league-rankings-section">
+                    <h3 id="current-league-title" class="league-title">Mübtedi Sıralaması</h3>
+                    <div id="league-rankings-list" class="league-rankings-list">
+                        <!-- Sıralama buraya dinamik olarak eklenecek -->
+                    </div>
                 </div>
             </div>
         </div>

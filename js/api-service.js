@@ -1075,26 +1075,39 @@ async function getLeagueRankings(leagueName, limit = 50) {
                 return viewData;
             }
             
-            // Fallback: Manuel join
-            const { data, error } = await supabaseClient
+            // Fallback: Manuel join - önce weekly_leaderboard'dan al
+            const { data: leaderboardData, error: lbError } = await supabaseClient
                 .from('weekly_leaderboard')
-                .select(`
-                    *,
-                    profiles!inner(username)
-                `)
+                .select('user_id,weekly_xp')
                 .eq('week_start', weekStartStr)
                 .eq('league', leagueName)
                 .order('weekly_xp', { ascending: false })
                 .limit(limit);
             
-            if (error) {
-                console.warn('Get league rankings error:', error);
+            if (lbError || !leaderboardData || leaderboardData.length === 0) {
+                if (lbError) console.warn('Get league rankings error:', lbError);
                 return [];
             }
             
+            // Username'leri profiles'den ayrı al
+            const userIds = leaderboardData.map(item => item.user_id);
+            const { data: profilesData } = await supabaseClient
+                .from('profiles')
+                .select('id,username')
+                .in('id', userIds);
+            
+            const profilesMap = new Map();
+            if (profilesData) {
+                profilesData.forEach(p => {
+                    profilesMap.set(p.id, p.username || 'Anonim');
+                });
+            }
+            
             // Pozisyon ekle
-            return (data || []).map((item, index) => ({
-                ...item,
+            return leaderboardData.map((item, index) => ({
+                user_id: item.user_id,
+                weekly_xp: item.weekly_xp || 0,
+                username: profilesMap.get(item.user_id) || 'Anonim',
                 position: index + 1
             }));
         } catch (error) {
@@ -1121,24 +1134,34 @@ async function getUserLeaguePosition(userId = null) {
             // Kullanıcının bilgileri
             const { data: userData, error: userError } = await supabaseClient
                 .from('weekly_leaderboard')
-                .select('league, weekly_xp')
+                .select('league,weekly_xp')
                 .eq('user_id', user.id)
                 .eq('week_start', weekStartStr)
-                .single();
+                .maybeSingle();
             
-            if (userError || !userData) {
+            if (userError) {
+                console.error('getUserLeaguePosition userData error:', userError);
+                return null;
+            }
+            
+            if (!userData) {
                 return null;
             }
             
             // Ligdeki tüm sıralama
             const { data: rankings, error: rankError } = await supabaseClient
                 .from('weekly_leaderboard')
-                .select('user_id, weekly_xp')
+                .select('user_id,weekly_xp')
                 .eq('week_start', weekStartStr)
                 .eq('league', userData.league)
                 .order('weekly_xp', { ascending: false });
             
-            if (rankError || !rankings) {
+            if (rankError) {
+                console.error('getUserLeaguePosition rankings error:', rankError);
+                return null;
+            }
+            
+            if (!rankings || rankings.length === 0) {
                 return null;
             }
             
@@ -1146,14 +1169,23 @@ async function getUserLeaguePosition(userId = null) {
             const totalInLeague = rankings.length;
             
             // Lig config'den yükselme/düşme eşiklerini al
-            const { data: leagueConfig } = await supabaseClient
-                .from('league_config')
-                .select('promotion_top_percent, demotion_bottom_percent')
-                .eq('league_name', userData.league)
-                .single();
+            let leagueConfig = null;
+            try {
+                const { data: configData, error: configError } = await supabaseClient
+                    .from('league_config')
+                    .select('promotion_top_percent,demotion_bottom_percent')
+                    .eq('league_name', userData.league)
+                    .maybeSingle();
+                
+                if (!configError && configData) {
+                    leagueConfig = configData;
+                }
+            } catch (configErr) {
+                console.warn('getUserLeaguePosition leagueConfig error:', configErr);
+            }
             
-            const promotionPercent = leagueConfig?.promotion_top_percent || 25;
-            const demotionPercent = leagueConfig?.demotion_bottom_percent || 30;
+            const promotionPercent = (leagueConfig && leagueConfig.promotion_top_percent) ? leagueConfig.promotion_top_percent : 25;
+            const demotionPercent = (leagueConfig && leagueConfig.demotion_bottom_percent) ? leagueConfig.demotion_bottom_percent : 30;
             
             const promotionThreshold = Math.ceil(totalInLeague * promotionPercent / 100);
             const demotionThreshold = Math.floor(totalInLeague * (100 - demotionPercent) / 100);

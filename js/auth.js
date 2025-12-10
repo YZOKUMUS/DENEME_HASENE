@@ -51,6 +51,11 @@ function switchAuthTab(tab) {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     
+    if (!loginForm || !registerForm) {
+        console.warn('⚠️ Auth formları bulunamadı');
+        return;
+    }
+    
     if (tab === 'login') {
         loginForm.style.display = 'flex';
         registerForm.style.display = 'none';
@@ -382,16 +387,21 @@ function showUserMenu() {
 }
 
 /**
- * Sayfa yüklendiğinde kullanıcı durumunu kontrol et
+ * Auth'u başlat
  */
-window.addEventListener('load', async () => {
+async function initializeAuth() {
     // Supabase client'ın başlatılmasını bekle
     await new Promise(resolve => {
+        let attempts = 0;
         const checkSupabase = () => {
             if (typeof window.supabase !== 'undefined' && window.supabase) {
                 resolve();
-            } else {
+            } else if (attempts < 50) { // 5 saniye timeout
+                attempts++;
                 setTimeout(checkSupabase, 100);
+            } else {
+                console.warn('⚠️ Supabase client başlatılamadı, auth devre dışı');
+                resolve(); // Devam et
             }
         };
         checkSupabase();
@@ -424,7 +434,13 @@ window.addEventListener('load', async () => {
             authNavBtn.style.display = 'flex';
         }
     }
-});
+}
+
+/**
+ * Sayfa yüklendiğinde kullanıcı durumunu kontrol et
+ */
+window.addEventListener('DOMContentLoaded', initializeAuth);
+window.addEventListener('load', initializeAuth);
 
 // Export functions
 if (typeof window !== 'undefined') {

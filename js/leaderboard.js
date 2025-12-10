@@ -12,7 +12,12 @@ async function showLeaderboardModal() {
         return;
     }
     
-    openModal('leaderboard-modal');
+    if (typeof window.openModal === 'function') {
+        window.openModal('leaderboard-modal');
+    } else if (modal) {
+        modal.style.display = 'flex';
+    }
+    
     await loadLeaderboardData();
 }
 
@@ -21,7 +26,13 @@ async function showLeaderboardModal() {
  */
 async function loadLeaderboardData() {
     try {
-        const position = await getUserLeaguePosition();
+        if (typeof window.getUserLeaguePosition !== 'function') {
+            console.warn('getUserLeaguePosition fonksiyonu bulunamadı');
+            showError('Liderlik tablosu yüklenirken bir hata oluştu.');
+            return;
+        }
+        
+        const position = await window.getUserLeaguePosition();
         if (!position) {
             // Kullanıcı giriş yapmamış veya henüz haftalık kayıt yok
             showNoLeaderboardData();
@@ -32,8 +43,10 @@ async function loadLeaderboardData() {
         await updateUserLeagueCard(position);
         
         // Lig sıralamasını yükle
-        const rankings = await getLeagueRankings(position.league, 20);
-        displayRankings(rankings, position);
+        if (typeof window.getLeagueRankings === 'function') {
+            const rankings = await window.getLeagueRankings(position.league, 20);
+            displayRankings(rankings, position);
+        }
     } catch (error) {
         console.error('Error loading leaderboard data:', error);
         showError('Liderlik tablosu yüklenirken bir hata oluştu.');
@@ -45,7 +58,12 @@ async function loadLeaderboardData() {
  */
 async function updateUserLeagueCard(position) {
     // Lig config bilgilerini al
-    const leagueConfig = await getLeagueConfig(position.league);
+    if (typeof window.getLeagueConfig !== 'function') {
+        console.warn('getLeagueConfig fonksiyonu bulunamadı');
+        return;
+    }
+    
+    const leagueConfig = await window.getLeagueConfig(position.league);
     if (!leagueConfig) return;
     
     // Icon ve isimleri güncelle
@@ -58,11 +76,13 @@ async function updateUserLeagueCard(position) {
     const markerEl = document.getElementById('user-position-marker');
     const positionInfoEl = document.getElementById('position-info');
     
+    const formatNum = typeof window.formatNumber === 'function' ? window.formatNumber : (n) => n.toString();
+    
     if (iconEl) iconEl.textContent = leagueConfig.icon || '📖';
     if (nameEl) nameEl.textContent = leagueConfig.display_name || position.league;
     if (arabicEl) arabicEl.textContent = leagueConfig.arabic_name || '';
     if (positionEl) positionEl.textContent = `#${position.position}`;
-    if (xpEl) xpEl.textContent = formatNumber(position.weekly_xp);
+    if (xpEl) xpEl.textContent = formatNum(position.weekly_xp || 0);
     if (leagueTitleEl) leagueTitleEl.textContent = `${leagueConfig.display_name || position.league} Sıralaması`;
     
     // Progress bar güncelle
@@ -135,10 +155,11 @@ function displayRankings(rankings, userPosition) {
         const username = rank.username || rank.profiles?.username || 'Anonim';
         const xp = rank.weekly_xp || 0;
         
+        const formatNum = typeof window.formatNumber === 'function' ? window.formatNumber : (n) => n.toString();
         item.innerHTML = `
             <div class="ranking-position">#${position}</div>
             <div class="ranking-username">${escapeHtml(username)}</div>
-            <div class="ranking-xp">${formatNumber(xp)} XP</div>
+            <div class="ranking-xp">${formatNum(xp)} XP</div>
         `;
         
         container.appendChild(item);

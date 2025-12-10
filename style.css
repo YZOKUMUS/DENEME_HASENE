@@ -4491,12 +4491,104 @@ select:focus {
     width: 90%;
 }
 
-.user-league-card {
+.user-league-card,
+.user-league-info {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 16px;
     padding: 20px;
     color: white;
     margin-bottom: 24px;
+}
+
+.user-league-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.user-league-icon-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.user-league-names {
+    margin-top: 8px;
+}
+
+.user-position {
+    font-size: 32px;
+    font-weight: 700;
+    text-align: right;
+    min-width: 60px;
+}
+
+.user-league-stats {
+    margin-bottom: 16px;
+}
+
+.user-xp-stat {
+    text-align: center;
+}
+
+.xp-label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.xp-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.league-progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.position-marker {
+    position: absolute;
+    top: -4px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: left 0.3s ease;
+}
+
+.position-info {
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.league-rankings-section {
+    margin-top: 24px;
+}
+
+.league-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.league-rankings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .league-icon {
@@ -4586,7 +4678,8 @@ select:focus {
     margin-bottom: 8px;
 }
 
-.user-marker {
+.user-marker,
+.position-marker {
     position: absolute;
     top: -4px;
     width: 16px;
@@ -4598,7 +4691,8 @@ select:focus {
     transition: left 0.3s ease;
 }
 
-.progress-info {
+.progress-info,
+.position-info {
     text-align: center;
     font-size: 12px;
     opacity: 0.9;
@@ -4615,12 +4709,14 @@ select:focus {
     color: var(--text-primary);
 }
 
-.rankings-list {
+.rankings-list,
+.league-rankings-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     max-height: 400px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .ranking-item {
@@ -4681,50 +4777,169 @@ select:focus {
     .leaderboard-modal-content {
         max-width: 98%;
         width: 98%;
+        padding: 12px;
     }
     
-    .user-league-card {
-        padding: 16px;
-        margin-bottom: 20px;
+    .user-league-card,
+    .user-league-info {
+        padding: 14px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+    }
+    
+    .user-league-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .user-league-icon-text {
+        width: 100%;
+    }
+    
+    .user-position {
+        font-size: clamp(24px, 6vw, 32px);
+        text-align: center;
+        min-width: auto;
     }
     
     .league-icon {
-        font-size: 40px;
+        font-size: clamp(36px, 10vw, 48px);
+        margin-bottom: 6px;
     }
     
     .league-name {
-        font-size: 20px;
+        font-size: clamp(18px, 5vw, 24px);
+        margin-bottom: 2px;
     }
     
     .league-arabic {
-        font-size: 18px;
+        font-size: clamp(16px, 4vw, 20px);
+        margin-bottom: 12px;
+    }
+    
+    .user-league-stats {
+        margin-bottom: 12px;
+    }
+    
+    .xp-label {
+        font-size: clamp(10px, 2.5vw, 12px);
+    }
+    
+    .xp-value {
+        font-size: clamp(18px, 5vw, 24px);
+    }
+    
+    .league-progress-container {
+        margin-top: 12px;
+    }
+    
+    .league-progress-bar {
+        height: 6px;
+        margin-bottom: 6px;
+    }
+    
+    .position-marker {
+        width: 14px;
+        height: 14px;
+        top: -3px;
+    }
+    
+    .position-info {
+        font-size: clamp(10px, 2.5vw, 12px);
+    }
+    
+    .league-rankings-section {
+        margin-top: 16px;
+    }
+    
+    .league-title {
+        font-size: clamp(16px, 4vw, 18px);
+        margin-bottom: 12px;
     }
     
     .league-stats {
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 10px;
+        margin-bottom: 14px;
     }
     
     .league-stats .stat-value {
-        font-size: 18px;
+        font-size: clamp(16px, 4vw, 18px);
     }
     
     .progress-zones {
-        font-size: 9px;
+        font-size: 8px;
     }
     
-    .rankings-list {
-        max-height: 300px;
+    .rankings-list,
+    .league-rankings-list {
+        max-height: clamp(250px, 50vh, 300px);
+        gap: 6px;
     }
     
     .ranking-item {
-        padding: 10px;
-        gap: 10px;
+        padding: clamp(8px, 2vw, 12px);
+        gap: clamp(8px, 2vw, 12px);
+        border-radius: 6px;
     }
     
     .ranking-position {
+        font-size: clamp(14px, 3.5vw, 18px);
+        min-width: clamp(24px, 6vw, 32px);
+    }
+    
+    .ranking-username {
+        font-size: clamp(13px, 3vw, 16px);
+    }
+    
+    .ranking-xp {
+        font-size: clamp(13px, 3vw, 16px);
+    }
+}
+
+/* Çok küçük ekranlar için ekstra düzenlemeler */
+@media (max-width: 360px) {
+    .leaderboard-modal-content {
+        max-width: 100%;
+        width: 100%;
+        padding: 10px;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    
+    .user-league-info {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .user-position {
+        font-size: 24px;
+    }
+    
+    .league-icon {
+        font-size: 32px;
+    }
+    
+    .league-name {
         font-size: 16px;
-        min-width: 28px;
+    }
+    
+    .league-arabic {
+        font-size: 14px;
+    }
+    
+    .xp-value {
+        font-size: 18px;
+    }
+    
+    .league-rankings-list {
+        max-height: 200px;
+    }
+    
+    .ranking-item {
+        padding: 8px;
+        gap: 8px;
     }
 }
 
