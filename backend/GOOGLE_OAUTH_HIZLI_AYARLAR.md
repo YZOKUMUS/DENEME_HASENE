@@ -38,14 +38,18 @@ Bu hata, Supabase'de Google OAuth provider'ının yapılandırılmamış olması
 
 ### 3. Supabase Redirect URLs Ayarla
 
-1. **Authentication** → **URL Configuration**
-2. **Redirect URLs** bölümüne ekleyin:
+1. Supabase Dashboard → **Authentication** (sol menüden 🔐 ikonu)
+2. Üst sekmelerden **"URL Configuration"** sekmesine tıklayın
+3. **"Redirect URLs"** bölümünü bulun
+4. **"+ Add URL"** butonuna tıklayın ve şu URL'leri ekleyin:
    ```
    http://localhost:5500/**
    http://127.0.0.1:5500/**
    https://yzokumus.github.io/DENEME_HASENE/**
    ```
    *(Mobil cihazlar için IP adresi ekleyin: `http://192.168.*.*:5500/**`)*
+
+**📍 Detaylı konum rehberi için:** `backend/REDIRECT_URL_NEREDE.md`
 
 ---
 
