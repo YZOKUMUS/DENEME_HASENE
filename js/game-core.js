@@ -154,6 +154,27 @@ async function loadStats() {
             }
         }
         
+        // KULLANICI DEĞİŞİKLİĞİ KONTROLÜ
+        // Eğer farklı bir kullanıcı giriş yaptıysa, localStorage'ı temizle
+        const lastUserId = localStorage.getItem('hasene_current_user_id');
+        const currentUserId = user ? user.id : null;
+        
+        if (currentUserId && lastUserId && lastUserId !== currentUserId) {
+            // Farklı kullanıcı giriş yaptı, localStorage'ı temizle
+            console.log('🔄 Farklı kullanıcı tespit edildi, localStorage temizleniyor...');
+            clearUserLocalStorage();
+            // Yeni kullanıcı ID'sini kaydet
+            localStorage.setItem('hasene_current_user_id', currentUserId);
+        } else if (currentUserId && !lastUserId) {
+            // İlk kez giriş yapan kullanıcı
+            localStorage.setItem('hasene_current_user_id', currentUserId);
+        } else if (!currentUserId && lastUserId) {
+            // Kullanıcı çıkış yaptı, localStorage'ı temizle
+            console.log('🔄 Kullanıcı çıkış yaptı, localStorage temizleniyor...');
+            clearUserLocalStorage();
+            localStorage.removeItem('hasene_current_user_id');
+        }
+        
         // Backend API'den yükle (eğer mevcut ve kullanıcı giriş yapmışsa)
         if (user && typeof window.loadUserStats === 'function') {
             try {
@@ -4665,6 +4686,50 @@ async function showDataStatus() {
 }
 
 /**
+ * Kullanıcıya özel localStorage verilerini temizler (kullanıcı değiştiğinde)
+ * hasene_user_has_registered ve hasene_current_user_id hariç
+ */
+function clearUserLocalStorage() {
+    try {
+        // Tüm localStorage key'lerini al
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (
+                key.startsWith('hasene_') ||
+                key.startsWith('daily') ||
+                key.startsWith('weekly') ||
+                key === 'gameStats' ||
+                key === 'perfectLessonsCount' ||
+                key === 'unlockedAchievements' ||
+                key === 'unlockedBadges'
+            )) {
+                // hasene_user_has_registered ve hasene_current_user_id hariç
+                if (key !== 'hasene_user_has_registered' && key !== 'hasene_current_user_id') {
+                    keysToRemove.push(key);
+                }
+            }
+        }
+        
+        // Key'leri temizle
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
+        
+        console.log(`✅ ${keysToRemove.length} localStorage key'i temizlendi`);
+        
+        // IndexedDB'yi de temizle
+        if (typeof window.clearIndexedDB === 'function') {
+            window.clearIndexedDB().catch(err => {
+                console.warn('IndexedDB temizleme hatası:', err);
+            });
+        }
+    } catch (error) {
+        console.error('clearUserLocalStorage hatası:', error);
+    }
+}
+
+/**
  * Tüm verileri sıfırlar
  */
 async function resetAllStats() {
@@ -5047,6 +5112,7 @@ if (typeof window !== 'undefined') {
     window.claimWeeklyRewards = claimWeeklyRewards;
     window.setCustomGoal = setCustomGoal;
     window.resetAllStats = resetAllStats;
+    window.clearUserLocalStorage = clearUserLocalStorage;
     window.showDetailedStats = () => {
         if (typeof showDetailedStatsModal === 'function') {
             showDetailedStatsModal();

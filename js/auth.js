@@ -322,6 +322,14 @@ async function handleLogout() {
         if (typeof window.logoutUser === 'function') {
             await window.logoutUser();
             
+            // Çıkış yapılınca kullanıcıya özel localStorage'ı temizle
+            if (typeof window.clearUserLocalStorage === 'function') {
+                window.clearUserLocalStorage();
+            }
+            
+            // Kullanıcı ID'sini temizle
+            localStorage.removeItem('hasene_current_user_id');
+            
             // Çıkış yapılınca kayıt durumunu SİLME (kullanıcı tekrar kayıt olmamalı)
             // localStorage.removeItem('hasene_user_has_registered'); // Silme, kullanıcı zaten kayıtlı
             
