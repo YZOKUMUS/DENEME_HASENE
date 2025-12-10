@@ -131,17 +131,32 @@ self.addEventListener('fetch', (event) => {
                 })
         );
     } else {
-        // Diğer dosyalar için: Network First
+        // POST, PUT, DELETE gibi non-GET isteklerini cache'leme (Supabase API çağrıları dahil)
+        const isNonGetRequest = event.request.method !== 'GET';
+        const isSupabaseAPI = url.hostname.includes('supabase.co');
+        
+        if (isNonGetRequest || isSupabaseAPI) {
+            // API çağrılarını direkt network'ten yap, cache'leme
+            event.respondWith(fetch(event.request));
+            return;
+        }
+        
+        // Diğer GET istekleri için: Network First
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    // Response'u cache'e ekle
-                    const responseToCache = response.clone();
-                    const cacheName = url.pathname.includes('/data/') ? DATA_CACHE_NAME : CACHE_NAME;
-                    caches.open(cacheName)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
+                    // Sadece başarılı GET isteklerini cache'e ekle
+                    if (response.ok && event.request.method === 'GET') {
+                        const responseToCache = response.clone();
+                        const cacheName = url.pathname.includes('/data/') ? DATA_CACHE_NAME : CACHE_NAME;
+                        caches.open(cacheName)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            })
+                            .catch(() => {
+                                // Cache hatası, sessizce devam et
+                            });
+                    }
                     return response;
                 })
                 .catch(() => {

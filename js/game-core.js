@@ -144,77 +144,176 @@ const elements = {
  */
 async function loadStats() {
     try {
-        // IndexedDB'den yükle (öncelikli)
-        const savedPoints = await loadFromIndexedDB('hasene_totalPoints');
-        if (savedPoints !== null) {
-            totalPoints = parseInt(savedPoints) || 0;
-            // NaN kontrolü
-            if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
-        } else {
-            // localStorage'dan yükle (yedek)
-            totalPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0') || 0;
-            // NaN kontrolü
-            if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
-        }
-
-        const savedBadges = await loadFromIndexedDB('hasene_badges');
-        if (savedBadges) {
-            badges = savedBadges;
-        } else {
-            const localBadges = safeGetItem('hasene_badges', badges);
-            badges = localBadges;
-        }
-
-        const savedStreak = await loadFromIndexedDB('hasene_streakData');
-        if (savedStreak) {
-            streakData = savedStreak;
-        } else {
-            const localStreak = safeGetItem('hasene_streakData', streakData);
-            streakData = localStreak;
-        }
-
-        const savedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
-        if (savedDailyTasks) {
-            dailyTasks = savedDailyTasks;
-            // Set'leri yeniden oluştur
-            if (dailyTasks.todayStats) {
-                dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
-                dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
-                dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
-                // Yeni alanlar için varsayılan değerler
-                if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
-                if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
-                if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
-            }
-        } else {
-            const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
-            dailyTasks = localDailyTasks;
-            if (dailyTasks.todayStats) {
-                dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
-                dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
-                dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
-                // Yeni alanlar için varsayılan değerler
-                if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
-                if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
-                if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
+        // Önce kullanıcı kontrolü yap (session yüklenmesini bekle)
+        let user = null;
+        if (typeof window.getCurrentUser === 'function') {
+            try {
+                user = await window.getCurrentUser();
+            } catch (e) {
+                // Kullanıcı kontrolü başarısız, devam et
             }
         }
-
-        const savedWeeklyTasks = await loadFromIndexedDB('hasene_weeklyTasks');
-        if (savedWeeklyTasks) {
-            weeklyTasks = savedWeeklyTasks;
-            if (weeklyTasks.weekStats) {
-                weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+        
+        // Backend API'den yükle (eğer mevcut ve kullanıcı giriş yapmışsa)
+        if (user && typeof window.loadUserStats === 'function') {
+            try {
+                const userStats = await window.loadUserStats();
+                if (userStats) {
+                    totalPoints = parseInt(userStats.total_points) || 0;
+                    if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+                    
+                    badges = userStats.badges || badges;
+                    streakData = userStats.streak_data || streakData;
+                    gameStats = userStats.game_stats || gameStats;
+                    perfectLessonsCount = userStats.perfect_lessons_count || 0;
+                    
+                    // Backend'den başarıyla yüklendi
+                    infoLog('İstatistikler backend\'den yüklendi');
+                }
+            } catch (apiError) {
+                // Backend hatası, localStorage'a düş
+                console.warn('Backend yükleme hatası, localStorage kullanılıyor:', apiError);
             }
-        } else {
-            const localWeeklyTasks = safeGetItem('hasene_weeklyTasks', weeklyTasks);
-            weeklyTasks = localWeeklyTasks;
-            if (weeklyTasks.weekStats) {
-                weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+        }
+        
+        // Eğer backend'den yüklenmediyse, localStorage/IndexedDB'den yükle
+        if (totalPoints === 0 && badges.stars === 0 && streakData.currentStreak === 0) {
+            // IndexedDB'den yükle (öncelikli)
+            const savedPoints = await loadFromIndexedDB('hasene_totalPoints');
+            if (savedPoints !== null) {
+                totalPoints = parseInt(savedPoints) || 0;
+                // NaN kontrolü
+                if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+            } else {
+                // localStorage'dan yükle (yedek)
+                totalPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0') || 0;
+                // NaN kontrolü
+                if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+            }
+
+            const savedBadges = await loadFromIndexedDB('hasene_badges');
+            if (savedBadges) {
+                badges = savedBadges;
+            } else {
+                const localBadges = safeGetItem('hasene_badges', badges);
+                badges = localBadges;
+            }
+
+            const savedStreak = await loadFromIndexedDB('hasene_streakData');
+            if (savedStreak) {
+                streakData = savedStreak;
+            } else {
+                const localStreak = safeGetItem('hasene_streakData', streakData);
+                streakData = localStreak;
             }
         }
 
-        wordStats = safeGetItem('hasene_wordStats', {});
+        // Günlük görevleri yükle (Backend API veya localStorage)
+        if (user && typeof window.loadDailyTasks === 'function') {
+            try {
+                const backendDailyTasks = await window.loadDailyTasks();
+                if (backendDailyTasks) {
+                    dailyTasks = backendDailyTasks;
+                    // Set'leri yeniden oluştur
+                    if (dailyTasks.todayStats) {
+                        dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                        dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                        dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+                    }
+                    if (dailyTasks.today_stats) {
+                        dailyTasks.todayStats = dailyTasks.today_stats;
+                        dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                        dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                        dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+                    }
+                }
+            } catch (apiError) {
+                console.warn('Backend daily tasks yükleme hatası:', apiError);
+            }
+        }
+        
+        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
+        if (!dailyTasks || !dailyTasks.lastTaskDate) {
+            const savedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
+            if (savedDailyTasks) {
+                dailyTasks = savedDailyTasks;
+                // Set'leri yeniden oluştur
+                if (dailyTasks.todayStats) {
+                    dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                    dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                    dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+                    // Yeni alanlar için varsayılan değerler
+                    if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
+                    if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
+                    if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
+                }
+            } else {
+                const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
+                dailyTasks = localDailyTasks;
+                if (dailyTasks.todayStats) {
+                    dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                    dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                    dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+                    // Yeni alanlar için varsayılan değerler
+                    if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
+                    if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
+                    if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
+                }
+            }
+        }
+
+        // Haftalık görevleri yükle (Backend API veya localStorage)
+        if (typeof window.loadWeeklyTasks === 'function') {
+            try {
+                const backendWeeklyTasks = await window.loadWeeklyTasks();
+                if (backendWeeklyTasks) {
+                    weeklyTasks = backendWeeklyTasks;
+                    if (weeklyTasks.weekStats) {
+                        weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                    }
+                    if (weeklyTasks.week_stats) {
+                        weeklyTasks.weekStats = weeklyTasks.week_stats;
+                        weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                    }
+                }
+            } catch (apiError) {
+                console.warn('Backend weekly tasks yükleme hatası:', apiError);
+            }
+        }
+        
+        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
+        if (!weeklyTasks || !weeklyTasks.lastWeekStart) {
+            const savedWeeklyTasks = await loadFromIndexedDB('hasene_weeklyTasks');
+            if (savedWeeklyTasks) {
+                weeklyTasks = savedWeeklyTasks;
+                if (weeklyTasks.weekStats) {
+                    weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                }
+            } else {
+                const localWeeklyTasks = safeGetItem('hasene_weeklyTasks', weeklyTasks);
+                weeklyTasks = localWeeklyTasks;
+                if (weeklyTasks.weekStats) {
+                    weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                }
+            }
+        }
+
+        // Kelime istatistiklerini yükle (Backend API veya localStorage)
+        if (user && typeof window.loadWordStats === 'function') {
+            try {
+                const backendWordStats = await window.loadWordStats();
+                if (backendWordStats && Object.keys(backendWordStats).length > 0) {
+                    wordStats = backendWordStats;
+                }
+            } catch (apiError) {
+                console.warn('Backend word stats yükleme hatası:', apiError);
+            }
+        }
+        
+        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
+        if (!wordStats || Object.keys(wordStats).length === 0) {
+            wordStats = safeGetItem('hasene_wordStats', {});
+        }
         
         // Eski wordStats formatını yeni spaced repetition formatına migrate et
         const todayForMigration = getLocalDateString();
@@ -351,7 +450,41 @@ async function loadStats() {
  */
 async function saveStats() {
     try {
-        // IndexedDB'ye kaydet (ana sistem)
+        // Backend API'ye kaydet (eğer mevcut ve kullanıcı giriş yapmışsa)
+        if (typeof window.saveUserStats === 'function') {
+            try {
+                await window.saveUserStats({
+                    total_points: totalPoints,
+                    badges: badges,
+                    streak_data: streakData,
+                    game_stats: gameStats,
+                    perfect_lessons_count: perfectLessonsCount
+                });
+                debugLog('İstatistikler backend\'e kaydedildi');
+            } catch (apiError) {
+                console.warn('Backend kaydetme hatası, localStorage kullanılıyor:', apiError);
+            }
+        }
+        
+        // Günlük görevleri backend'e kaydet
+        if (typeof window.saveDailyTasks === 'function') {
+            try {
+                await window.saveDailyTasks(dailyTasks);
+            } catch (apiError) {
+                console.warn('Backend daily tasks kaydetme hatası:', apiError);
+            }
+        }
+        
+        // Haftalık görevleri backend'e kaydet
+        if (typeof window.saveWeeklyTasks === 'function') {
+            try {
+                await window.saveWeeklyTasks(weeklyTasks);
+            } catch (apiError) {
+                console.warn('Backend weekly tasks kaydetme hatası:', apiError);
+            }
+        }
+        
+        // IndexedDB'ye kaydet (ana sistem - offline destek için)
         if (db) {
             await saveToIndexedDB('hasene_totalPoints', totalPoints.toString());
             await saveToIndexedDB('hasene_badges', badges);
@@ -379,7 +512,7 @@ async function saveStats() {
             await saveToIndexedDB('hasene_weeklyTasks', weeklyTasksToSave);
         }
 
-        // localStorage'a kaydet (yedek)
+        // localStorage'a kaydet (yedek - offline destek için)
         localStorage.setItem('hasene_totalPoints', totalPoints.toString());
         safeSetItem('hasene_badges', badges);
         safeSetItem('hasene_streakData', streakData);
@@ -4605,6 +4738,21 @@ window.addEventListener('load', async () => {
                 elements.loadingScreen.style.display = 'none';
             }, 500);
         }, 500);
+    }
+    
+    // Supabase client'ın başlatılmasını bekle (eğer varsa)
+    if (typeof window.supabase !== 'undefined') {
+        await new Promise(resolve => {
+            const checkSupabase = () => {
+                if (typeof window.getCurrentUser === 'function') {
+                    // Biraz daha bekle (session restore için)
+                    setTimeout(resolve, 300);
+                } else {
+                    setTimeout(checkSupabase, 100);
+                }
+            };
+            checkSupabase();
+        });
     }
     
     // İstatistikleri yükle
