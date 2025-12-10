@@ -161,12 +161,17 @@ async function loginUser(email, password) {
         
         if (error) {
             console.error('❌ Login error:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
             
             // Hata mesajlarını iyileştir
             if (error.message && error.message.includes('Email not confirmed')) {
                 throw new Error('Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın. Email gelmediyse Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünde "Confirm email" seçeneğini kapatabilirsiniz.');
-            } else if (error.message && (error.message.includes('Invalid login credentials') || error.message.includes('invalid') || error.code === 'invalid_credentials')) {
-                throw new Error('Email veya şifre hatalı. Lütfen kontrol edin:\n\n• Email adresinin doğru olduğundan emin olun\n• Şifrenin doğru olduğundan emin olun\n• Email doğrulaması gerekiyorsa email\'inizi kontrol edin\n\nŞifrenizi unuttuysanız "Şifremi Unuttum" özelliği yakında eklenecek.');
+            } else if (error.message && (error.message.includes('Invalid login credentials') || error.message.includes('invalid') || error.code === 'invalid_credentials' || error.code === 'invalid_grant')) {
+                // Daha detaylı hata mesajı
+                throw new Error('Email veya şifre hatalı. Lütfen kontrol edin:\n\n✅ Email adresinin doğru yazıldığından emin olun\n✅ Şifrenin doğru yazıldığından emin olun (büyük/küçük harf önemli)\n✅ Email doğrulaması gerekiyorsa email\'inizi kontrol edin\n\n💡 İpucu: Email ve şifreyi tekrar yazmayı deneyin. Şifre büyük/küçük harf ve özel karakterlere duyarlıdır.');
+            } else if (error.message && error.message.includes('Email logins are disabled')) {
+                throw new Error('Email girişleri devre dışı. Lütfen Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünden "Enable email provider" seçeneğini açın.');
             }
             throw error;
         }
