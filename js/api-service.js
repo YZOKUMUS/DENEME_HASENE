@@ -158,10 +158,15 @@ async function loginUser(email, password) {
  */
 async function loginWithGoogle() {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // GitHub Pages URL'ini kullan (production)
+        const redirectUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? window.location.origin + window.location.pathname
+            : 'https://yzokumus.github.io/DENEME_HASENE';
+        
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin + window.location.pathname
+                redirectTo: redirectUrl
             }
         });
         
@@ -177,10 +182,15 @@ async function loginWithGoogle() {
  */
 async function loginWithGitHub() {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // GitHub Pages URL'ini kullan (production)
+        const redirectUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? window.location.origin + window.location.pathname
+            : 'https://yzokumus.github.io/DENEME_HASENE';
+        
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'github',
             options: {
-                redirectTo: window.location.origin + window.location.pathname
+                redirectTo: redirectUrl
             }
         });
         
