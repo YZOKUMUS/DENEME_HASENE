@@ -42,6 +42,10 @@ function initSupabase() {
             if (supabaseUrl && supabaseKey && typeof window.supabase !== 'undefined') {
                 const { createClient } = window.supabase;
                 supabaseClient = createClient(supabaseUrl, supabaseKey);
+                // Global olarak expose et (auth.js için)
+                if (typeof window !== 'undefined') {
+                    window.supabaseClient = supabaseClient;
+                }
                 console.log('✅ Supabase client başlatıldı:', supabaseUrl);
                 return true;
             } else if (!supabaseUrl || !supabaseKey) {
@@ -62,12 +66,27 @@ function initSupabase() {
 // Sayfa yüklendiğinde başlat
 if (typeof window !== 'undefined') {
     // Supabase script yüklendikten sonra başlat
+    const tryInitSupabase = () => {
+        if (initSupabase()) {
+            // Başarılı, window.supabaseClient zaten set edildi (initSupabase içinde)
+            console.log('✅ Supabase client initialized and exposed to window');
+        } else {
+            // Başarısız, tekrar dene
+            console.warn('⚠️ Supabase init başarısız, tekrar denenecek...');
+            setTimeout(() => {
+                if (initSupabase()) {
+                    console.log('✅ Supabase client initialized (retry)');
+                }
+            }, 500);
+        }
+    };
+    
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(initSupabase, 100); // Script'in yüklenmesini bekle
+            setTimeout(tryInitSupabase, 100); // Script'in yüklenmesini bekle
         });
     } else {
-        setTimeout(initSupabase, 100);
+        setTimeout(tryInitSupabase, 100);
     }
 }
 
@@ -1289,6 +1308,9 @@ async function getLeagueConfig(leagueName) {
 // ============================================
 
 if (typeof window !== 'undefined') {
+    // Supabase client'ı global olarak expose et (auth.js için)
+    window.supabaseClient = supabaseClient;
+    
     window.registerUser = registerUser;
     window.loginUser = loginUser;
     window.loginWithGoogle = loginWithGoogle;
