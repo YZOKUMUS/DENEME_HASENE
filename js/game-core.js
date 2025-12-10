@@ -2305,6 +2305,15 @@ async function endGame() {
     }
     safeSetItem(dailyKey, dailyData);
     
+    // UI'ı hemen güncelle (rakamların görünmesi için)
+    updateStatsBar();
+    if (typeof updateDailyGoalDisplay === 'function') {
+        updateDailyGoalDisplay();
+    }
+    if (typeof updateStreakDisplay === 'function') {
+        updateStreakDisplay();
+    }
+    
     // Backend'e kaydet
     await saveStatsImmediate();
     

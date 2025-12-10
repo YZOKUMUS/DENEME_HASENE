@@ -138,9 +138,17 @@ async function addToGlobalPoints(points, correctAnswers) {
         }
     }
     
-    // UI'ı güncelle
+    // UI'ı güncelle (HEMEN GÖRÜNSÜN)
     if (typeof updateStatsBar === 'function') {
-        updateStatsBar();
+        updateStatsBar(); // Hasene, Yıldız, Mertebe güncellenir
+    }
+    
+    if (typeof updateDailyGoalDisplay === 'function') {
+        updateDailyGoalDisplay(); // Günlük hedef progress bar güncellenir
+    }
+    
+    if (typeof updateStreakDisplay === 'function') {
+        updateStreakDisplay(); // Streak (Seri) güncellenir
     }
     
     // Kaydet
@@ -161,6 +169,14 @@ async function addToGlobalPoints(points, correctAnswers) {
     // Streak güncelle
     if (correctAnswers > 0 && typeof updateDailyProgress === 'function') {
         updateDailyProgress(correctAnswers);
+        // Streak güncellendikten sonra tekrar göster
+        if (typeof updateStreakDisplay === 'function') {
+            updateStreakDisplay();
+        }
+        // Günlük hedef de güncellenebilir
+        if (typeof updateDailyGoalDisplay === 'function') {
+            updateDailyGoalDisplay();
+        }
     }
 }
 
