@@ -478,14 +478,7 @@ async function updateUserUI() {
         if (authNavBtn) {
             authNavBtn.style.display = 'none';
         }
-        // Kayıt Ol sekmesini gizle (giriş yapmış kullanıcı için)
-        if (registerTabBtn) {
-            registerTabBtn.style.display = 'none';
-        }
-        // Bilgilendirme kutusunu gizle
-        if (registerBenefitsInfo) {
-            registerBenefitsInfo.style.display = 'none';
-        }
+        // Kayıt Ol sekmesi ve bilgilendirme kutusu artık yok (sadece Google ile giriş)
         
         // Auth modal açıksa kapat
         const authModal = document.getElementById('auth-modal');
@@ -511,14 +504,7 @@ async function updateUserUI() {
         if (authNavBtn) {
             authNavBtn.style.display = 'flex';
         }
-        // Kayıt Ol sekmesini göster
-        if (registerTabBtn) {
-            registerTabBtn.style.display = 'flex';
-        }
-        // Bilgilendirme kutusunu göster
-        if (registerBenefitsInfo) {
-            registerBenefitsInfo.style.display = 'block';
-        }
+        // Kayıt Ol sekmesi ve bilgilendirme kutusu artık yok (sadece Google ile giriş)
     }
     
     // Auth modal UI'ını da güncelle

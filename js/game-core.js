@@ -143,15 +143,20 @@ const elements = {
  * Tüm istatistikleri yükler
  */
 async function loadStats() {
+    console.log('📥 loadStats() çağrıldı');
     try {
         // Önce kullanıcı kontrolü yap (session yüklenmesini bekle)
         let user = null;
         if (typeof window.getCurrentUser === 'function') {
             try {
                 user = await window.getCurrentUser();
+                console.log('📥 getCurrentUser() sonucu:', user ? `Kullanıcı var (${user.id})` : 'Kullanıcı yok');
             } catch (e) {
+                console.warn('📥 getCurrentUser() hatası:', e);
                 // Kullanıcı kontrolü başarısız, devam et
             }
+        } else {
+            console.warn('📥 window.getCurrentUser fonksiyonu bulunamadı');
         }
         
         // KULLANICI DEĞİŞİKLİĞİ KONTROLÜ
@@ -283,7 +288,9 @@ async function loadStats() {
         // Günlük görevleri yükle (Backend API veya localStorage)
         if (user && typeof window.loadDailyTasks === 'function') {
             try {
+                console.log('📥 Backend\'den daily_tasks yükleniyor...');
                 const backendDailyTasks = await window.loadDailyTasks();
+                console.log('📥 Backend\'den daily_tasks yüklendi:', backendDailyTasks ? 'Veri var' : 'Veri yok');
                 if (backendDailyTasks) {
                     dailyTasks = backendDailyTasks;
                     // Set'leri yeniden oluştur (loadDailyTasks zaten camelCase döndürüyor)
