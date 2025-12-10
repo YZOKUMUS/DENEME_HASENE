@@ -688,6 +688,10 @@
             <span>🏆</span>
             <span>Muvaffakiyetler</span>
         </button>
+        <button class="nav-btn" id="leaderboard-nav-btn" onclick="showLeaderboardModal()">
+            <span>🏅</span>
+            <span>Ligler</span>
+        </button>
         <button class="nav-btn" data-page="calendar">
             <span>📅</span>
             <span>Takvim</span>
@@ -1011,6 +1015,63 @@
                 <div class="modal-actions">
                     <button class="btn-primary" onclick="showDetailedStats()">Detaylı İstatistikler</button>
                     <button class="btn-secondary" onclick="showDataStatus()">Veri Durumu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal" style="display:none;">
+        <div class="modal-content leaderboard-modal-content">
+            <div class="modal-header">
+                <h2>🏆 Haftalık Ligler</h2>
+                <button class="modal-close" onclick="closeModal('leaderboard-modal')">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Kullanıcının Lig Bilgileri -->
+                <div id="user-league-info" class="user-league-card">
+                    <div class="league-icon" id="user-league-icon">📖</div>
+                    <div class="league-name" id="user-league-name">Mübtedi</div>
+                    <div class="league-arabic" id="user-league-arabic">مبتدئ</div>
+                    <div class="league-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Pozisyon</span>
+                            <span class="stat-value" id="user-league-position">#-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Bu Hafta XP</span>
+                            <span class="stat-value" id="user-weekly-xp">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="league-progress-container">
+                        <div class="progress-zones">
+                            <div class="zone promotion-zone">
+                                <span>Yükselme</span>
+                            </div>
+                            <div class="zone safe-zone">
+                                <span>Güvenli</span>
+                            </div>
+                            <div class="zone demotion-zone">
+                                <span>Düşme</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="user-marker" id="user-position-marker"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="position-info">- / -</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lig Sıralaması -->
+                <div class="league-rankings">
+                    <h3 id="current-league-title">Mübtedi Sıralaması</h3>
+                    <div id="league-rankings-list" class="rankings-list">
+                        <div class="loading-text">Yükleniyor...</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1500,6 +1561,7 @@
     </script>
     <script src="js/api-service.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/leaderboard.js"></script>
     
     <script src="js/game-core.js"></script>
     <script src="js/detailed-stats.js"></script>

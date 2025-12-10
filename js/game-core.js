@@ -706,6 +706,15 @@ async function addToGlobalPoints(points, correctAnswers) {
     if (correctAnswers > 0) {
         updateDailyProgress(correctAnswers);
     }
+    
+    // Haftalık XP'yi güncelle (Leaderboard için)
+    if (typeof window.updateWeeklyXP === 'function') {
+        try {
+            await window.updateWeeklyXP(points);
+        } catch (error) {
+            console.warn('Weekly XP update failed:', error);
+        }
+    }
 }
 
 /**

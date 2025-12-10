@@ -904,7 +904,7 @@ async function saveBadge(badgeId) {
 // ============================================
 
 /**
- * Liderlik tablosunu yükle
+ * Liderlik tablosunu yükle (eski - genel)
  */
 async function loadLeaderboard(limit = 100) {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
@@ -919,6 +919,293 @@ async function loadLeaderboard(limit = 100) {
     
     // Fallback: Boş array
     return [];
+}
+
+// ============================================
+// WEEKLY LEADERBOARD API (Duolingo Benzeri)
+// ============================================
+
+/**
+ * Hafta başlangıcını hesapla (Pazartesi)
+ */
+function getWeekStart(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Pazartesi
+    const weekStart = new Date(d.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
+}
+
+/**
+ * Hafta bitişini hesapla (Pazar)
+ */
+function getWeekEnd(weekStart) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    return weekEnd;
+}
+
+/**
+ * Haftalık XP güncelle
+ */
+async function updateWeeklyXP(points) {
+    const user = await getCurrentUser();
+    if (!user) {
+        console.warn('No user logged in, weekly XP not updated');
+        return;
+    }
+    
+    const weekStart = getWeekStart();
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        try {
+            // Önce RPC fonksiyonunu dene
+            const { error: rpcError } = await supabaseClient.rpc('increment_weekly_xp', {
+                p_user_id: user.id,
+                p_week_start: weekStartStr,
+                p_points: points
+            });
+            
+            if (rpcError) {
+                // Fallback: Manual upsert
+                const weekEnd = getWeekEnd(weekStart);
+                const weekEndStr = weekEnd.toISOString().split('T')[0];
+                
+                // Mevcut kaydı kontrol et
+                const { data: current } = await supabaseClient
+                    .from('weekly_leaderboard')
+                    .select('weekly_xp, league')
+                    .eq('user_id', user.id)
+                    .eq('week_start', weekStartStr)
+                    .single();
+                
+                const currentXP = current?.weekly_xp || 0;
+                const currentLeague = current?.league || 'mubtedi';
+                
+                // Upsert
+                const { error: upsertError } = await supabaseClient
+                    .from('weekly_leaderboard')
+                    .upsert({
+                        user_id: user.id,
+                        week_start: weekStartStr,
+                        week_end: weekEndStr,
+                        weekly_xp: currentXP + points,
+                        league: currentLeague,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'user_id,week_start'
+                    });
+                
+                if (upsertError) {
+                    console.warn('Weekly XP upsert error:', upsertError);
+                }
+            }
+        } catch (error) {
+            console.warn('Weekly XP update error:', error);
+        }
+    }
+}
+
+/**
+ * Kullanıcının lig bilgilerini getir
+ */
+async function getLeagueInfo(userId = null) {
+    const user = userId || await getCurrentUser();
+    if (!user) return null;
+    
+    const weekStart = getWeekStart();
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('weekly_leaderboard')
+                .select(`
+                    *,
+                    user_leagues!inner(*)
+                `)
+                .eq('user_id', user.id)
+                .eq('week_start', weekStartStr)
+                .single();
+            
+            if (error && error.code !== 'PGRST116') {
+                console.warn('Get league info error:', error);
+                return null;
+            }
+            
+            return data;
+        } catch (error) {
+            console.warn('Get league info error:', error);
+            return null;
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Ligdeki sıralamayı getir
+ */
+async function getLeagueRankings(leagueName, limit = 50) {
+    const weekStart = getWeekStart();
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        try {
+            // Önce view'ı dene
+            const { data: viewData, error: viewError } = await supabaseClient
+                .from('league_rankings')
+                .select('*')
+                .eq('league', leagueName)
+                .eq('week_start', weekStartStr)
+                .order('weekly_xp', { ascending: false })
+                .limit(limit);
+            
+            if (!viewError && viewData) {
+                return viewData;
+            }
+            
+            // Fallback: Manuel join
+            const { data, error } = await supabaseClient
+                .from('weekly_leaderboard')
+                .select(`
+                    *,
+                    profiles!inner(username)
+                `)
+                .eq('week_start', weekStartStr)
+                .eq('league', leagueName)
+                .order('weekly_xp', { ascending: false })
+                .limit(limit);
+            
+            if (error) {
+                console.warn('Get league rankings error:', error);
+                return [];
+            }
+            
+            // Pozisyon ekle
+            return (data || []).map((item, index) => ({
+                ...item,
+                position: index + 1
+            }));
+        } catch (error) {
+            console.warn('Get league rankings error:', error);
+            return [];
+        }
+    }
+    
+    return [];
+}
+
+/**
+ * Kullanıcının lig pozisyonu
+ */
+async function getUserLeaguePosition(userId = null) {
+    const user = userId || await getCurrentUser();
+    if (!user) return null;
+    
+    const weekStart = getWeekStart();
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        try {
+            // Kullanıcının bilgileri
+            const { data: userData, error: userError } = await supabaseClient
+                .from('weekly_leaderboard')
+                .select('league, weekly_xp')
+                .eq('user_id', user.id)
+                .eq('week_start', weekStartStr)
+                .single();
+            
+            if (userError || !userData) {
+                return null;
+            }
+            
+            // Ligdeki tüm sıralama
+            const { data: rankings, error: rankError } = await supabaseClient
+                .from('weekly_leaderboard')
+                .select('user_id, weekly_xp')
+                .eq('week_start', weekStartStr)
+                .eq('league', userData.league)
+                .order('weekly_xp', { ascending: false });
+            
+            if (rankError || !rankings) {
+                return null;
+            }
+            
+            const position = rankings.findIndex(r => r.user_id === user.id) + 1;
+            const totalInLeague = rankings.length;
+            
+            // Lig config'den yükselme/düşme eşiklerini al
+            const { data: leagueConfig } = await supabaseClient
+                .from('league_config')
+                .select('promotion_top_percent, demotion_bottom_percent')
+                .eq('league_name', userData.league)
+                .single();
+            
+            const promotionPercent = leagueConfig?.promotion_top_percent || 25;
+            const demotionPercent = leagueConfig?.demotion_bottom_percent || 30;
+            
+            const promotionThreshold = Math.ceil(totalInLeague * promotionPercent / 100);
+            const demotionThreshold = Math.floor(totalInLeague * (100 - demotionPercent) / 100);
+            
+            return {
+                league: userData.league,
+                weekly_xp: userData.weekly_xp,
+                position: position,
+                total_in_league: totalInLeague,
+                promotion_threshold: promotionThreshold,
+                demotion_threshold: demotionThreshold,
+                promotion_percent: promotionPercent,
+                demotion_percent: demotionPercent
+            };
+        } catch (error) {
+            console.warn('Get user league position error:', error);
+            return null;
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Lig config bilgilerini getir
+ */
+async function getLeagueConfig(leagueName) {
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('league_config')
+                .select('*')
+                .eq('league_name', leagueName)
+                .single();
+            
+            if (error) return null;
+            return data;
+        } catch (error) {
+            console.warn('Get league config error:', error);
+            return null;
+        }
+    }
+    
+    // Fallback: Hardcoded config
+    const configs = {
+        'mubtedi': { icon: '📖', display_name: 'Mübtedi', arabic_name: 'مبتدئ', color: '#8B4513' },
+        'talib': { icon: '📚', display_name: 'Talib', arabic_name: 'طالب', color: '#CD7F32' },
+        'mutavassit': { icon: '📘', display_name: 'Mutavassıt', arabic_name: 'متوسط', color: '#4682B4' },
+        'mutebahhir': { icon: '📗', display_name: 'Mütebahhir', arabic_name: 'متبحر', color: '#228B22' },
+        'hafiz': { icon: '📙', display_name: 'Hafız', arabic_name: 'حافظ', color: '#FFD700' },
+        'kurra': { icon: '📕', display_name: 'Kurra', arabic_name: 'قراء', color: '#DC143C' },
+        'alim': { icon: '📓', display_name: 'Alim', arabic_name: 'عالم', color: '#4B0082' },
+        'mujtahid': { icon: '📔', display_name: 'Müctehid', arabic_name: 'مجتهد', color: '#4169E1' },
+        'muhaddis': { icon: '📖', display_name: 'Muhaddis', arabic_name: 'محدث', color: '#000080' },
+        'faqih': { icon: '📗', display_name: 'Fakih', arabic_name: 'فقيه', color: '#006400' },
+        'imam': { icon: '📘', display_name: 'İmam', arabic_name: 'إمام', color: '#8B008B' },
+        'ulama': { icon: '✨', display_name: 'Ulema', arabic_name: 'علماء', color: '#FFD700' }
+    };
+    return configs[leagueName] || configs['mubtedi'];
 }
 
 // ============================================
@@ -950,5 +1237,14 @@ if (typeof window !== 'undefined') {
     window.saveAchievement = saveAchievement;
     window.loadBadges = loadBadges;
     window.saveBadge = saveBadge;
+    
+    // Weekly Leaderboard API
+    window.getWeekStart = getWeekStart;
+    window.getWeekEnd = getWeekEnd;
+    window.updateWeeklyXP = updateWeeklyXP;
+    window.getLeagueInfo = getLeagueInfo;
+    window.getLeagueRankings = getLeagueRankings;
+    window.getUserLeaguePosition = getUserLeaguePosition;
+    window.getLeagueConfig = getLeagueConfig;
 }
 
