@@ -869,12 +869,14 @@ async function saveAchievement(achievementId) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // Supabase'in DEFAULT NOW() kullanmasını sağla (server timezone'u kullanır)
+        // unlocked_at belirtilmezse Supabase otomatik olarak NOW() kullanır
         const { error } = await supabaseClient
             .from('achievements')
             .upsert({
                 user_id: user.id,
-                achievement_id: achievementId,
-                unlocked_at: new Date().toISOString()
+                achievement_id: achievementId
+                // unlocked_at belirtilmediği için DEFAULT NOW() kullanılacak
             }, {
                 onConflict: 'user_id,achievement_id'
             });
@@ -948,12 +950,14 @@ async function saveBadge(badgeId) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // Supabase'in DEFAULT NOW() kullanmasını sağla (server timezone'u kullanır)
+        // unlocked_at belirtilmezse Supabase otomatik olarak NOW() kullanır
         const { error } = await supabaseClient
             .from('badges')
             .upsert({
                 user_id: user.id,
-                badge_id: badgeId,
-                unlocked_at: new Date().toISOString()
+                badge_id: badgeId
+                // unlocked_at belirtilmediği için DEFAULT NOW() kullanılacak
             }, {
                 onConflict: 'user_id,badge_id'
             });
