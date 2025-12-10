@@ -1346,6 +1346,38 @@ if (typeof window !== 'undefined') {
     window.removeFavorite = removeFavorite;
     window.saveDailyStat = saveDailyStat;
     window.loadDailyStat = loadDailyStat;
+    window.loadAllDailyStatsDates = loadAllDailyStatsDates;
+    
+    /**
+     * Tüm daily_stats tarihlerini yükle (takvim için playDates oluşturmak için)
+     */
+    async function loadAllDailyStatsDates() {
+        const user = await getCurrentUser();
+        if (!user) return [];
+        
+        if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('daily_stats')
+                    .select('date')
+                    .eq('user_id', user.id)
+                    .order('date', { ascending: false });
+                
+                if (error) throw error;
+                
+                // Sadece oyun oynanmış günleri döndür (stats.correct > 0 veya stats.wrong > 0)
+                // Ama şimdilik tüm tarihleri döndürüyoruz (daily_stats varsa oyun oynanmış sayılır)
+                return (data || []).map(item => item.date).filter(Boolean);
+            } catch (error) {
+                console.warn('loadAllDailyStatsDates error:', error);
+                return [];
+            }
+        }
+        
+        return [];
+    }
+    
+    window.loadAllDailyStatsDates = loadAllDailyStatsDates;
     window.loadLeaderboard = loadLeaderboard;
     window.loadAchievements = loadAchievements;
     window.saveAchievement = saveAchievement;

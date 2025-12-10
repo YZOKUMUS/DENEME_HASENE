@@ -167,8 +167,57 @@ async function loadStats() {
                     gameStats = userStats.game_stats || gameStats;
                     perfectLessonsCount = userStats.perfect_lessons_count || 0;
                     
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    // Böylece her yerde aynı veriler görünür
+                    localStorage.setItem('hasene_totalPoints', totalPoints.toString());
+                    if (badges) {
+                        safeSetItem('hasene_badges', badges);
+                        if (db) {
+                            saveToIndexedDB('hasene_badges', badges).catch(() => {});
+                        }
+                    }
+                    if (streakData) {
+                        // playDates array'ini güncelle: daily_stats tablosundan oynanan günleri çek
+                        // Böylece takvim hem streakData.playDates hem de daily_stats'tan güncellenir
+                        try {
+                            if (typeof window.loadAllDailyStatsDates === 'function') {
+                                const allDates = await window.loadAllDailyStatsDates();
+                                if (allDates && allDates.length > 0) {
+                                    // daily_stats'tan gelen tarihleri playDates'e ekle (duplicate olmasın)
+                                    const existingDates = new Set(streakData.playDates || []);
+                                    allDates.forEach(date => {
+                                        if (!existingDates.has(date)) {
+                                            existingDates.add(date);
+                                        }
+                                    });
+                                    streakData.playDates = Array.from(existingDates).sort();
+                                    streakData.totalPlayDays = streakData.playDates.length;
+                                }
+                            }
+                        } catch (error) {
+                            // daily_stats'tan yükleme hatası, mevcut playDates'i kullan
+                            console.warn('daily_stats tarihlerini yükleme hatası (normal olabilir):', error);
+                        }
+                        
+                        safeSetItem('hasene_streakData', streakData);
+                        if (db) {
+                            saveToIndexedDB('hasene_streakData', streakData).catch(() => {});
+                        }
+                    }
+                    if (gameStats) {
+                        safeSetItem('gameStats', gameStats);
+                    }
+                    if (perfectLessonsCount !== undefined) {
+                        localStorage.setItem('perfectLessonsCount', perfectLessonsCount.toString());
+                    }
+                    
+                    // IndexedDB'ye de kaydet
+                    if (db) {
+                        saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(() => {});
+                    }
+                    
                     // Backend'den başarıyla yüklendi
-                    infoLog('İstatistikler backend\'den yüklendi');
+                    infoLog('İstatistikler backend\'den yüklendi ve localStorage\'a senkronize edildi');
                 }
             } catch (apiError) {
                 // Backend hatası, localStorage'a düş
@@ -226,6 +275,21 @@ async function loadStats() {
                         dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
                         dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
                     }
+                    
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    const dailyTasksToSave = {
+                        ...dailyTasks,
+                        todayStats: {
+                            ...dailyTasks.todayStats,
+                            allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
+                            farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
+                            reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
+                        }
+                    };
+                    safeSetItem('hasene_dailyTasks', dailyTasksToSave);
+                    if (db) {
+                        saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(() => {});
+                    }
                 }
             } catch (apiError) {
                 console.warn('Backend daily tasks yükleme hatası:', apiError);
@@ -263,7 +327,7 @@ async function loadStats() {
         }
 
         // Haftalık görevleri yükle (Backend API veya localStorage)
-        if (typeof window.loadWeeklyTasks === 'function') {
+        if (user && typeof window.loadWeeklyTasks === 'function') {
             try {
                 const backendWeeklyTasks = await window.loadWeeklyTasks();
                 if (backendWeeklyTasks) {
@@ -274,6 +338,19 @@ async function loadStats() {
                     if (weeklyTasks.week_stats) {
                         weeklyTasks.weekStats = weeklyTasks.week_stats;
                         weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                    }
+                    
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    const weeklyTasksToSave = {
+                        ...weeklyTasks,
+                        weekStats: {
+                            ...weeklyTasks.weekStats,
+                            allModesPlayed: Array.from(weeklyTasks.weekStats.allModesPlayed || [])
+                        }
+                    };
+                    safeSetItem('hasene_weeklyTasks', weeklyTasksToSave);
+                    if (db) {
+                        saveToIndexedDB('hasene_weeklyTasks', weeklyTasksToSave).catch(() => {});
                     }
                 }
             } catch (apiError) {
@@ -304,6 +381,9 @@ async function loadStats() {
                 const backendWordStats = await window.loadWordStats();
                 if (backendWordStats && Object.keys(backendWordStats).length > 0) {
                     wordStats = backendWordStats;
+                    
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    safeSetItem('hasene_wordStats', wordStats);
                 }
             } catch (apiError) {
                 console.warn('Backend word stats yükleme hatası:', apiError);
@@ -356,11 +436,14 @@ async function loadStats() {
             }
         });
         // Achievements yükle (Backend API veya localStorage)
-        if (typeof window.loadAchievements === 'function') {
+        if (user && typeof window.loadAchievements === 'function') {
             try {
                 const backendAchievements = await window.loadAchievements();
                 if (backendAchievements && backendAchievements.length > 0) {
                     unlockedAchievements = backendAchievements;
+                    
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    safeSetItem('unlockedAchievements', unlockedAchievements);
                 }
             } catch (apiError) {
                 console.warn('Backend achievements yükleme hatası:', apiError);
@@ -384,11 +467,14 @@ async function loadStats() {
         }
         
         // Badges yükle (Backend API veya localStorage)
-        if (typeof window.loadBadges === 'function') {
+        if (user && typeof window.loadBadges === 'function') {
             try {
                 const backendBadges = await window.loadBadges();
                 if (backendBadges && backendBadges.length > 0) {
                     unlockedBadges = backendBadges;
+                    
+                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                    safeSetItem('unlockedBadges', unlockedBadges);
                 }
             } catch (apiError) {
                 console.warn('Backend badges yükleme hatası:', apiError);
