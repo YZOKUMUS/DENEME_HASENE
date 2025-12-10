@@ -156,46 +156,107 @@ ALTER TABLE weekly_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monthly_stats ENABLE ROW LEVEL SECURITY;
 
 -- Policies: Kullanıcılar sadece kendi verilerini görebilir
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
+-- User Stats Policies
+DROP POLICY IF EXISTS "Users can view own stats" ON user_stats;
 CREATE POLICY "Users can view own stats" ON user_stats FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own stats" ON user_stats;
 CREATE POLICY "Users can update own stats" ON user_stats FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own stats" ON user_stats;
 CREATE POLICY "Users can insert own stats" ON user_stats FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Daily Tasks Policies
+DROP POLICY IF EXISTS "Users can view own daily tasks" ON daily_tasks;
 CREATE POLICY "Users can view own daily tasks" ON daily_tasks FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own daily tasks" ON daily_tasks;
 CREATE POLICY "Users can update own daily tasks" ON daily_tasks FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own daily tasks" ON daily_tasks;
 CREATE POLICY "Users can insert own daily tasks" ON daily_tasks FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Weekly Tasks Policies
+DROP POLICY IF EXISTS "Users can view own weekly tasks" ON weekly_tasks;
 CREATE POLICY "Users can view own weekly tasks" ON weekly_tasks FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own weekly tasks" ON weekly_tasks;
 CREATE POLICY "Users can update own weekly tasks" ON weekly_tasks FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own weekly tasks" ON weekly_tasks;
 CREATE POLICY "Users can insert own weekly tasks" ON weekly_tasks FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Word Stats Policies
+DROP POLICY IF EXISTS "Users can view own word stats" ON word_stats;
 CREATE POLICY "Users can view own word stats" ON word_stats FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own word stats" ON word_stats;
 CREATE POLICY "Users can update own word stats" ON word_stats FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own word stats" ON word_stats;
 CREATE POLICY "Users can insert own word stats" ON word_stats FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Favorite Words Policies
+DROP POLICY IF EXISTS "Users can view own favorites" ON favorite_words;
 CREATE POLICY "Users can view own favorites" ON favorite_words FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own favorites" ON favorite_words;
 CREATE POLICY "Users can insert own favorites" ON favorite_words FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own favorites" ON favorite_words;
 CREATE POLICY "Users can delete own favorites" ON favorite_words FOR DELETE USING (auth.uid() = user_id);
 
+-- Achievements Policies
+DROP POLICY IF EXISTS "Users can view own achievements" ON achievements;
 CREATE POLICY "Users can view own achievements" ON achievements FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own achievements" ON achievements;
 CREATE POLICY "Users can insert own achievements" ON achievements FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Badges Policies
+DROP POLICY IF EXISTS "Users can view own badges" ON badges;
 CREATE POLICY "Users can view own badges" ON badges FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own badges" ON badges;
 CREATE POLICY "Users can insert own badges" ON badges FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Daily Stats Policies
+DROP POLICY IF EXISTS "Users can view own daily stats" ON daily_stats;
 CREATE POLICY "Users can view own daily stats" ON daily_stats FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own daily stats" ON daily_stats;
 CREATE POLICY "Users can update own daily stats" ON daily_stats FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own daily stats" ON daily_stats;
 CREATE POLICY "Users can insert own daily stats" ON daily_stats FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Weekly Stats Policies
+DROP POLICY IF EXISTS "Users can view own weekly stats" ON weekly_stats;
 CREATE POLICY "Users can view own weekly stats" ON weekly_stats FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own weekly stats" ON weekly_stats;
 CREATE POLICY "Users can update own weekly stats" ON weekly_stats FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own weekly stats" ON weekly_stats;
 CREATE POLICY "Users can insert own weekly stats" ON weekly_stats FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Monthly Stats Policies
+DROP POLICY IF EXISTS "Users can view own monthly stats" ON monthly_stats;
 CREATE POLICY "Users can view own monthly stats" ON monthly_stats FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own monthly stats" ON monthly_stats;
 CREATE POLICY "Users can update own monthly stats" ON monthly_stats FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own monthly stats" ON monthly_stats;
 CREATE POLICY "Users can insert own monthly stats" ON monthly_stats FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Trigger: updated_at otomatik güncelleme
@@ -207,13 +268,28 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_user_stats_updated_at ON user_stats;
 CREATE TRIGGER update_user_stats_updated_at BEFORE UPDATE ON user_stats FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_daily_tasks_updated_at ON daily_tasks;
 CREATE TRIGGER update_daily_tasks_updated_at BEFORE UPDATE ON daily_tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_weekly_tasks_updated_at ON weekly_tasks;
 CREATE TRIGGER update_weekly_tasks_updated_at BEFORE UPDATE ON weekly_tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_word_stats_updated_at ON word_stats;
 CREATE TRIGGER update_word_stats_updated_at BEFORE UPDATE ON word_stats FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_daily_stats_updated_at ON daily_stats;
 CREATE TRIGGER update_daily_stats_updated_at BEFORE UPDATE ON daily_stats FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_weekly_stats_updated_at ON weekly_stats;
 CREATE TRIGGER update_weekly_stats_updated_at BEFORE UPDATE ON weekly_stats FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_monthly_stats_updated_at ON monthly_stats;
 CREATE TRIGGER update_monthly_stats_updated_at BEFORE UPDATE ON monthly_stats FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Liderlik tablosu için view (public, herkes görebilir)
@@ -231,5 +307,6 @@ ORDER BY us.total_points DESC, us.updated_at DESC
 LIMIT 100;
 
 -- Liderlik tablosu için policy (herkes görebilir ama sadece username ve stats)
+DROP POLICY IF EXISTS "Anyone can view leaderboard" ON profiles;
 CREATE POLICY "Anyone can view leaderboard" ON profiles FOR SELECT USING (true);
 

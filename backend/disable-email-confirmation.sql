@@ -2,21 +2,37 @@
 -- EMAIL CONFIRMATION'ı KAPAT
 -- ============================================
 
--- Supabase'de email confirmation'ı kapatmak için
--- Bu SQL'i SQL Editor'de çalıştırın
+-- ⚠️ NOT: Supabase'de email confirmation artık SQL ile değil,
+-- Dashboard üzerinden yapılıyor. SQL komutları artık çalışmıyor.
 
--- Yöntem 1: Auth config'i güncelle (Supabase'in yeni sisteminde)
-UPDATE auth.config 
-SET enable_email_confirmation = false;
+-- ============================================
+-- ✅ DOĞRU YÖNTEM: SUPABASE DASHBOARD
+-- ============================================
 
--- Eğer yukarıdaki çalışmazsa, şunu deneyin:
+-- 1. Supabase Dashboard'a gidin: https://app.supabase.com
+-- 2. Projenizi seçin
+-- 3. Sol menüden "Authentication" → "Providers" sekmesine gidin
+-- 4. "Email" provider'ını bulun ve tıklayın
+-- 5. "Confirm email" seçeneğini KAPALI yapın (toggle OFF)
+-- 6. "Save" butonuna tıklayın
+
+-- ============================================
+-- 🔄 ALTERNATIF: AUTH → SETTINGS
+-- ============================================
+
+-- Eğer yukarıdaki yöntem çalışmazsa:
+-- 1. Supabase Dashboard → Authentication → Settings
+-- 2. "Enable email confirmations" toggle'ını KAPATIN
+-- 3. Kaydedin
+
+-- ============================================
+-- 📝 ESKİ YÖNTEMLER (ARTIK ÇALIŞMIYOR)
+-- ============================================
+
+-- ❌ Bu komutlar artık çalışmıyor:
 -- UPDATE auth.config 
--- SET raw_app_meta_data = jsonb_set(
---     COALESCE(raw_app_meta_data, '{}'::jsonb),
---     '{email_confirmation}',
---     'false'::jsonb
--- );
+-- SET enable_email_confirmation = false;
 
--- Kontrol etmek için:
+-- ❌ Bu da çalışmıyor:
 -- SELECT * FROM auth.config;
 
