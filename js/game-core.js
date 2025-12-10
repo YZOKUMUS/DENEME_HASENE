@@ -1533,6 +1533,12 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         // Puan kaybı yok - sadece doğru cevap gösterilir
         playSound('wrong');
         
+        // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
+        saveDetailedStats(0, 0, 1, 0, 0);
+        if (typeof refreshDetailedStatsIfOpen === 'function') {
+            refreshDetailedStatsIfOpen();
+        }
+        
         // Audio çalıyorsa bitmesini bekle, yoksa normal süre sonra geç
         const moveToNextQuestion = () => {
             currentQuestion++;
@@ -1944,17 +1950,45 @@ async function saveCurrentGameProgress() {
         wrong: sessionWrong
     });
     
+    // LOG: saveCurrentGameProgress başladı
+    console.log('🟠 saveCurrentGameProgress çağrıldı:', {
+        sessionScore,
+        sessionCorrect,
+        sessionWrong,
+        maxCombo
+    });
+    
     // Global puanlara ekle
     await addToGlobalPoints(sessionScore, sessionCorrect);
     
-    // Günlük istatistikleri güncelle
-    const dailyCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0');
-    const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0');
-    localStorage.setItem('dailyCorrect', (dailyCorrect + sessionCorrect).toString());
-    localStorage.setItem('dailyWrong', (dailyWrong + sessionWrong).toString());
+    // NOT: saveDetailedStats() çağrılmıyor çünkü her soru cevaplandığında zaten çağrılıyor!
+    // Burada duplicate kayıt yapmamak için sadece localStorage senkronizasyonu yapıyoruz.
     
-    // Detaylı istatistikleri kaydet (günlük, haftalık, aylık)
-    saveDetailedStats(sessionScore, sessionCorrect, sessionWrong, maxCombo, 0);
+    // localStorage'daki dailyCorrect ve dailyWrong'u hasene_daily_ verilerinden senkronize et
+    const today = getLocalDateString();
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = safeGetItem(dailyKey, { correct: 0, wrong: 0, points: 0 });
+    
+    // LOG: localStorage senkronizasyonu
+    console.log('🟣 saveCurrentGameProgress - localStorage senkronize ediliyor:', {
+        dailyKey,
+        dailyData: { correct: dailyData.correct, wrong: dailyData.wrong },
+        localStorageBefore: {
+            correct: localStorage.getItem('dailyCorrect'),
+            wrong: localStorage.getItem('dailyWrong')
+        },
+        not: 'saveDetailedStats çağrılmadı - her soru zaten kaydedildi!'
+    });
+    
+    localStorage.setItem('dailyCorrect', (dailyData.correct || 0).toString());
+    localStorage.setItem('dailyWrong', (dailyData.wrong || 0).toString());
+    
+    console.log('🟣 saveCurrentGameProgress - localStorage senkronize edildi:', {
+        localStorageAfter: {
+            correct: localStorage.getItem('dailyCorrect'),
+            wrong: localStorage.getItem('dailyWrong')
+        }
+    });
     
     // Oyun istatistiklerini güncelle
     gameStats.totalCorrect += sessionCorrect;
@@ -2004,6 +2038,15 @@ async function saveCurrentGameProgress() {
 }
 
 async function endGame() {
+    // LOG: endGame başladı
+    console.log('🔴 endGame çağrıldı:', {
+        sessionScore,
+        sessionCorrect,
+        sessionWrong,
+        maxCombo,
+        totalQuestions: questions.length
+    });
+    
     // Perfect Lesson bonusu kontrolü
     // Tüm sorular doğru cevaplanmış olmalı (hiç yanlış cevap yok ve tüm sorular cevaplanmış)
     let perfectBonus = 0;
@@ -2014,16 +2057,11 @@ async function endGame() {
         // Mükemmel ders sayısını artır
         perfectLessonsCount++;
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
+        console.log('⭐ Perfect bonus eklendi:', perfectBonus);
     }
     
     // Global puanlara ekle
     await addToGlobalPoints(sessionScore, sessionCorrect);
-    
-    // Günlük istatistikleri güncelle
-    const dailyCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0');
-    const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0');
-    localStorage.setItem('dailyCorrect', (dailyCorrect + sessionCorrect).toString());
-    localStorage.setItem('dailyWrong', (dailyWrong + sessionWrong).toString());
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle
@@ -2038,8 +2076,45 @@ async function endGame() {
         maxCombo: 0,
         gameModes: {}
     });
+    
+    // LOG: endGame - mevcut dailyData
+    console.log('🔴 endGame - mevcut dailyData:', {
+        dailyKey,
+        dailyData: { ...dailyData },
+        not: 'saveDetailedStats çağrılmadı - her soru zaten kaydedildi!'
+    });
+    
     // Oyun sayısını artır (her soru zaten kaydedildi, sadece oyun sayısı eksik)
     dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    
+    // Perfect bonus'u detaylı istatistiklere ekle
+    if (perfectBonus > 0) {
+        dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
+        dailyData.points = (dailyData.points || 0) + perfectBonus;
+        console.log('🔴 endGame - perfect bonus eklendi:', {
+            perfectBonus,
+            yeniPoints: dailyData.points
+        });
+    }
+    
+    // localStorage'daki dailyCorrect ve dailyWrong'u hasene_daily_ verilerinden senkronize et
+    console.log('🔴 endGame - localStorage senkronize ediliyor:', {
+        dailyData: { correct: dailyData.correct, wrong: dailyData.wrong },
+        localStorageBefore: {
+            correct: localStorage.getItem('dailyCorrect'),
+            wrong: localStorage.getItem('dailyWrong')
+        }
+    });
+    
+    localStorage.setItem('dailyCorrect', (dailyData.correct || 0).toString());
+    localStorage.setItem('dailyWrong', (dailyData.wrong || 0).toString());
+    
+    console.log('🔴 endGame - localStorage senkronize edildi:', {
+        localStorageAfter: {
+            correct: localStorage.getItem('dailyCorrect'),
+            wrong: localStorage.getItem('dailyWrong')
+        }
+    });
     // Perfect bonus'u detaylı istatistiklere ekle
     if (perfectBonus > 0) {
         dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
@@ -2061,6 +2136,7 @@ async function endGame() {
         streakDays: 0,
         playedDates: []
     });
+    // Oyun tamamlandığı için gamesPlayed artırılır
     weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
     // Perfect bonus'u detaylı istatistiklere ekle
     if (perfectBonus > 0) {
@@ -2770,9 +2846,20 @@ if (typeof updateWordStats === 'undefined') {
 /**
  * Detaylı istatistikleri kaydeder (günlük, haftalık, aylık)
  */
-function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
+function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, incrementGamesPlayed = false) {
     const today = getLocalDateString();
     const todayDate = new Date();
+    
+    // LOG: Fonksiyon çağrısı
+    console.log('🔵 saveDetailedStats çağrıldı:', {
+        points,
+        correct,
+        wrong,
+        maxCombo,
+        perfectLessons,
+        incrementGamesPlayed,
+        stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
+    });
     
     // Günlük istatistikler
     const dailyKey = `hasene_daily_${today}`;
@@ -2786,11 +2873,26 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
         gameModes: {}
     });
     
+    const oldCorrect = dailyData.correct || 0;
+    const oldWrong = dailyData.wrong || 0;
+    const oldPoints = dailyData.points || 0;
+    
     dailyData.correct = (dailyData.correct || 0) + correct;
     dailyData.wrong = (dailyData.wrong || 0) + wrong;
     dailyData.points = (dailyData.points || 0) + points;
-    dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    // gamesPlayed sadece oyun tamamlandığında artırılmalı, her soru için değil
+    if (incrementGamesPlayed) {
+        dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
+    }
     dailyData.perfectLessons = (dailyData.perfectLessons || 0) + perfectLessons;
+    
+    // LOG: Günlük veri güncellemesi
+    console.log('🟢 Günlük veri güncellendi:', {
+        key: dailyKey,
+        eski: { correct: oldCorrect, wrong: oldWrong, points: oldPoints },
+        yeni: { correct: dailyData.correct, wrong: dailyData.wrong, points: dailyData.points },
+        eklenen: { correct, wrong, points }
+    });
     if (maxCombo > (dailyData.maxCombo || 0)) {
         dailyData.maxCombo = maxCombo;
     }
@@ -2799,6 +2901,20 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     }
     
     safeSetItem(dailyKey, dailyData);
+    
+    // LOG: localStorage senkronizasyonu kontrolü
+    const localStorageCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0') || 0;
+    const localStorageWrong = parseInt(localStorage.getItem('dailyWrong') || '0') || 0;
+    console.log('🟡 localStorage durumu:', {
+        dailyCorrect: localStorageCorrect,
+        dailyWrong: localStorageWrong,
+        hasene_daily_correct: dailyData.correct,
+        hasene_daily_wrong: dailyData.wrong,
+        fark: {
+            correct: Math.abs(localStorageCorrect - dailyData.correct),
+            wrong: Math.abs(localStorageWrong - dailyData.wrong)
+        }
+    });
     
     // Haftalık istatistikler
     const weekStartStr = getWeekStartDateString(todayDate);
@@ -2818,7 +2934,10 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     weeklyData.hasene = (weeklyData.hasene || 0) + points;
     weeklyData.correct = (weeklyData.correct || 0) + correct;
     weeklyData.wrong = (weeklyData.wrong || 0) + wrong;
-    weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
+    // gamesPlayed sadece oyun tamamlandığında artırılmalı, her soru için değil
+    if (incrementGamesPlayed) {
+        weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
+    }
     weeklyData.perfectLessons = (weeklyData.perfectLessons || 0) + perfectLessons;
     if (maxCombo > (weeklyData.maxCombo || 0)) {
         weeklyData.maxCombo = maxCombo;
@@ -2858,7 +2977,10 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons) {
     monthlyData.hasene = (monthlyData.hasene || 0) + points;
     monthlyData.correct = (monthlyData.correct || 0) + correct;
     monthlyData.wrong = (monthlyData.wrong || 0) + wrong;
-    monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
+    // gamesPlayed sadece oyun tamamlandığında artırılmalı, her soru için değil
+    if (incrementGamesPlayed) {
+        monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
+    }
     monthlyData.perfectLessons = (monthlyData.perfectLessons || 0) + perfectLessons;
     if (maxCombo > (monthlyData.maxCombo || 0)) {
         monthlyData.maxCombo = maxCombo;
@@ -3413,9 +3535,32 @@ function showAchievementUnlock(achievement) {
  * İstatistikler modalını gösterir
  */
 function showStatsModal() {
+    // LOG: showStatsModal çağrıldı
+    console.log('🟡 showStatsModal çağrıldı');
+    
     // Güvenli değer alma - NaN, undefined, null kontrolü
-    const dailyCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0') || 0;
-    const dailyWrong = parseInt(localStorage.getItem('dailyWrong') || '0') || 0;
+    // dailyCorrect ve dailyWrong'u hasene_daily_ verilerinden al (duplicate kaynağı kaldırıldı)
+    const today = getLocalDateString();
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = safeGetItem(dailyKey, { correct: 0, wrong: 0, points: 0 });
+    const dailyCorrect = dailyData.correct || 0;
+    const dailyWrong = dailyData.wrong || 0;
+    
+    const localStorageCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0') || 0;
+    const localStorageWrong = parseInt(localStorage.getItem('dailyWrong') || '0') || 0;
+    
+    // LOG: Değer karşılaştırması
+    console.log('🟡 showStatsModal - Değer karşılaştırması:', {
+        hasene_daily: { correct: dailyCorrect, wrong: dailyWrong },
+        localStorage: { correct: localStorageCorrect, wrong: localStorageWrong },
+        fark: {
+            correct: Math.abs(dailyCorrect - localStorageCorrect),
+            wrong: Math.abs(dailyWrong - localStorageWrong)
+        }
+    });
+    
+    // Bugünkü toplam Hasene'yi hasene_daily_ verilerinden al (totalPoints değil, bugünkü toplam)
+    const dailyTotalPoints = dailyData.points || 0;
     
     const safeTotalPoints = totalPoints || 0;
     const safeTotalCorrect = (gameStats && gameStats.totalCorrect) || 0;
@@ -3424,7 +3569,23 @@ function showStatsModal() {
     
     document.getElementById('stats-daily-correct').textContent = dailyCorrect;
     document.getElementById('stats-daily-wrong').textContent = dailyWrong;
-    document.getElementById('stats-total-points').textContent = formatNumber(safeTotalPoints);
+    // NOT: HTML'de "Toplam Hasene" yazıyor ama kullanıcı bugünkü toplamı görmek istiyor
+    // Bu yüzden bugünkü toplamı gösteriyoruz (hasene_daily_${today}.points)
+    document.getElementById('stats-total-points').textContent = formatNumber(dailyTotalPoints);
+    
+    // LOG: Puan karşılaştırması
+    console.log('🟡 showStatsModal - Puan karşılaştırması:', {
+        bugunkuToplam: dailyTotalPoints,
+        tumZamanlarToplami: safeTotalPoints,
+        kullanilan: 'dailyTotalPoints (bugünkü toplam)',
+        hasene_daily_points: dailyData.points
+    });
+    
+    console.log('🟡 showStatsModal - DOM güncellendi:', {
+        statsDailyCorrect: dailyCorrect,
+        statsDailyWrong: dailyWrong,
+        statsTotalPoints: safeTotalPoints
+    });
     document.getElementById('stats-total-correct').textContent = formatNumber(safeTotalCorrect);
     document.getElementById('stats-total-wrong').textContent = formatNumber(safeTotalWrong);
     

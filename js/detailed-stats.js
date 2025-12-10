@@ -67,6 +67,8 @@ function loadDailyStats() {
     const content = document.getElementById('daily-stats-content');
     if (!content) return;
     
+    console.log('📊 loadDailyStats çağrıldı');
+    
     const today = getLocalDateString();
     const dailyStats = [];
     let totalCorrect = 0;
@@ -92,6 +94,21 @@ function loadDailyStats() {
         });
         
         const isToday = dateStr === today;
+        
+        // LOG: Bugün için detaylı log
+        if (isToday) {
+            const localStorageCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0') || 0;
+            const localStorageWrong = parseInt(localStorage.getItem('dailyWrong') || '0') || 0;
+            console.log('📊 loadDailyStats - Bugün verileri:', {
+                dateStr,
+                hasene_daily: { correct: dailyData.correct, wrong: dailyData.wrong, points: dailyData.points },
+                localStorage: { correct: localStorageCorrect, wrong: localStorageWrong },
+                fark: {
+                    correct: Math.abs(dailyData.correct - localStorageCorrect),
+                    wrong: Math.abs(dailyData.wrong - localStorageWrong)
+                }
+            });
+        }
         const accuracy = (dailyData.correct + dailyData.wrong) > 0 
             ? Math.round((dailyData.correct / (dailyData.correct + dailyData.wrong)) * 100) 
             : 0;
