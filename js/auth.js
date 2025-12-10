@@ -291,10 +291,36 @@ async function updateUserUI() {
     if (user && user.email) {
         // Kullanıcı giriş yapmış
         if (userProfileBtn) {
-            userProfileBtn.style.display = 'block';
+            userProfileBtn.style.display = 'flex';
         }
+        // Email'i gizle - sadece avatar ve çıkış butonu göster
         if (userEmailEl) {
-            userEmailEl.textContent = user.email;
+            userEmailEl.style.display = 'none';
+        }
+        // Avatar'ı güncelle
+        const userAvatarInitial = document.getElementById('user-avatar-initial');
+        if (userAvatarInitial) {
+            // Kullanıcı adının ilk harfini al veya email'in ilk harfini al
+            const displayName = user.username || user.email || 'U';
+            const initial = displayName.charAt(0).toUpperCase();
+            userAvatarInitial.textContent = initial;
+            
+            // Avatar rengini kullanıcı adına göre belirle (tutarlı renk için)
+            const colors = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+            ];
+            const colorIndex = displayName.charCodeAt(0) % colors.length;
+            const avatarEl = document.getElementById('user-avatar');
+            if (avatarEl) {
+                avatarEl.style.background = colors[colorIndex];
+            }
         }
         if (authNavBtn) {
             authNavBtn.style.display = 'none';

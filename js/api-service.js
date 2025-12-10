@@ -233,6 +233,22 @@ async function getCurrentUser() {
                 localStorage.setItem('hasene_user_email', session.user.email);
             }
             
+            // Username'i profiles tablosundan al
+            try {
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+                
+                if (profile && profile.username) {
+                    return { ...session.user, username: profile.username };
+                }
+            } catch (profileError) {
+                // Profile hatası kritik değil, devam et
+                console.warn('Profile yükleme hatası (normal olabilir):', profileError);
+            }
+            
             return session.user;
         } catch (error) {
             // Hata durumunda sessizce null döndür (console spam'ini önle)

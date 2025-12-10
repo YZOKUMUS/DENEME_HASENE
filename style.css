@@ -196,6 +196,8 @@ body {
     padding: var(--spacing-xs) var(--spacing-sm);
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     border-radius: var(--radius-sm);
+    position: relative;
+    z-index: 1; /* Butonların altında kalması için */
 }
 
 .stat-item {
@@ -2897,6 +2899,11 @@ body {
         min-height: calc(100vh - 130px);
     }
 
+    /* Hero Section - Mobilde üstten padding ekle (butonlar için) */
+    .hero-section {
+        padding-top: 50px; /* Giriş/çıkış butonları için alan */
+    }
+    
     /* Stats Bar - Mobilde 5 öğe yan yana */
     .stats-bar {
         flex-wrap: nowrap;
@@ -3522,6 +3529,11 @@ body {
         min-height: calc(100vh - 120px);
     }
 
+    /* Hero Section - Çok küçük ekranlarda daha fazla alan */
+    .hero-section {
+        padding-top: 48px;
+    }
+    
     .stats-bar {
         padding: 4px 2px;
         gap: 1px;
@@ -4770,6 +4782,123 @@ select:focus {
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
+}
+
+/* ============================================
+   USER PROFILE & AUTH BUTTONS
+   ============================================ */
+.auth-nav-btn,
+.user-profile-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 999; /* Stats bar'ın görünür olması için düşük z-index */
+    background: rgba(118, 75, 162, 0.9);
+    border: none;
+    border-radius: 18px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.auth-nav-btn:hover,
+.user-profile-btn:hover {
+    background: rgba(118, 75, 162, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.user-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.user-avatar #user-avatar-initial {
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.logout-btn {
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    font-size: 12px;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.logout-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobil için küçük buton */
+@media (max-width: 600px) {
+    .auth-nav-btn,
+    .user-profile-btn {
+        top: 8px;
+        right: 8px;
+        padding: 5px 10px;
+        font-size: 11px;
+        border-radius: 16px;
+        z-index: 998; /* Stats bar'ın görünür olması için */
+    }
+    
+    .user-profile-btn {
+        padding: 3px 8px 3px 3px;
+        gap: 6px;
+    }
+    
+    .user-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+        border-width: 1.5px;
+    }
+    
+    .logout-btn {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 360px) {
+    .auth-nav-btn,
+    .user-profile-btn {
+        top: 6px;
+        right: 6px;
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+    
+    .user-avatar {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
 }
 
 /* Responsive Leaderboard */

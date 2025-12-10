@@ -319,15 +319,17 @@
     <!-- Main Container -->
     <div class="container" id="main-container">
         <!-- User Profile Button (Top Right - Giriş yapmış kullanıcılar için) -->
-        <div id="user-profile-btn" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 1000; background: rgba(118, 75, 162, 0.9); padding: 8px 12px; border-radius: 20px; color: white; font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-            <span id="user-email" style="margin-right: 8px;"></span>
-            <span id="logout-span" onclick="handleLogout()" style="cursor: pointer; opacity: 0.8;">Çıkış</span>
+        <div id="user-profile-btn" class="user-profile-btn" style="display: none;">
+            <div class="user-avatar" id="user-avatar">
+                <span id="user-avatar-initial">U</span>
+            </div>
+            <span id="logout-span" onclick="handleLogout()" class="logout-btn">Çıkış</span>
         </div>
 
         <!-- Auth Nav Button (Top Right - Giriş yapmamış kullanıcılar için) -->
-        <button id="auth-nav-btn" onclick="showAuthModal()" style="display: flex; position: fixed; top: 10px; right: 10px; z-index: 1000; background: rgba(118, 75, 162, 0.9); padding: 8px 16px; border: none; border-radius: 20px; color: white; font-size: 14px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); align-items: center; gap: 6px;">
+        <button id="auth-nav-btn" class="auth-nav-btn" onclick="showAuthModal()" style="display: flex;">
             <span>🔐</span>
-            <span>Giriş Yap</span>
+            <span>Giriş</span>
         </button>
 
         <!-- Ana Menü -->
