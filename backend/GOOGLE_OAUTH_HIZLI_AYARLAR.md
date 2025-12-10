@@ -10,18 +10,20 @@ Bu hata, Supabase'de Google OAuth provider'ının yapılandırılmamış olması
 
 ### 1. Google Cloud Console'da OAuth Client ID Oluştur
 
-1. https://console.cloud.google.com/ → Proje seçin
-2. **APIs & Services** → **Credentials**
-3. **+ CREATE CREDENTIALS** → **OAuth client ID**
-4. **OAuth consent screen** ayarlarını yapın (ilk defa ise)
-5. **Application type**: **Web application**
-6. **Name**: "Hasene Web"
-7. **Authorized redirect URIs**: 
+**📖 Detaylı rehber:** `backend/GOOGLE_CLOUD_OAUTH_CLIENT_ID_OLUSTURMA.md`
+
+**Hızlı özet:**
+1. https://console.cloud.google.com/ → Proje seçin (veya yeni proje oluşturun)
+2. **APIs & Services** → **OAuth consent screen** (ilk defa ise ayarlayın)
+3. **APIs & Services** → **Credentials** → **+ CREATE CREDENTIALS** → **OAuth client ID**
+4. **Application type**: **Web application**
+5. **Name**: "Hasene Web"
+6. **Authorized redirect URIs**: 
    ```
    https://ldsudrqanyjqisdunikn.supabase.co/auth/v1/callback
    ```
-   *(Kendi Supabase project URL'inizi kullanın)*
-8. **CREATE** → **Client ID** ve **Client Secret**'ı kopyalayın
+   *(Kendi Supabase project URL'inizi kullanın - Settings → API → Project URL)*
+7. **CREATE** → **Client ID** ve **Client Secret**'ı kopyalayın ⚠️ (Bir daha gösterilmeyecek!)
 
 ---
 
