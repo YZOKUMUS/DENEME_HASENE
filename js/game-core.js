@@ -355,31 +355,60 @@ async function loadStats() {
                 stats.lastReview = stats.lastCorrect || stats.lastWrong || todayForMigration;
             }
         });
-        // Eski format desteği: array of strings -> array of objects
-        const savedAchievements = safeGetItem('unlockedAchievements', []);
-        const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
-        
-        // Eski format kontrolü ve dönüştürme
-        if (savedAchievements.length > 0 && typeof savedAchievements[0] === 'string') {
-            // Eski format: string array -> object array (timestamp şimdiki zaman)
-            unlockedAchievements = savedAchievements.map((id, index) => ({
-                id: id,
-                unlockedAt: Date.now() - (savedAchievements.length - index) * 1000 // Sıraya göre timestamp
-            }));
-            safeSetItem('unlockedAchievements', unlockedAchievements);
-        } else {
-            unlockedAchievements = savedAchievements;
+        // Achievements yükle (Backend API veya localStorage)
+        if (typeof window.loadAchievements === 'function') {
+            try {
+                const backendAchievements = await window.loadAchievements();
+                if (backendAchievements && backendAchievements.length > 0) {
+                    unlockedAchievements = backendAchievements;
+                }
+            } catch (apiError) {
+                console.warn('Backend achievements yükleme hatası:', apiError);
+            }
         }
         
-        if (savedUnlockedBadges.length > 0 && typeof savedUnlockedBadges[0] === 'string') {
-            // Eski format: string array -> object array (timestamp şimdiki zaman)
-            unlockedBadges = savedUnlockedBadges.map((id, index) => ({
-                id: id,
-                unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000 // Sıraya göre timestamp
-            }));
-            safeSetItem('unlockedBadges', unlockedBadges);
-        } else {
-            unlockedBadges = savedUnlockedBadges;
+        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
+        if (unlockedAchievements.length === 0) {
+            const savedAchievements = safeGetItem('unlockedAchievements', []);
+            // Eski format kontrolü ve dönüştürme
+            if (savedAchievements.length > 0 && typeof savedAchievements[0] === 'string') {
+                // Eski format: string array -> object array (timestamp şimdiki zaman)
+                unlockedAchievements = savedAchievements.map((id, index) => ({
+                    id: id,
+                    unlockedAt: Date.now() - (savedAchievements.length - index) * 1000 // Sıraya göre timestamp
+                }));
+                safeSetItem('unlockedAchievements', unlockedAchievements);
+            } else {
+                unlockedAchievements = savedAchievements;
+            }
+        }
+        
+        // Badges yükle (Backend API veya localStorage)
+        if (typeof window.loadBadges === 'function') {
+            try {
+                const backendBadges = await window.loadBadges();
+                if (backendBadges && backendBadges.length > 0) {
+                    unlockedBadges = backendBadges;
+                }
+            } catch (apiError) {
+                console.warn('Backend badges yükleme hatası:', apiError);
+            }
+        }
+        
+        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
+        if (unlockedBadges.length === 0) {
+            const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
+            // Eski format kontrolü ve dönüştürme
+            if (savedUnlockedBadges.length > 0 && typeof savedUnlockedBadges[0] === 'string') {
+                // Eski format: string array -> object array (timestamp şimdiki zaman)
+                unlockedBadges = savedUnlockedBadges.map((id, index) => ({
+                    id: id,
+                    unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000 // Sıraya göre timestamp
+                }));
+                safeSetItem('unlockedBadges', unlockedBadges);
+            } else {
+                unlockedBadges = savedUnlockedBadges;
+            }
         }
         perfectLessonsCount = parseInt(safeGetItem('perfectLessonsCount', 0)) || 0;
         
@@ -3466,6 +3495,14 @@ function unlockBadge(badge) {
         unlockedAt: Date.now()
     });
     showBadgeUnlock(badge);
+    
+    // Backend'e kaydet
+    if (typeof window.saveBadge === 'function') {
+        window.saveBadge(badge.id).catch(err => {
+            console.warn('Badge backend kayıt hatası (normal olabilir):', err);
+        });
+    }
+    
     saveStats();
 }
 
@@ -3675,6 +3712,14 @@ function unlockAchievement(achievement) {
         unlockedAt: Date.now()
     });
     showAchievementUnlock(achievement);
+    
+    // Backend'e kaydet
+    if (typeof window.saveAchievement === 'function') {
+        window.saveAchievement(achievement.id).catch(err => {
+            console.warn('Achievement backend kayıt hatası (normal olabilir):', err);
+        });
+    }
+    
     saveStats();
 }
 

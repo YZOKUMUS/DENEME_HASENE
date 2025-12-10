@@ -742,6 +742,164 @@ async function loadDailyStat(date) {
 }
 
 // ============================================
+// ACHIEVEMENTS API
+// ============================================
+
+/**
+ * Achievements yükle
+ */
+async function loadAchievements() {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        return JSON.parse(localStorage.getItem('unlockedAchievements') || '[]');
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from('achievements')
+            .select('achievement_id, unlocked_at')
+            .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        // Format: [{id: string, unlockedAt: number}, ...]
+        return (data || []).map(a => ({
+            id: a.achievement_id,
+            unlockedAt: new Date(a.unlocked_at).getTime()
+        }));
+    }
+    
+    // Fallback: localStorage
+    return JSON.parse(localStorage.getItem('unlockedAchievements') || '[]');
+}
+
+/**
+ * Achievement kaydet
+ */
+async function saveAchievement(achievementId) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        const achievements = JSON.parse(localStorage.getItem('unlockedAchievements') || '[]');
+        const exists = achievements.some(a => {
+            if (typeof a === 'string') return a === achievementId;
+            return a.id === achievementId;
+        });
+        if (!exists) {
+            achievements.push({ id: achievementId, unlockedAt: Date.now() });
+            localStorage.setItem('unlockedAchievements', JSON.stringify(achievements));
+        }
+        return;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { error } = await supabaseClient
+            .from('achievements')
+            .upsert({
+                user_id: user.id,
+                achievement_id: achievementId,
+                unlocked_at: new Date().toISOString()
+            }, {
+                onConflict: 'user_id,achievement_id'
+            });
+        
+        if (error) throw error;
+        return;
+    }
+    
+    // Fallback: localStorage
+    const achievements = JSON.parse(localStorage.getItem('unlockedAchievements') || '[]');
+    const exists = achievements.some(a => {
+        if (typeof a === 'string') return a === achievementId;
+        return a.id === achievementId;
+    });
+    if (!exists) {
+        achievements.push({ id: achievementId, unlockedAt: Date.now() });
+        localStorage.setItem('unlockedAchievements', JSON.stringify(achievements));
+    }
+}
+
+// ============================================
+// BADGES API
+// ============================================
+
+/**
+ * Badges yükle (ayrı tablo - user_stats.badges ile karıştırma)
+ */
+async function loadBadges() {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        return JSON.parse(localStorage.getItem('unlockedBadges') || '[]');
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from('badges')
+            .select('badge_id, unlocked_at')
+            .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        // Format: [{id: string, unlockedAt: number}, ...]
+        return (data || []).map(b => ({
+            id: b.badge_id,
+            unlockedAt: new Date(b.unlocked_at).getTime()
+        }));
+    }
+    
+    // Fallback: localStorage
+    return JSON.parse(localStorage.getItem('unlockedBadges') || '[]');
+}
+
+/**
+ * Badge kaydet
+ */
+async function saveBadge(badgeId) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        const badges = JSON.parse(localStorage.getItem('unlockedBadges') || '[]');
+        const exists = badges.some(b => {
+            if (typeof b === 'string') return b === badgeId;
+            return b.id === badgeId;
+        });
+        if (!exists) {
+            badges.push({ id: badgeId, unlockedAt: Date.now() });
+            localStorage.setItem('unlockedBadges', JSON.stringify(badges));
+        }
+        return;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { error } = await supabaseClient
+            .from('badges')
+            .upsert({
+                user_id: user.id,
+                badge_id: badgeId,
+                unlocked_at: new Date().toISOString()
+            }, {
+                onConflict: 'user_id,badge_id'
+            });
+        
+        if (error) throw error;
+        return;
+    }
+    
+    // Fallback: localStorage
+    const badges = JSON.parse(localStorage.getItem('unlockedBadges') || '[]');
+    const exists = badges.some(b => {
+        if (typeof b === 'string') return b === badgeId;
+        return b.id === badgeId;
+    });
+    if (!exists) {
+        badges.push({ id: badgeId, unlockedAt: Date.now() });
+        localStorage.setItem('unlockedBadges', JSON.stringify(badges));
+    }
+}
+
+// ============================================
 // LEADERBOARD API
 // ============================================
 
@@ -788,5 +946,9 @@ if (typeof window !== 'undefined') {
     window.saveDailyStat = saveDailyStat;
     window.loadDailyStat = loadDailyStat;
     window.loadLeaderboard = loadLeaderboard;
+    window.loadAchievements = loadAchievements;
+    window.saveAchievement = saveAchievement;
+    window.loadBadges = loadBadges;
+    window.saveBadge = saveBadge;
 }
 
