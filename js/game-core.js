@@ -4480,10 +4480,14 @@ function showBadgesModal() {
  * Takvim modalını gösterir
  */
 function showCalendarModal() {
-    const calendarGrid = document.getElementById('calendar-grid');
-    const calendarMonthYear = document.getElementById('calendar-month-year');
-    
-    if (calendarGrid) {
+    try {
+        const calendarGrid = document.getElementById('calendar-grid');
+        const calendarMonthYear = document.getElementById('calendar-month-year');
+        
+        if (!calendarGrid) {
+            console.error('❌ calendar-grid elementi bulunamadı!');
+            return;
+        }
         calendarGrid.innerHTML = '';
         
         // Bugünün tarihi
@@ -4525,24 +4529,26 @@ function showCalendarModal() {
             const dateStr = getLocalDateString(date);
             
             // Bu gün oynanmış mı?
-            const isPlayed = streakData.playDates.includes(dateStr);
+            const isPlayed = (streakData?.playDates && Array.isArray(streakData.playDates)) 
+                ? streakData.playDates.includes(dateStr) 
+                : false;
             
             // Bu gün gelecek bir gün mü?
             const isFuture = date > today;
             
             // Seri kontrolü: Bugünden geriye doğru kesintisiz oynanan günler
             let isStreak = false;
-            if (isPlayed && !isFuture && streakData.currentStreak > 0) {
+            if (isPlayed && !isFuture && streakData?.currentStreak > 0) {
                 const daysDiff = getDaysDifference(date, today);
                 // Bugünden geriye doğru seri uzunluğu kadar gün içinde mi?
-                if (daysDiff >= 0 && daysDiff < streakData.currentStreak) {
+                if (daysDiff >= 0 && daysDiff < (streakData?.currentStreak || 0)) {
                     // Kesintisiz kontrol: Bu günden bugüne kadar tüm günler oynanmış mı?
                     let allDaysPlayed = true;
                     for (let j = 0; j <= daysDiff; j++) {
                         const checkDate = new Date(today);
                         checkDate.setDate(checkDate.getDate() - j);
                         const checkDateStr = getLocalDateString(checkDate);
-                        if (!streakData.playDates.includes(checkDateStr)) {
+                        if (!streakData?.playDates || !Array.isArray(streakData.playDates) || !streakData.playDates.includes(checkDateStr)) {
                             allDaysPlayed = false;
                             break;
                         }
@@ -4566,13 +4572,32 @@ function showCalendarModal() {
             dayEl.textContent = day;
             calendarGrid.appendChild(dayEl);
         }
+        
+        // Streak bilgilerini güncelle (null check ile)
+        const currentStreakEl = document.getElementById('calendar-current-streak');
+        const bestStreakEl = document.getElementById('calendar-best-streak');
+        const totalDaysEl = document.getElementById('calendar-total-days');
+        
+        if (currentStreakEl) {
+            currentStreakEl.textContent = (streakData?.currentStreak || 0) + ' gün';
+        }
+        if (bestStreakEl) {
+            bestStreakEl.textContent = (streakData?.bestStreak || 0) + ' gün';
+        }
+        if (totalDaysEl) {
+            totalDaysEl.textContent = streakData?.totalPlayDays || 0;
+        }
+        
+        openModal('calendar-modal');
+    } catch (error) {
+        console.error('❌ showCalendarModal hatası:', error);
+        // Hata olsa bile modal açılmaya çalış
+        try {
+            openModal('calendar-modal');
+        } catch (modalError) {
+            console.error('❌ Modal açma hatası:', modalError);
+        }
     }
-    
-    document.getElementById('calendar-current-streak').textContent = streakData.currentStreak + ' gün';
-    document.getElementById('calendar-best-streak').textContent = streakData.bestStreak + ' gün';
-    document.getElementById('calendar-total-days').textContent = streakData.totalPlayDays;
-    
-    openModal('calendar-modal');
 }
 
 /**
