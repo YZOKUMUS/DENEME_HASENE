@@ -175,12 +175,18 @@ async function handleRegister() {
     } catch (error) {
         console.error('Register hatası:', error);
         
-        // Email confirmation hatası için özel mesaj
-        if (error.message && error.message.includes('Email not confirmed')) {
-            showAuthMessage('Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın veya Supabase ayarlarından email confirmation\'ı kapatın.', 'error');
-        } else {
-            showAuthMessage(error.message || 'Kayıt olunamadı. Lütfen tekrar deneyin.', 'error');
+        // Özel hata mesajları
+        let errorMessage = 'Kayıt olunamadı. Lütfen tekrar deneyin.';
+        
+        if (error.message && error.message.includes('Email signups are disabled')) {
+            errorMessage = 'Email kayıtları şu an devre dışı. Lütfen Supabase Dashboard\'da Authentication → Providers → Email bölümünden email signup\'ları açın.';
+        } else if (error.message && error.message.includes('Email not confirmed')) {
+            errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın veya Supabase ayarlarından email confirmation\'ı kapatın.';
+        } else if (error.message) {
+            errorMessage = error.message;
         }
+        
+        showAuthMessage(errorMessage, 'error');
     }
 }
 
