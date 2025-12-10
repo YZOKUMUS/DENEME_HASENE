@@ -370,17 +370,17 @@ async function loadStats() {
         // Eğer backend'den yüklenmediyse, localStorage'dan yükle
         if (unlockedAchievements.length === 0) {
             const savedAchievements = safeGetItem('unlockedAchievements', []);
-            // Eski format kontrolü ve dönüştürme
-            if (savedAchievements.length > 0 && typeof savedAchievements[0] === 'string') {
-                // Eski format: string array -> object array (timestamp şimdiki zaman)
-                unlockedAchievements = savedAchievements.map((id, index) => ({
-                    id: id,
-                    unlockedAt: Date.now() - (savedAchievements.length - index) * 1000 // Sıraya göre timestamp
-                }));
-                safeSetItem('unlockedAchievements', unlockedAchievements);
-            } else {
-                unlockedAchievements = savedAchievements;
-            }
+        // Eski format kontrolü ve dönüştürme
+        if (savedAchievements.length > 0 && typeof savedAchievements[0] === 'string') {
+            // Eski format: string array -> object array (timestamp şimdiki zaman)
+            unlockedAchievements = savedAchievements.map((id, index) => ({
+                id: id,
+                unlockedAt: Date.now() - (savedAchievements.length - index) * 1000 // Sıraya göre timestamp
+            }));
+            safeSetItem('unlockedAchievements', unlockedAchievements);
+        } else {
+            unlockedAchievements = savedAchievements;
+        }
         }
         
         // Badges yükle (Backend API veya localStorage)
@@ -399,15 +399,15 @@ async function loadStats() {
         if (unlockedBadges.length === 0) {
             const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
             // Eski format kontrolü ve dönüştürme
-            if (savedUnlockedBadges.length > 0 && typeof savedUnlockedBadges[0] === 'string') {
-                // Eski format: string array -> object array (timestamp şimdiki zaman)
-                unlockedBadges = savedUnlockedBadges.map((id, index) => ({
-                    id: id,
-                    unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000 // Sıraya göre timestamp
-                }));
-                safeSetItem('unlockedBadges', unlockedBadges);
-            } else {
-                unlockedBadges = savedUnlockedBadges;
+        if (savedUnlockedBadges.length > 0 && typeof savedUnlockedBadges[0] === 'string') {
+            // Eski format: string array -> object array (timestamp şimdiki zaman)
+            unlockedBadges = savedUnlockedBadges.map((id, index) => ({
+                id: id,
+                unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000 // Sıraya göre timestamp
+            }));
+            safeSetItem('unlockedBadges', unlockedBadges);
+        } else {
+            unlockedBadges = savedUnlockedBadges;
             }
         }
         perfectLessonsCount = parseInt(safeGetItem('perfectLessonsCount', 0)) || 0;

@@ -663,9 +663,9 @@ async function initializeAuth() {
             console.log('🔄 OAuth callback tespit edildi, session bekleniyor...');
             // Auth state change listener yukarıda halleder
             // Sadece biraz bekle ve UI'ı güncelle
-            setTimeout(async () => {
-                await updateUserUI();
-                await syncUserData();
+        setTimeout(async () => {
+            await updateUserUI();
+            await syncUserData();
             }, 1500);
         }
     }
