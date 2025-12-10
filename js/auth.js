@@ -376,51 +376,20 @@ function clearAuthForms() {
  * Auth modal UI'ını güncelle (kullanıcı giriş durumuna göre)
  */
 async function updateAuthModalUI() {
-    const user = typeof window.getCurrentUser === 'function' ? await window.getCurrentUser() : null;
+    // Kayıt ol kaldırıldı - sadece Google ile giriş
+    // Her zaman kayıt ol sekmesini ve formunu gizle
     const registerTabBtn = document.getElementById('register-tab-btn');
     const registerForm = document.getElementById('register-form');
     const registerBenefitsInfo = document.getElementById('register-benefits-info');
     
-    // Kayıt durumunu kontrol et (localStorage'dan)
-    const hasRegistered = localStorage.getItem('hasene_user_has_registered') === 'true';
-    
-    if (user) {
-        // Kullanıcı giriş yapmış - kayıt ol sekmesini tamamen gizle
-        if (registerTabBtn) {
-            registerTabBtn.style.display = 'none';
-        }
-        if (registerForm) {
-            registerForm.style.display = 'none';
-        }
-        if (registerBenefitsInfo) {
-            registerBenefitsInfo.style.display = 'none';
-        }
-    } else if (hasRegistered) {
-        // Kullanıcı kayıt olmuş ama giriş yapmamış - sadece giriş yap sekmesi göster
-        console.log('📝 Kullanıcı daha önce kayıt olmuş, kayıt ol sekmesi gizleniyor');
-        if (registerTabBtn) {
-            registerTabBtn.style.display = 'none';
-        }
-        if (registerForm) {
-            registerForm.style.display = 'none';
-        }
-        if (registerBenefitsInfo) {
-            registerBenefitsInfo.style.display = 'none';
-        }
-        // Giriş yap sekmesine otomatik geç
-        const loginTabBtn = document.querySelector('.auth-tab-btn[data-tab="login"]');
-        if (loginTabBtn) {
-            loginTabBtn.classList.add('active');
-        }
-        switchAuthTab('login');
-    } else {
-        // Kullanıcı ne giriş yapmış ne de kayıt olmuş - kayıt ol sekmesini göster
-        if (registerTabBtn) {
-            registerTabBtn.style.display = 'flex';
-        }
-        if (registerBenefitsInfo) {
-            registerBenefitsInfo.style.display = 'block';
-        }
+    if (registerTabBtn) {
+        registerTabBtn.style.display = 'none';
+    }
+    if (registerForm) {
+        registerForm.style.display = 'none';
+    }
+    if (registerBenefitsInfo) {
+        registerBenefitsInfo.style.display = 'none';
     }
 }
 
@@ -446,8 +415,7 @@ async function updateUserUI() {
     
     console.log('🔍 Elementler:', {
         userProfileBtn: !!userProfileBtn,
-        authNavBtn: !!authNavBtn,
-        registerTabBtn: !!registerTabBtn
+        authNavBtn: !!authNavBtn
     });
     
     if (user && user.email) {

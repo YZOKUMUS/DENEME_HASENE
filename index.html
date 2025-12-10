@@ -724,68 +724,32 @@
     <div id="auth-modal" class="modal" style="display:none;">
         <div class="modal-content auth-modal-content">
             <div class="modal-header">
-                <h2>Giriş Yap / Kayıt Ol</h2>
+                <h2>Giriş Yap</h2>
                 <button class="modal-close" onclick="closeAuthModal()">×</button>
             </div>
             <div class="modal-body">
-                <!-- Tab Navigation -->
-                <div class="auth-tabs">
+                <!-- Tab Navigation - Kayıt Ol kaldırıldı, sadece Google ile giriş -->
+                <div class="auth-tabs" style="display: none;">
                     <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Giriş Yap</button>
-                    <button class="auth-tab-btn" data-tab="register" id="register-tab-btn" onclick="switchAuthTab('register')">Kayıt Ol</button>
+                    <!-- Kayıt Ol sekmesi kaldırıldı -->
                 </div>
 
                 <!-- Login Form -->
+                <!-- Login Form - Sadece Google ile giriş -->
                 <form id="login-form" class="auth-form" style="display: flex;">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" autocomplete="email" required placeholder="ornek@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Şifre</label>
-                        <input type="password" id="login-password" autocomplete="current-password" required>
+                    <div style="text-align: center; margin-bottom: 20px; width: 100%;">
+                        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;">
+                            Google hesabınızla giriş yaparak oyuna başlayabilirsiniz.
+                        </p>
                     </div>
                     <div id="auth-message" class="auth-message" style="display:none;"></div>
-                    <button type="button" class="btn-primary" onclick="handleLogin()">Giriş Yap</button>
-                    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+                    <button type="button" class="btn-google" onclick="handleGoogleLogin()" style="width: 100%; margin-top: 10px;">
                         <span>🔐</span>
                         Google ile Giriş Yap
                     </button>
                 </form>
 
-                <!-- Register Form -->
-                <form id="register-form" class="auth-form" style="display: none;">
-                    <div class="form-group">
-                        <label for="register-username">Kullanıcı Adı</label>
-                        <input type="text" id="register-username" autocomplete="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <input type="email" id="register-email" autocomplete="email" required placeholder="ornek@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Şifre</label>
-                        <input type="password" id="register-password" autocomplete="new-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password-confirm">Şifre Tekrar</label>
-                        <input type="password" id="register-password-confirm" autocomplete="new-password" required>
-                    </div>
-                    <div id="register-benefits-info" class="register-benefits" style="display: block; margin: 15px 0; padding: 15px; background: rgba(118, 75, 162, 0.1); border-radius: 8px; font-size: 14px;">
-                        <strong>📝 Kayıt olmanın avantajları:</strong>
-                        <ul style="margin: 10px 0 0 20px; padding: 0;">
-                            <li>✅ Verileriniz bulutta güvenle saklanır</li>
-                            <li>✅ Tüm cihazlardan erişim sağlayabilirsiniz</li>
-                            <li>✅ Liderlik tablosunda yer alabilirsiniz</li>
-                            <li>✅ İlerlemeniz kaybolmaz</li>
-                        </ul>
-                    </div>
-                    <div id="auth-message-register" class="auth-message" style="display:none;"></div>
-                    <button type="button" class="btn-primary" onclick="handleRegister()">Kayıt Ol</button>
-                    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
-                        <span>🔐</span>
-                        Google ile Kayıt Ol
-                    </button>
-                </form>
+                <!-- Register Form - Kaldırıldı: Sadece Google ile giriş yapılıyor -->
             </div>
         </div>
     </div>
