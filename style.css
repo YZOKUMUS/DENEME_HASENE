@@ -4157,6 +4157,298 @@ select:focus {
     display: block;
 }
 
+/* ============================================
+   AUTH MODAL - RESPONSIVE
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .auth-modal-content {
+        max-width: 95%;
+        width: 95%;
+        margin: 10px;
+        max-height: 90vh;
+    }
+    
+    .auth-tabs {
+        gap: 8px;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .auth-tab-btn {
+        padding: 10px 12px;
+        font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+    
+    .register-benefits {
+        padding: 14px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .register-benefits > div {
+        font-size: clamp(14px, 2.5vw, 15px) !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .register-benefits ul {
+        font-size: clamp(12px, 2vw, 13px) !important;
+        padding-left: 20px !important;
+        line-height: 1.6 !important;
+    }
+    
+    .register-benefits li {
+        margin-bottom: 6px !important;
+    }
+    
+    .form-group label {
+        font-size: clamp(0.85rem, 2vw, 0.9rem);
+    }
+    
+    .form-group input {
+        padding: 12px 14px;
+        font-size: clamp(0.95rem, 2.2vw, 1rem);
+    }
+    
+    .btn-primary.btn-full,
+    .btn-google {
+        padding: 12px 16px;
+        font-size: clamp(0.95rem, 2.2vw, 1rem);
+    }
+    
+    .modal-header {
+        padding: 12px 14px;
+    }
+    
+    .modal-header h2 {
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+    }
+    
+    .modal-close {
+        width: 36px;
+        height: 36px;
+        font-size: 1.75rem;
+    }
+}
+
+/* Mobil */
+@media (max-width: 600px) {
+    .auth-modal-content {
+        max-width: 98%;
+        width: 98%;
+        margin: 5px;
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+    
+    .auth-tabs {
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+    
+    .auth-tab-btn {
+        padding: 10px 8px;
+        font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+        min-height: 44px; /* Touch target için */
+    }
+    
+    .register-benefits {
+        padding: 12px !important;
+        margin-bottom: 14px !important;
+        border-radius: 10px !important;
+    }
+    
+    .register-benefits > div {
+        font-size: clamp(13px, 3vw, 14px) !important;
+        margin-bottom: 8px !important;
+        gap: 6px !important;
+    }
+    
+    .register-benefits ul {
+        font-size: clamp(11px, 2.8vw, 12px) !important;
+        padding-left: 18px !important;
+        line-height: 1.5 !important;
+    }
+    
+    .register-benefits li {
+        margin-bottom: 5px !important;
+    }
+    
+    .auth-form {
+        gap: 14px;
+    }
+    
+    .form-group {
+        gap: 6px;
+    }
+    
+    .form-group label {
+        font-size: clamp(0.8rem, 3vw, 0.85rem);
+        font-weight: 600;
+    }
+    
+    .form-group input {
+        padding: 14px 12px;
+        font-size: clamp(16px, 4vw, 18px); /* iOS zoom önleme */
+        border-radius: 8px;
+        min-height: 44px; /* Touch target için */
+    }
+    
+    .btn-primary.btn-full {
+        padding: 14px 16px;
+        font-size: clamp(1rem, 3.5vw, 1.1rem);
+        min-height: 48px; /* Touch target için */
+        font-weight: 600;
+    }
+    
+    .btn-google {
+        padding: 12px 14px;
+        font-size: clamp(0.9rem, 3vw, 1rem);
+        min-height: 44px; /* Touch target için */
+        gap: 10px;
+    }
+    
+    .btn-google svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .auth-divider {
+        margin: 14px 0;
+        gap: 10px;
+    }
+    
+    .auth-divider span {
+        font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+    }
+    
+    .modal-header {
+        padding: 10px 12px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .modal-header h2 {
+        font-size: clamp(0.95rem, 3vw, 1.1rem);
+    }
+    
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        font-size: 1.5rem;
+        min-width: 32px; /* Touch target için */
+        min-height: 32px;
+    }
+    
+    .modal-body {
+        padding: 12px;
+    }
+    
+    .auth-message {
+        padding: 10px 12px;
+        font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+        margin-top: 12px;
+    }
+}
+
+/* Küçük Mobil */
+@media (max-width: 360px) {
+    .auth-modal-content {
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    
+    .auth-tabs {
+        gap: 2px;
+        margin-bottom: 12px;
+    }
+    
+    .auth-tab-btn {
+        padding: 8px 6px;
+        font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+    }
+    
+    .register-benefits {
+        padding: 10px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .register-benefits > div {
+        font-size: clamp(12px, 3.5vw, 13px) !important;
+    }
+    
+    .register-benefits ul {
+        font-size: clamp(10px, 3vw, 11px) !important;
+        padding-left: 16px !important;
+    }
+    
+    .form-group input {
+        padding: 12px 10px;
+        font-size: clamp(16px, 4vw, 17px);
+    }
+    
+    .btn-primary.btn-full {
+        padding: 12px 14px;
+        font-size: clamp(0.95rem, 3.5vw, 1rem);
+    }
+    
+    .modal-header {
+        padding: 8px 10px;
+    }
+    
+    .modal-body {
+        padding: 10px;
+    }
+}
+
+/* Landscape (Yatay Mod) */
+@media (max-height: 500px) and (orientation: landscape) {
+    .auth-modal-content {
+        max-height: 98vh;
+        max-width: 90%;
+    }
+    
+    .register-benefits {
+        padding: 10px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .register-benefits ul {
+        font-size: clamp(10px, 2vh, 11px) !important;
+        line-height: 1.4 !important;
+    }
+    
+    .register-benefits li {
+        margin-bottom: 3px !important;
+    }
+    
+    .auth-form {
+        gap: 10px;
+    }
+    
+    .form-group input {
+        padding: 10px 12px;
+        min-height: 40px;
+    }
+    
+    .btn-primary.btn-full,
+    .btn-google {
+        padding: 10px 14px;
+        min-height: 40px;
+    }
+    
+    .modal-header {
+        padding: 8px 12px;
+    }
+    
+    .modal-body {
+        padding: 10px 12px;
+    }
+}
+
 .btn-user {
     background: var(--accent-primary);
     color: #fff;

@@ -280,6 +280,8 @@ async function updateUserUI() {
     const userProfileBtn = document.getElementById('user-profile-btn');
     const userEmailEl = document.getElementById('user-email');
     const authNavBtn = document.getElementById('auth-nav-btn');
+    const registerTabBtn = document.getElementById('register-tab-btn');
+    const registerBenefitsInfo = document.getElementById('register-benefits-info');
     
     if (user && user.email) {
         // Kullanıcı giriş yapmış
@@ -292,6 +294,14 @@ async function updateUserUI() {
         if (authNavBtn) {
             authNavBtn.style.display = 'none';
         }
+        // Kayıt Ol sekmesini gizle
+        if (registerTabBtn) {
+            registerTabBtn.style.display = 'none';
+        }
+        // Bilgilendirme kutusunu gizle
+        if (registerBenefitsInfo) {
+            registerBenefitsInfo.style.display = 'none';
+        }
     } else {
         // Kullanıcı giriş yapmamış
         if (userProfileBtn) {
@@ -299,6 +309,14 @@ async function updateUserUI() {
         }
         if (authNavBtn) {
             authNavBtn.style.display = 'flex';
+        }
+        // Kayıt Ol sekmesini göster
+        if (registerTabBtn) {
+            registerTabBtn.style.display = 'flex';
+        }
+        // Bilgilendirme kutusunu göster
+        if (registerBenefitsInfo) {
+            registerBenefitsInfo.style.display = 'block';
         }
     }
 }
