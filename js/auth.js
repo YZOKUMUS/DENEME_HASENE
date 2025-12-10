@@ -146,12 +146,20 @@ async function handleLogin() {
     } catch (error) {
         console.error('Login hatası:', error);
         
-        // Email confirmation hatası için özel mesaj
-        if (error.message && error.message.includes('Email not confirmed')) {
-            showAuthMessage('Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın. Eğer email gelmediyse, Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünde "Confirm email" seçeneğini kapatabilirsiniz.', 'error');
-        } else {
-            showAuthMessage(error.message || 'Giriş yapılamadı. Lütfen tekrar deneyin.', 'error');
+        let errorMessage = 'Giriş yapılamadı. Lütfen tekrar deneyin.';
+        
+        // Detaylı hata mesajları
+        if (error.message && error.message.includes('Email doğrulanmamış')) {
+            errorMessage = error.message;
+        } else if (error.message && (error.message.includes('Invalid login credentials') || error.message.includes('invalid') || error.message.includes('Email veya şifre hatalı'))) {
+            errorMessage = error.message;
+        } else if (error.message && error.message.includes('Email not confirmed')) {
+            errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın. Eğer email gelmediyse, Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünde "Confirm email" seçeneğini kapatabilirsiniz.';
+        } else if (error.message) {
+            errorMessage = error.message;
         }
+        
+        showAuthMessage(errorMessage, 'error');
     }
 }
 

@@ -151,15 +151,22 @@ async function registerUser(email, password, username = null) {
  */
 async function loginUser(email, password) {
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // Email'i normalize et (lowercase)
+        const normalizedEmail = email.toLowerCase().trim();
+        
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email,
+            email: normalizedEmail,
             password
         });
         
         if (error) {
-            // Email confirmation hatası için özel mesaj
+            console.error('❌ Login error:', error);
+            
+            // Hata mesajlarını iyileştir
             if (error.message && error.message.includes('Email not confirmed')) {
-                throw new Error('Email not confirmed. Please confirm your email from Supabase Dashboard: Authentication > Users > [Your User] > Confirm email checkbox. Or register a new account.');
+                throw new Error('Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın. Email gelmediyse Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünde "Confirm email" seçeneğini kapatabilirsiniz.');
+            } else if (error.message && (error.message.includes('Invalid login credentials') || error.message.includes('invalid') || error.code === 'invalid_credentials')) {
+                throw new Error('Email veya şifre hatalı. Lütfen kontrol edin:\n\n• Email adresinin doğru olduğundan emin olun\n• Şifrenin doğru olduğundan emin olun\n• Email doğrulaması gerekiyorsa email\'inizi kontrol edin\n\nŞifrenizi unuttuysanız "Şifremi Unuttum" özelliği yakında eklenecek.');
             }
             throw error;
         }
