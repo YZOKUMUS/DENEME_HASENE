@@ -2871,16 +2871,32 @@ body {
 
     .bottom-nav {
         height: 70px;
-        padding: var(--spacing-xs) var(--spacing-sm);
+        padding: var(--spacing-xs) 2px;
+        gap: 2px;
+        justify-content: space-between;
     }
 
     .bottom-nav .nav-btn {
-        padding: var(--spacing-xs);
-        font-size: 0.7rem;
+        padding: 2px;
+        font-size: 0.65rem;
+        min-width: 48px;
+        flex: 1;
+        max-width: 60px;
+        gap: 2px;
     }
 
     .bottom-nav .nav-btn span:first-child {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+    }
+
+    .bottom-nav .nav-btn span:nth-child(2) {
+        font-size: 0.6rem;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
     }
 
     .tasks-counter {
@@ -3521,6 +3537,23 @@ body {
 
     .bottom-nav {
         height: 65px;
+        padding: var(--spacing-xs) 1px;
+        gap: 1px;
+    }
+
+    .bottom-nav .nav-btn {
+        min-width: 42px;
+        padding: 1px;
+        gap: 1px;
+    }
+
+    .bottom-nav .nav-btn span:first-child {
+        font-size: 1rem;
+    }
+
+    .bottom-nav .nav-btn span:nth-child(2) {
+        font-size: 0.6rem;
+        line-height: 1;
     }
 
     .container {
