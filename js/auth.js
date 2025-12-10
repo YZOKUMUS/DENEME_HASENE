@@ -7,7 +7,14 @@ let currentAuthTab = 'login';
 /**
  * Authentication modal'ını açar
  */
-function showAuthModal() {
+async function showAuthModal() {
+    // Kullanıcı giriş yapmışsa modal'ı açma
+    const user = typeof window.getCurrentUser === 'function' ? await window.getCurrentUser() : null;
+    if (user) {
+        console.log('Kullanıcı zaten giriş yapmış, auth modal açılmadı');
+        return;
+    }
+    
     // openModal fonksiyonunu kullan (utils.js'den)
     if (typeof openModal === 'function') {
         openModal('auth-modal');
@@ -17,8 +24,11 @@ function showAuthModal() {
             modal.style.display = 'flex';
         }
     }
-    // İlk tab'ı göster
+    // İlk tab'ı göster (kullanıcı giriş yapmamışsa kayıt ol sekmesi görünebilir)
     switchAuthTab('login');
+    
+    // UI'ı güncelle (kayıt ol sekmesini gizle/göster)
+    updateAuthModalUI();
 }
 
 /**
@@ -36,7 +46,15 @@ function closeAuthModal() {
 /**
  * Auth tab'ları arasında geçiş yapar
  */
-function switchAuthTab(tab) {
+async function switchAuthTab(tab) {
+    // Kullanıcı giriş yapmışsa ve kayıt ol sekmesine geçmeye çalışıyorsa engelle
+    const user = typeof window.getCurrentUser === 'function' ? await window.getCurrentUser() : null;
+    if (user && tab === 'register') {
+        console.log('Giriş yapmış kullanıcı kayıt ol sekmesine geçemez');
+        showAuthMessage('Zaten giriş yapmışsınız. Çıkış yapmak için üst sağdaki butonu kullanın.', 'error');
+        return;
+    }
+    
     currentAuthTab = tab;
     
     // Tab butonlarını güncelle
@@ -60,12 +78,22 @@ function switchAuthTab(tab) {
         loginForm.style.display = 'flex';
         registerForm.style.display = 'none';
     } else {
+        // Kayıt ol sekmesine geçiş yapılıyorsa, kullanıcı kontrolü yap
+        if (user) {
+            loginForm.style.display = 'flex';
+            registerForm.style.display = 'none';
+            showAuthMessage('Zaten giriş yapmışsınız.', 'error');
+            return;
+        }
         loginForm.style.display = 'none';
         registerForm.style.display = 'flex';
     }
     
     // Mesajları temizle
     hideAuthMessage();
+    
+    // UI'ı güncelle
+    updateAuthModalUI();
 }
 
 /**
@@ -92,6 +120,10 @@ async function handleLogin() {
             const result = await window.loginUser(email, password);
             
             if (result && result.user) {
+                // Giriş başarılı - kayıt durumunu işaretle
+                localStorage.setItem('hasene_user_has_registered', 'true');
+                console.log('✅ Giriş başarılı, kayıt durumu localStorage\'a kaydedildi');
+                
                 showAuthMessage('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
                 
                 // Modal'ı hemen kapat
@@ -159,6 +191,10 @@ async function handleRegister() {
             const result = await window.registerUser(email, password, username);
             
             if (result && result.user) {
+                // Kayıt başarılı - localStorage'a kayıt durumunu kaydet
+                localStorage.setItem('hasene_user_has_registered', 'true');
+                console.log('✅ Kayıt başarılı, localStorage\'a kaydedildi');
+                
                 // Email confirmation kontrolü
                 if (result.user.email_confirmed_at || result.user.confirmed_at) {
                     // Email zaten doğrulanmış, direkt giriş yap
@@ -176,6 +212,9 @@ async function handleRegister() {
                 } else {
                     // Email confirmation gerekli
                     showAuthMessage('Kayıt başarılı! Lütfen email\'inize gelen doğrulama linkine tıklayın. Email\'i doğruladıktan sonra giriş yapabilirsiniz.', 'success');
+                    
+                    // Auth modal UI'ını güncelle (kayıt ol sekmesini gizle)
+                    updateAuthModalUI();
                     
                     // Modal'ı kapat ama sayfayı yenileme
                     setTimeout(() => {
@@ -200,8 +239,17 @@ async function handleRegister() {
             errorMessage = 'Email formatı geçersiz. Lütfen doğru formatta bir email adresi girin.';
         } else if (error.message && error.message.includes('Email not confirmed')) {
             errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın veya Supabase ayarlarından email confirmation\'ı kapatın.';
-        } else if (error.message && error.message.includes('User already registered')) {
+        } else if (error.message && (error.message.includes('User already registered') || error.message.includes('already registered'))) {
             errorMessage = 'Bu email adresi ile zaten bir hesap var. Lütfen giriş yapın.';
+            // Otomatik olarak login tab'ına geç
+            setTimeout(() => {
+                switchAuthTab('login');
+                // Email'i login formuna kopyala
+                const loginEmailInput = document.getElementById('login-email');
+                if (loginEmailInput) {
+                    loginEmailInput.value = email;
+                }
+            }, 1500);
         } else if (error.message) {
             errorMessage = error.message;
         }
@@ -251,6 +299,10 @@ async function handleLogout() {
     try {
         if (typeof window.logoutUser === 'function') {
             await window.logoutUser();
+            
+            // Çıkış yapılınca kayıt durumunu SİLME (kullanıcı tekrar kayıt olmamalı)
+            // localStorage.removeItem('hasene_user_has_registered'); // Silme, kullanıcı zaten kayıtlı
+            
             updateUserUI();
             showAuthMessage('Çıkış yapıldı', 'success');
             setTimeout(() => {
@@ -299,13 +351,70 @@ function clearAuthForms() {
 }
 
 /**
+ * Auth modal UI'ını güncelle (kullanıcı giriş durumuna göre)
+ */
+async function updateAuthModalUI() {
+    const user = typeof window.getCurrentUser === 'function' ? await window.getCurrentUser() : null;
+    const registerTabBtn = document.getElementById('register-tab-btn');
+    const registerForm = document.getElementById('register-form');
+    const registerBenefitsInfo = document.getElementById('register-benefits-info');
+    
+    // Kayıt durumunu kontrol et (localStorage'dan)
+    const hasRegistered = localStorage.getItem('hasene_user_has_registered') === 'true';
+    
+    if (user) {
+        // Kullanıcı giriş yapmış - kayıt ol sekmesini tamamen gizle
+        if (registerTabBtn) {
+            registerTabBtn.style.display = 'none';
+        }
+        if (registerForm) {
+            registerForm.style.display = 'none';
+        }
+        if (registerBenefitsInfo) {
+            registerBenefitsInfo.style.display = 'none';
+        }
+    } else if (hasRegistered) {
+        // Kullanıcı kayıt olmuş ama giriş yapmamış - sadece giriş yap sekmesi göster
+        console.log('📝 Kullanıcı daha önce kayıt olmuş, kayıt ol sekmesi gizleniyor');
+        if (registerTabBtn) {
+            registerTabBtn.style.display = 'none';
+        }
+        if (registerForm) {
+            registerForm.style.display = 'none';
+        }
+        if (registerBenefitsInfo) {
+            registerBenefitsInfo.style.display = 'none';
+        }
+        // Giriş yap sekmesine otomatik geç
+        const loginTabBtn = document.querySelector('.auth-tab-btn[data-tab="login"]');
+        if (loginTabBtn) {
+            loginTabBtn.classList.add('active');
+        }
+        switchAuthTab('login');
+    } else {
+        // Kullanıcı ne giriş yapmış ne de kayıt olmuş - kayıt ol sekmesini göster
+        if (registerTabBtn) {
+            registerTabBtn.style.display = 'flex';
+        }
+        if (registerBenefitsInfo) {
+            registerBenefitsInfo.style.display = 'block';
+        }
+    }
+}
+
+/**
  * Kullanıcı UI'ını güncelle
  */
 async function updateUserUI() {
+    console.log('🔄 updateUserUI çağrıldı');
+    
     // getCurrentUser fonksiyonunu kullan (api-service.js'den)
     let user = null;
     if (typeof window.getCurrentUser === 'function') {
         user = await window.getCurrentUser();
+        console.log('👤 Kullanıcı durumu:', user ? 'Giriş yapmış' : 'Giriş yapmamış', user);
+    } else {
+        console.warn('⚠️ getCurrentUser fonksiyonu bulunamadı');
     }
     
     const userProfileBtn = document.getElementById('user-profile-btn');
@@ -314,10 +423,20 @@ async function updateUserUI() {
     const registerTabBtn = document.getElementById('register-tab-btn');
     const registerBenefitsInfo = document.getElementById('register-benefits-info');
     
+    console.log('🔍 Elementler:', {
+        userProfileBtn: !!userProfileBtn,
+        authNavBtn: !!authNavBtn,
+        registerTabBtn: !!registerTabBtn
+    });
+    
     if (user && user.email) {
         // Kullanıcı giriş yapmış
+        console.log('✅ Kullanıcı giriş yapmış, avatar gösteriliyor');
         if (userProfileBtn) {
             userProfileBtn.style.display = 'flex';
+            console.log('👤 user-profile-btn gösterildi');
+        } else {
+            console.error('❌ user-profile-btn bulunamadı!');
         }
         // Email'i gizle - sadece avatar ve çıkış butonu göster
         if (userEmailEl) {
@@ -330,6 +449,12 @@ async function updateUserUI() {
             const displayName = user.username || user.email || 'U';
             const initial = displayName.charAt(0).toUpperCase();
             userAvatarInitial.textContent = initial;
+            console.log('🎨 Avatar harfi güncellendi:', {
+                initial: initial,
+                username: user.username,
+                email: user.email,
+                displayName: displayName
+            });
             
             // Avatar rengini kullanıcı adına göre belirle (tutarlı renk için)
             const colors = [
@@ -346,12 +471,17 @@ async function updateUserUI() {
             const avatarEl = document.getElementById('user-avatar');
             if (avatarEl) {
                 avatarEl.style.background = colors[colorIndex];
+                console.log('🎨 Avatar rengi güncellendi:', colors[colorIndex]);
+            } else {
+                console.error('❌ user-avatar elementi bulunamadı!');
             }
+        } else {
+            console.error('❌ user-avatar-initial elementi bulunamadı!');
         }
         if (authNavBtn) {
             authNavBtn.style.display = 'none';
         }
-        // Kayıt Ol sekmesini gizle
+        // Kayıt Ol sekmesini gizle (giriş yapmış kullanıcı için)
         if (registerTabBtn) {
             registerTabBtn.style.display = 'none';
         }
@@ -359,8 +489,15 @@ async function updateUserUI() {
         if (registerBenefitsInfo) {
             registerBenefitsInfo.style.display = 'none';
         }
+        
+        // Auth modal açıksa kapat
+        const authModal = document.getElementById('auth-modal');
+        if (authModal && authModal.style.display !== 'none') {
+            closeAuthModal();
+        }
     } else {
         // Kullanıcı giriş yapmamış
+        console.log('❌ Kullanıcı giriş yapmamış, giriş butonu gösteriliyor');
         if (userProfileBtn) {
             userProfileBtn.style.display = 'none';
         }
@@ -376,6 +513,11 @@ async function updateUserUI() {
             registerBenefitsInfo.style.display = 'block';
         }
     }
+    
+    // Auth modal UI'ını da güncelle
+    updateAuthModalUI();
+    
+    console.log('✅ updateUserUI tamamlandı');
 }
 
 /**
@@ -442,11 +584,14 @@ function showUserMenu() {
  * Auth'u başlat
  */
 async function initializeAuth() {
+    console.log('🔐 initializeAuth başlatılıyor...');
+    
     // Supabase client'ın başlatılmasını bekle
     await new Promise(resolve => {
         let attempts = 0;
         const checkSupabase = () => {
             if (typeof window.supabase !== 'undefined' && window.supabase) {
+                console.log('✅ Supabase client bulundu');
                 resolve();
             } else if (attempts < 50) { // 5 saniye timeout
                 attempts++;
@@ -463,6 +608,7 @@ async function initializeAuth() {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     // Kullanıcı giriş durumunu kontrol et
+    console.log('🔄 updateUserUI çağrılıyor...');
     await updateUserUI();
     
     // OAuth callback kontrolü (URL'de code parametresi varsa)
