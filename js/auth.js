@@ -621,20 +621,52 @@ async function initializeAuth() {
     // Biraz daha bekle (Supabase client init için)
     await new Promise(resolve => setTimeout(resolve, 200));
     
+    // Supabase auth state change listener ekle (OAuth callback için kritik!)
+    if (typeof window.supabase !== 'undefined' && window.supabase) {
+        try {
+            window.supabase.auth.onAuthStateChange((event, session) => {
+                console.log('🔄 Auth state changed:', event, session ? 'Session var' : 'Session yok');
+                
+                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                    // Kullanıcı giriş yaptı, UI'ı güncelle
+                    console.log('✅ Kullanıcı giriş yaptı, UI güncelleniyor...');
+                    setTimeout(async () => {
+                        await updateUserUI();
+                        await syncUserData();
+                        
+                        // URL'den hash fragment'i temizle (OAuth callback sonrası)
+                        if (window.location.hash.includes('access_token') || window.location.hash.includes('code')) {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                    }, 500);
+                } else if (event === 'SIGNED_OUT') {
+                    // Kullanıcı çıkış yaptı
+                    console.log('👋 Kullanıcı çıkış yaptı');
+                    updateUserUI();
+                }
+            });
+            console.log('✅ Auth state change listener eklendi');
+        } catch (error) {
+            console.error('❌ Auth state change listener eklenemedi:', error);
+        }
+    }
+    
     // Kullanıcı giriş durumunu kontrol et
     console.log('🔄 updateUserUI çağrılıyor...');
     await updateUserUI();
     
-    // OAuth callback kontrolü (URL'de code parametresi varsa)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('code')) {
-        // OAuth başarılı, kullanıcı bilgilerini yükle
-        setTimeout(async () => {
-            await updateUserUI();
-            await syncUserData();
-            // URL'den code parametresini temizle
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }, 1000);
+    // OAuth callback kontrolü (URL'de hash fragment varsa - Supabase OAuth hash kullanır)
+    if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        if (hashParams.get('access_token') || hashParams.get('code')) {
+            console.log('🔄 OAuth callback tespit edildi, session bekleniyor...');
+            // Auth state change listener yukarıda halleder
+            // Sadece biraz bekle ve UI'ı güncelle
+            setTimeout(async () => {
+                await updateUserUI();
+                await syncUserData();
+            }, 1500);
+        }
     }
     
     // Eğer kullanıcı giriş yapmamışsa, auth butonunu göster
