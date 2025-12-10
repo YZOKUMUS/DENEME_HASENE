@@ -492,6 +492,16 @@ async function updateUserUI() {
         if (authModal && authModal.style.display !== 'none') {
             closeAuthModal();
         }
+        
+        // ÖNEMLİ: Kullanıcı giriş yaptıysa, backend'den verileri yükle
+        // Bu, OAuth callback sonrası veya sayfa yüklendiğinde verilerin gelmesini sağlar
+        if (typeof window.loadStats === 'function') {
+            console.log('📥 Kullanıcı giriş yapmış, backend\'den veriler yükleniyor...');
+            // Asenkron olarak çağır, UI güncellemesini engellemesin
+            window.loadStats().catch(err => {
+                console.error('❌ loadStats hatası (updateUserUI):', err);
+            });
+        }
     } else {
         // Kullanıcı giriş yapmamış
         console.log('❌ Kullanıcı giriş yapmamış, giriş butonu gösteriliyor');
@@ -620,6 +630,14 @@ async function initializeAuth() {
                     
                     setTimeout(async () => {
                         await updateUserUI();
+                        
+                        // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
+                        if (typeof window.loadStats === 'function') {
+                            console.log('📥 Backend\'den veriler yükleniyor (OAuth callback)...');
+                            await window.loadStats();
+                        }
+                        
+                        // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
                         await syncUserData();
                         
                         // URL'den hash fragment'i temizle (OAuth callback sonrası)
@@ -646,6 +664,16 @@ async function initializeAuth() {
                         console.log('🔄 Auth state changed (delayed):', event);
                         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                             updateUserUI();
+                            
+                            // ÖNEMLİ: Backend'den verileri yükle
+                            if (typeof window.loadStats === 'function') {
+                                console.log('📥 Backend\'den veriler yükleniyor (delayed)...');
+                                window.loadStats().catch(err => {
+                                    console.error('❌ loadStats hatası:', err);
+                                });
+                            }
+                            
+                            // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
                             syncUserData();
                         } else if (event === 'SIGNED_OUT') {
                             updateUserUI();
@@ -673,6 +701,14 @@ async function initializeAuth() {
             // Sadece biraz bekle ve UI'ı güncelle
         setTimeout(async () => {
             await updateUserUI();
+            
+            // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
+            if (typeof window.loadStats === 'function') {
+                console.log('📥 Backend\'den veriler yükleniyor (OAuth callback)...');
+                await window.loadStats();
+            }
+            
+            // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
             await syncUserData();
             }, 1500);
         }

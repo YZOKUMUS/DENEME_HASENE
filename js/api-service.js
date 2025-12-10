@@ -424,15 +424,27 @@ async function loadDailyTasks() {
         if (error && error.code !== 'PGRST116') throw error;
         
         if (data) {
+            // Kolon isimlerini camelCase'e çevir
+            const result = {
+                lastTaskDate: data.last_task_date,
+                tasks: data.tasks || [],
+                bonusTasks: data.bonus_tasks || [],
+                completedTasks: data.completed_tasks || [],
+                todayStats: data.today_stats || {},
+                rewardsClaimed: data.rewards_claimed || false
+            };
+            
             // Set'leri geri yükle
-            if (data.today_stats) {
-                data.today_stats.allGameModes = new Set(data.today_stats.allGameModes || []);
-                data.today_stats.farklıZorluk = new Set(data.today_stats.farklıZorluk || []);
-                data.today_stats.reviewWords = new Set(data.today_stats.reviewWords || []);
+            if (result.todayStats) {
+                result.todayStats.allGameModes = new Set(result.todayStats.allGameModes || []);
+                result.todayStats.farklıZorluk = new Set(result.todayStats.farklıZorluk || []);
+                result.todayStats.reviewWords = new Set(result.todayStats.reviewWords || []);
             }
+            
+            return result;
         }
         
-        return data;
+        return null;
     }
     
     // Fallback: localStorage
@@ -524,11 +536,27 @@ async function loadWeeklyTasks() {
         
         if (error && error.code !== 'PGRST116') throw error;
         
-        if (data && data.week_stats) {
-            data.week_stats.allModesPlayed = new Set(data.week_stats.allModesPlayed || []);
+        if (data) {
+            // Kolon isimlerini camelCase'e çevir
+            const result = {
+                lastWeekStart: data.last_week_start,
+                weekStart: data.week_start,
+                weekEnd: data.week_end,
+                tasks: data.tasks || [],
+                completedTasks: data.completed_tasks || [],
+                weekStats: data.week_stats || {},
+                rewardsClaimed: data.rewards_claimed || false
+            };
+            
+            // Set'leri geri yükle
+            if (result.weekStats) {
+                result.weekStats.allModesPlayed = new Set(result.weekStats.allModesPlayed || []);
+            }
+            
+            return result;
         }
         
-        return data;
+        return null;
     }
     
     // Fallback: localStorage
