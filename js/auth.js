@@ -622,14 +622,19 @@ async function initializeAuth() {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     // Supabase auth state change listener ekle (OAuth callback için kritik!)
-    if (typeof window.supabase !== 'undefined' && window.supabase) {
+    // api-service.js'den supabaseClient'ı al (global olarak expose edilmiş)
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
         try {
-            window.supabase.auth.onAuthStateChange((event, session) => {
+            window.supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔄 Auth state changed:', event, session ? 'Session var' : 'Session yok');
                 
                 if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                     // Kullanıcı giriş yaptı, UI'ı güncelle
                     console.log('✅ Kullanıcı giriş yaptı, UI güncelleniyor...');
+                    
+                    // Google OAuth ile giriş yapıldıysa da kayıt durumunu işaretle
+                    localStorage.setItem('hasene_user_has_registered', 'true');
+                    
                     setTimeout(async () => {
                         await updateUserUI();
                         await syncUserData();
@@ -649,6 +654,27 @@ async function initializeAuth() {
         } catch (error) {
             console.error('❌ Auth state change listener eklenemedi:', error);
         }
+    } else {
+        // Biraz daha bekle, supabaseClient henüz hazır olmayabilir
+        setTimeout(() => {
+            if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
+                try {
+                    window.supabaseClient.auth.onAuthStateChange((event, session) => {
+                        console.log('🔄 Auth state changed (delayed):', event);
+                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                            updateUserUI();
+                            syncUserData();
+                        } else if (event === 'SIGNED_OUT') {
+                            updateUserUI();
+                        }
+                    });
+                    console.log('✅ Auth state change listener eklendi (delayed)');
+                } catch (error) {
+                    console.warn('⚠️ Auth state listener eklenemedi:', error);
+                }
+            }
+        }, 1000);
+        console.warn('⚠️ Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
     }
     
     // Kullanıcı giriş durumunu kontrol et
