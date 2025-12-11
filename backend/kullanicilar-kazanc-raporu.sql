@@ -64,11 +64,23 @@ SELECT
     COALESCE(wl.league, 'mubtedi') AS "Lig",
     
     -- Günlük/Haftalık/Aylık İstatistikler
+    (SELECT MIN(date) FROM daily_stats ds WHERE ds.user_id = au.id) AS "İlk Oyun Tarihi",
     (SELECT MAX(date) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Son Oyun Tarihi",
     (SELECT COALESCE((stats->>'points')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Puan",
+    (SELECT COALESCE((stats->>'correct')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Doğru",
+    (SELECT COALESCE((stats->>'wrong')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Yanlış",
     (SELECT COALESCE((stats->>'gamesPlayed')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Oyun",
+    (SELECT MAX((stats->>'points')::INTEGER) FROM daily_stats ds WHERE ds.user_id = au.id) AS "En Yüksek Günlük Puan",
     (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Toplam",
+    (SELECT MAX((stats->>'hasene')::INTEGER) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "En Yüksek Haftalık Puan",
     (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Toplam",
+    (SELECT MAX((stats->>'hasene')::INTEGER) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "En Yüksek Aylık Puan",
+    
+    -- En Aktif Gün (En çok puan kazanılan gün)
+    (SELECT date FROM daily_stats ds WHERE ds.user_id = au.id 
+        ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün",
+    (SELECT (stats->>'points')::INTEGER FROM daily_stats ds WHERE ds.user_id = au.id 
+        ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün Puanı",
     
     -- Ortalama Hesaplamalar
     CASE 
@@ -76,13 +88,106 @@ SELECT
         THEN ROUND(COALESCE(us.total_points, 0)::NUMERIC / (us.streak_data->>'totalPlayDays')::NUMERIC, 2)
         ELSE 0
     END AS "Ortalama Günlük Puan",
+    CASE 
+        WHEN COALESCE((us.streak_data->>'totalPlayDays')::INTEGER, 0) > 0
+        THEN ROUND(
+            (
+                COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+            )::NUMERIC / (us.streak_data->>'totalPlayDays')::NUMERIC, 
+            2
+        )
+        ELSE 0
+    END AS "Ortalama Günlük Oyun",
+    CASE 
+        WHEN (
+            COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) +
+            COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) +
+            COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) +
+            COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) +
+            COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) +
+            COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+        ) > 0
+        THEN ROUND(
+            COALESCE(us.total_points, 0)::NUMERIC / 
+            (
+                COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) +
+                COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+            )::NUMERIC, 
+            2
+        )
+        ELSE 0
+    END AS "Ortalama Oyun Başına Puan",
     
     -- Rozet ve Başarım Sayıları
     (SELECT COUNT(*) FROM badges b WHERE b.user_id = au.id) AS "Toplam Rozet",
+    (SELECT MAX(unlocked_at) FROM badges b WHERE b.user_id = au.id) AS "Son Rozet Tarihi",
     (SELECT COUNT(*) FROM achievements a WHERE a.user_id = au.id) AS "Toplam Başarım",
+    (SELECT MAX(unlocked_at) FROM achievements a WHERE a.user_id = au.id) AS "Son Başarım Tarihi",
+    
+    -- Kelime İstatistikleri
+    (SELECT COUNT(*) FROM word_stats ws WHERE ws.user_id = au.id) AS "Toplam Öğrenilen Kelime",
+    (SELECT COUNT(*) FROM word_stats ws WHERE ws.user_id = au.id 
+        AND (ws.stats->>'successRate')::NUMERIC < 50 
+        AND (ws.stats->>'attempts')::INTEGER >= 2) AS "Zorlanılan Kelime",
+    (SELECT COUNT(*) FROM word_stats ws WHERE ws.user_id = au.id 
+        AND (ws.stats->>'successRate')::NUMERIC >= 80 
+        AND (ws.stats->>'attempts')::INTEGER >= 3) AS "İyi Bilinen Kelime",
+    (SELECT COUNT(*) FROM word_stats ws WHERE ws.user_id = au.id 
+        AND (ws.stats->>'attempts')::INTEGER >= 5) AS "Çok Denenen Kelime",
     
     -- Favori Kelime Sayısı
     (SELECT COUNT(*) FROM favorite_words fw WHERE fw.user_id = au.id) AS "Favori Kelime",
+    
+    -- Görev İstatistikleri
+    (SELECT COUNT(*) FROM daily_tasks dt, jsonb_array_elements(dt.tasks) task 
+        WHERE dt.user_id = au.id AND (task->>'completed')::BOOLEAN = true) AS "Tamamlanan Günlük Görev",
+    (SELECT COUNT(*) FROM weekly_tasks wt, jsonb_array_elements(wt.tasks) task 
+        WHERE wt.user_id = au.id AND (task->>'completed')::BOOLEAN = true) AS "Tamamlanan Haftalık Görev",
+    (SELECT COALESCE(rewards_claimed, false) FROM daily_tasks dt WHERE dt.user_id = au.id) AS "Günlük Ödül Alındı",
+    (SELECT COALESCE(rewards_claimed, false) FROM weekly_tasks wt WHERE wt.user_id = au.id) AS "Haftalık Ödül Alındı",
+    
+    -- En Çok Oynanan Oyun Modu
+    CASE 
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) >= 
+             GREATEST(
+                 COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+             ) THEN '📝 Kelime Çevir'
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) >= 
+             GREATEST(
+                 COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+             ) THEN '🎧 Dinle Bul'
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) >= 
+             GREATEST(
+                 COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+             ) THEN '✍️ Boşluk Doldur'
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) >= 
+             GREATEST(
+                 COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0),
+                 COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+             ) THEN '📖 Ayet Oku'
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) >= 
+             COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0) THEN '🤲 Dua Et'
+        WHEN COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0) > 0 THEN '📚 Hadis Oku'
+        ELSE '❌ Oyun Yok'
+    END AS "En Çok Oynanan Mod",
     
     -- Son Güncelleme
     COALESCE(us.updated_at, p.created_at, au.created_at) AS "Son Güncelleme",

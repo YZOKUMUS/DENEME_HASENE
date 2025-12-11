@@ -15,6 +15,38 @@ function getLocalDateString(date = new Date()) {
 }
 
 /**
+ * Yerel saat dilimine göre ISO string formatında timestamp döndürür
+ * PostgreSQL timestamp alanları UTC olarak saklanır, bu yüzden yerel saati UTC'ye çeviriyoruz
+ * Ama timezone bilgisiyle birlikte gönderiyoruz ki Supabase doğru şekilde işlesin
+ * Örnek: "2025-01-15T14:30:00+03:00" (Türkiye saati için, PostgreSQL bunu UTC'ye çevirir)
+ * 
+ * NOT: Supabase dashboard'unda zaman dilimi ayarını kontrol edin.
+ * Eğer hala farklı saat görünüyorsa, Supabase dashboard'unun timezone ayarını değiştirin.
+ */
+function getLocalISOString(date = new Date()) {
+    // Yerel saat dilimini kullan, ama timezone bilgisiyle birlikte gönder
+    // PostgreSQL bunu UTC'ye çevirecek, ama timezone bilgisi sayesinde doğru saat görünecek
+    const localDate = new Date(date);
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const hours = String(localDate.getHours()).padStart(2, '0');
+    const minutes = String(localDate.getMinutes()).padStart(2, '0');
+    const seconds = String(localDate.getSeconds()).padStart(2, '0');
+    const milliseconds = String(localDate.getMilliseconds()).padStart(3, '0');
+    
+    // Timezone offset'i hesapla (örn: +03:00)
+    // getTimezoneOffset() negatif döner (Türkiye için -180 dakika = -3 saat)
+    // Bu yüzden negatif alıyoruz ki pozitif olsun (+03:00)
+    const offset = -localDate.getTimezoneOffset(); 
+    const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, '0');
+    const offsetSign = offset >= 0 ? '+' : '-';
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${offsetSign}${offsetHours}:${offsetMinutes}`;
+}
+
+/**
  * Sayıyı binlik ayırıcı ile formatlar (1,234)
  */
 function formatNumber(num) {
@@ -638,6 +670,7 @@ function switchInfoTab(tabName) {
 // Export
 if (typeof window !== 'undefined') {
     window.getLocalDateString = getLocalDateString;
+    window.getLocalISOString = getLocalISOString;
     window.addDays = addDays;
     window.formatNumber = formatNumber;
     window.closeModal = closeModal;

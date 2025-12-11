@@ -424,7 +424,7 @@ async function saveUserStats(stats) {
                 streak_data: stats.streak_data,
                 game_stats: stats.game_stats,
                 perfect_lessons_count: stats.perfect_lessons_count,
-                updated_at: new Date().toISOString()
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
             }, {
                 onConflict: 'user_id'
             });
@@ -536,7 +536,7 @@ async function saveDailyTasks(tasks) {
                     reviewWords: Array.from(tasks.todayStats.reviewWords || [])
                 },
                 rewards_claimed: tasks.rewardsClaimed,
-                updated_at: new Date().toISOString()
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
             }, {
                 onConflict: 'user_id'
             });
@@ -643,7 +643,7 @@ async function saveWeeklyTasks(tasks) {
                     allModesPlayed: Array.from(tasks.weekStats.allModesPlayed || [])
                 },
                 rewards_claimed: tasks.rewardsClaimed,
-                updated_at: new Date().toISOString()
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
             }, {
                 onConflict: 'user_id'
             });
@@ -714,7 +714,7 @@ async function saveWordStat(wordId, stats) {
                 user_id: user.id,
                 word_id: wordId,
                 stats: stats,
-                updated_at: new Date().toISOString()
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
             }, {
                 onConflict: 'user_id,word_id'
             });
@@ -841,7 +841,7 @@ async function saveDailyStat(date, stats) {
                 user_id: user.id,
                 date: date,
                 stats: stats,
-                updated_at: new Date().toISOString()
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
             }, {
                 onConflict: 'user_id,date'
             });
@@ -1139,7 +1139,7 @@ async function updateWeeklyXP(points) {
                         week_end: weekEndStr,
                         weekly_xp: currentXP + points,
                         league: currentLeague,
-                        updated_at: new Date().toISOString()
+                        updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
                     }, {
                         onConflict: 'user_id,week_start'
                     });
