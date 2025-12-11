@@ -194,6 +194,7 @@ SELECT
     
     -- En Çok Oynanan Oyun Modu
     CASE 
+        WHEN us.user_id IS NULL OR us.game_stats IS NULL OR (us.game_stats->'gameModeCounts') IS NULL THEN '❌ Oyun Yok'
         WHEN COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) >= 
              GREATEST(
                  COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0),
@@ -226,8 +227,11 @@ SELECT
         ELSE '❌ Oyun Yok'
     END AS "En Çok Oynanan Mod",
     
-    -- Son Güncelleme
-    COALESCE(us.updated_at, p.created_at, au.created_at) AS "Son Güncelleme",
+    -- Son Güncelleme (sadece oyun oynanmışsa göster)
+    CASE 
+        WHEN us.user_id IS NOT NULL AND us.updated_at IS NOT NULL THEN us.updated_at
+        ELSE NULL
+    END AS "Son Güncelleme",
     
     -- Durum Bilgisi
     CASE 
