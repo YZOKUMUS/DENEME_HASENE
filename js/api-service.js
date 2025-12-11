@@ -855,6 +855,68 @@ async function saveDailyStat(date, stats) {
 }
 
 /**
+ * Haftalık istatistikleri kaydet
+ */
+async function saveWeeklyStat(weekStart, stats) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+        return;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { error } = await supabaseClient
+            .from('weekly_stats')
+            .upsert({
+                user_id: user.id,
+                week_start: weekStart,
+                stats: stats,
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+            }, {
+                onConflict: 'user_id,week_start'
+            });
+        
+        if (error) throw error;
+        return;
+    }
+    
+    // Fallback: localStorage
+    localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+}
+
+/**
+ * Aylık istatistikleri kaydet
+ */
+async function saveMonthlyStat(month, stats) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+        return;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { error } = await supabaseClient
+            .from('monthly_stats')
+            .upsert({
+                user_id: user.id,
+                month: month,
+                stats: stats,
+                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+            }, {
+                onConflict: 'user_id,month'
+            });
+        
+        if (error) throw error;
+        return;
+    }
+    
+    // Fallback: localStorage
+    localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+}
+
+/**
  * Günlük istatistikleri yükle
  */
 async function loadDailyStat(date) {
@@ -1467,6 +1529,8 @@ if (typeof window !== 'undefined') {
     window.addFavorite = addFavorite;
     window.removeFavorite = removeFavorite;
     window.saveDailyStat = saveDailyStat;
+    window.saveWeeklyStat = saveWeeklyStat;
+    window.saveMonthlyStat = saveMonthlyStat;
     window.loadDailyStat = loadDailyStat;
     window.loadWeeklyStat = loadWeeklyStat;
     window.loadMonthlyStat = loadMonthlyStat;
