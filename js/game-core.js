@@ -1104,8 +1104,10 @@ function updateStreakDisplay() {
  */
 async function startKelimeCevirGame(subMode) {
     currentGame = 'kelime-cevir';
+    currentGameMode = 'kelime-cevir';
     currentSubMode = subMode;
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     window.currentSubMode = currentSubMode;
     currentQuestion = 0;
     sessionScore = 0;
@@ -1479,7 +1481,9 @@ function showComboBonus() {
  */
 async function startDinleBulGame() {
     currentGame = 'dinle-bul';
+    currentGameMode = 'dinle-bul';
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     currentQuestion = 0;
     sessionScore = 0;
     sessionCorrect = 0;
@@ -1705,7 +1709,9 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
  */
 async function startBoslukDoldurGame() {
     currentGame = 'bosluk-doldur';
+    currentGameMode = 'bosluk-doldur';
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     currentQuestion = 0;
     sessionScore = 0;
     sessionCorrect = 0;
@@ -2200,7 +2206,9 @@ function setupAudioButtonForContent(buttonId, audioUrl, startTime = null) {
  */
 async function startAyetOku() {
     currentGame = 'ayet-oku';
+    currentGameMode = 'ayet-oku';
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     const allAyet = await loadAyetData();
     if (!allAyet || allAyet.length === 0) {
         showErrorMessage('Ayet verileri yüklenemedi!');
@@ -2214,6 +2222,9 @@ async function startAyetOku() {
     
     // Oyun sayacını artır
     gameStats.gameModeCounts['ayet-oku']++;
+    
+    // İstatistikleri kaydet
+    debouncedSaveStats();
     
     // Günlük görev ilerlemesini güncelle
     updateTaskProgress('ayet-oku', {
@@ -2271,7 +2282,9 @@ function displayAyet(ayet, allAyet) {
  */
 async function startDuaEt() {
     currentGame = 'dua-et';
+    currentGameMode = 'dua-et';
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     const allDua = await loadDuaData();
     if (!allDua || allDua.length === 0) {
         showErrorMessage('Dua verileri yüklenemedi!');
@@ -2284,6 +2297,9 @@ async function startDuaEt() {
     displayDua(shuffledDua[currentDuaIndex], shuffledDua);
     
     gameStats.gameModeCounts['dua-et']++;
+    
+    // İstatistikleri kaydet
+    debouncedSaveStats();
     
     // Günlük görev ilerlemesini güncelle
     updateTaskProgress('dua-et', {
@@ -2339,7 +2355,9 @@ function displayDua(dua, allDua) {
  */
 async function startHadisOku() {
     currentGame = 'hadis-oku';
+    currentGameMode = 'hadis-oku';
     window.currentGame = currentGame;
+    window.currentGameMode = currentGameMode;
     const allHadis = await loadHadisData();
     if (!allHadis || allHadis.length === 0) {
         showErrorMessage('Hadis verileri yüklenemedi!');
@@ -2352,6 +2370,9 @@ async function startHadisOku() {
     displayHadis(shuffledHadis[currentHadisIndex], shuffledHadis);
     
     gameStats.gameModeCounts['hadis-oku']++;
+    
+    // İstatistikleri kaydet
+    debouncedSaveStats();
     
     // Günlük görev ilerlemesini güncelle
     updateTaskProgress('hadis-oku', {
@@ -2491,13 +2512,20 @@ async function saveCurrentGameProgress() {
     gameStats.totalCorrect += sessionCorrect;
     gameStats.totalWrong += sessionWrong;
     
-    // currentGameMode yerine currentGame kullan
-    const gameModeKey = currentGame === 'kelime-cevir' ? 'kelime-cevir' :
-                        currentGame === 'dinle-bul' ? 'dinle-bul' :
-                        currentGame === 'bosluk-doldur' ? 'bosluk-doldur' : null;
+    // Oyun modunu belirle (currentGameMode veya currentGame'den)
+    const gameModeKey = currentGameMode || 
+                        (currentGame === 'kelime-cevir' ? 'kelime-cevir' :
+                         currentGame === 'dinle-bul' ? 'dinle-bul' :
+                         currentGame === 'bosluk-doldur' ? 'bosluk-doldur' :
+                         currentGame === 'ayet-oku' ? 'ayet-oku' :
+                         currentGame === 'dua-et' ? 'dua-et' :
+                         currentGame === 'hadis-oku' ? 'hadis-oku' : null);
     
     if (gameModeKey) {
         gameStats.gameModeCounts[gameModeKey] = (gameStats.gameModeCounts[gameModeKey] || 0) + 1;
+        console.log(`🎮 Oyun modu sayacı güncellendi: ${gameModeKey} = ${gameStats.gameModeCounts[gameModeKey]}`);
+    } else {
+        console.warn('⚠️ Oyun modu belirlenemedi! currentGameMode:', currentGameMode, 'currentGame:', currentGame);
     }
     
     // Görev ilerlemesini güncelle
@@ -3555,8 +3583,21 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     if (maxCombo > (dailyData.maxCombo || 0)) {
         dailyData.maxCombo = maxCombo;
     }
-    if (currentGameMode) {
-        dailyData.gameModes[currentGameMode] = (dailyData.gameModes[currentGameMode] || 0) + 1;
+    
+    // Oyun modunu belirle (currentGameMode veya currentGame'den)
+    const gameModeKey = currentGameMode || 
+                        (currentGame === 'kelime-cevir' ? 'kelime-cevir' :
+                         currentGame === 'dinle-bul' ? 'dinle-bul' :
+                         currentGame === 'bosluk-doldur' ? 'bosluk-doldur' :
+                         currentGame === 'ayet-oku' ? 'ayet-oku' :
+                         currentGame === 'dua-et' ? 'dua-et' :
+                         currentGame === 'hadis-oku' ? 'hadis-oku' : null);
+    
+    if (gameModeKey) {
+        dailyData.gameModes[gameModeKey] = (dailyData.gameModes[gameModeKey] || 0) + 1;
+        console.log(`🎮 Günlük oyun modu sayacı güncellendi: ${gameModeKey} = ${dailyData.gameModes[gameModeKey]}`);
+    } else {
+        console.warn('⚠️ saveDetailedStats: Oyun modu belirlenemedi! currentGameMode:', currentGameMode, 'currentGame:', currentGame);
     }
     
     safeSetItem(dailyKey, dailyData);
