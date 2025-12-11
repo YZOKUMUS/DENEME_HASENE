@@ -981,6 +981,11 @@ async function addToGlobalPoints(points, correctAnswers) {
     // UI'ı güncelle
     updateStatsBar();
     
+    // Detaylı istatistiklere ekle (haftalık/aylık için)
+    // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor,
+    // ama burada bonus puanlar (günlük hedef, perfect lesson vb.) için de ekleniyor
+    saveDetailedStats(points, 0, 0, 0, 0, false);
+    
     // Kaydet
     await saveStatsImmediate();
     
@@ -2620,6 +2625,8 @@ async function endGame() {
             perfectBonus,
             yeniPoints: dailyData.points
         });
+        // Perfect bonus'u haftalık/aylık istatistiklere de ekle
+        saveDetailedStats(perfectBonus, 0, 0, 0, 1, false);
     }
     
     // localStorage'daki dailyCorrect ve dailyWrong'u hasene_daily_ verilerinden senkronize et
