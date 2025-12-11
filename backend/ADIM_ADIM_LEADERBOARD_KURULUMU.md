@@ -120,3 +120,4 @@ Eğer herhangi bir adımda hata alırsanız:
 
 Herhangi bir adımda takılırsanız, bana yazın. Adım adım yardımcı olurum!
 
+

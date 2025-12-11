@@ -162,3 +162,4 @@ service cloud.firestore {
 5. ✅ Liderlik tablosu ekle
 6. ✅ Real-time özellikler ekle (isteğe bağlı)
 
+

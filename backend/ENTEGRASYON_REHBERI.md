@@ -162,3 +162,4 @@ Sorun yaşarsanız:
 2. Supabase Dashboard'da **"Logs"** sekmesine bak
 3. `backend/KURULUM.md` dosyasını oku
 
+

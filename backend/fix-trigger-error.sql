@@ -13,3 +13,4 @@ DROP TRIGGER IF EXISTS update_user_leagues_updated_at ON user_leagues;
 -- Şimdi leaderboard-setup.sql veya supabase-setup.sql'i tekrar çalıştırabilirsiniz
 -- Trigger'lar otomatik olarak yeniden oluşturulacak.
 
+

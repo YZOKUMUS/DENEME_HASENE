@@ -202,3 +202,4 @@ SET
 
 SELECT 'Tüm veriler temizlendi ve tablolar yeniden oluşturuldu!' as result;
 
+

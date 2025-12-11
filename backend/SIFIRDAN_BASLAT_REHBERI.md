@@ -56,3 +56,4 @@ Bu işlem **TÜM VERİLERİ SİLER**:
 
 **Hazır mısınız? İşlem geri alınamaz!**
 
+

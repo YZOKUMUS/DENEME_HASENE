@@ -100,3 +100,4 @@ Supabase Dashboard'da **Authentication** > **URL Configuration** sekmesinde:
 - Browser console'u kontrol edin
 - `auth.js` dosyasındaki OAuth callback kontrolünü kontrol edin
 
+

@@ -182,3 +182,4 @@ Tabloları gördükten sonra:
 
 **Sorun devam ederse, hangi adımda takıldığınızı bana söyleyin!**
 
+

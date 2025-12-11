@@ -79,3 +79,4 @@ FROM information_schema.tables t
 WHERE table_schema = 'public' 
 ORDER BY table_name;
 
+

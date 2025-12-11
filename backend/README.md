@@ -95,3 +95,4 @@ GET    /api/leaderboard       - Liderlik tablosu
 3. Supabase'den API key'leri al ve `.env` dosyasına ekle
 4. Frontend'de `js/api-service.js` modülünü kullan
 
+

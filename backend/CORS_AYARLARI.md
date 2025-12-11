@@ -38,3 +38,4 @@ Eğer CORS ayarlarını bulamazsanız:
 3. CORS hatası görünüyorsa → CORS ayarlarını yapın
 4. CORS hatası yoksa → Her şey çalışıyor! ✅
 
+

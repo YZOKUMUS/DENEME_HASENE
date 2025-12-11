@@ -95,3 +95,4 @@ Production'da Supabase URL ve Key'leri environment variable olarak kullanın:
 
 Başarılar! 🎊
 
+

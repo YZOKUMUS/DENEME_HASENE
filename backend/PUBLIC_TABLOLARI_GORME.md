@@ -48,3 +48,4 @@ Bu tabloda **12 lig kaydı** olmalı:
 
 Bu kayıtları görebiliyorsanız, SQL script başarıyla çalışmış demektir! ✅
 
+

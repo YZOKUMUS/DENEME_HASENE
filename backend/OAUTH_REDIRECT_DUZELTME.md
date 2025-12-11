@@ -37,3 +37,4 @@ OAuth redirect URL'i GitHub Pages URL'ine güncellendi. Kod GitHub'a push edildi
 
 **Site URL** ve **Redirect URLs** ayarları çok önemli! Eğer yanlışsa OAuth çalışmaz.
 
+

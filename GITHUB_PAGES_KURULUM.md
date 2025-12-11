@@ -72,3 +72,4 @@ Artık oyununuz canlıda! Diğer kullanıcılar:
 - Oyun oynayabilir
 - Verileri backend'de saklanır
 
+

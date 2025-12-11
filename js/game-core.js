@@ -601,42 +601,25 @@ async function loadStats() {
         checkWeeklyTasks();
 
         // UI'ı güncelle - ÖNEMLİ: Backend verileri yüklendikten SONRA güncelle
-        const loadedDailyXP = localStorage.getItem('dailyXP');
-        const loadedTotalPoints = totalPoints;
-        const loadedStars = badges.stars;
-        const loadedStreak = streakData.currentStreak;
+        // DOM hazır olana kadar bekle
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                updateUIAfterLoad();
+            });
+        } else {
+            // DOM zaten hazır, hemen güncelle
+            updateUIAfterLoad();
+        }
         
-        console.log('🔄 UI güncelleniyor...', {
-            totalPoints: loadedTotalPoints,
-            badges: loadedStars,
-            dailyXP: loadedDailyXP,
-            streak: loadedStreak
-        });
-        
-        updateStatsBar();
-        updateDailyGoalDisplay();
-        updateStreakDisplay(); // Streak'i de güncelle
-        updateTasksDisplay(); // Görev sayacını güncelle
+        function updateUIAfterLoad() {
+            updateStatsBar();
+            updateDailyGoalDisplay();
+            updateStreakDisplay(); // Streak'i de güncelle
+            updateTasksDisplay(); // Görev sayacını güncelle
+        }
 
         infoLog('İstatistikler yüklendi');
         console.log('✅ loadStats tamamlandı - UI güncellendi');
-        
-        // MOBİL DEBUG: Backend verileri yüklendiyse kullanıcıya bilgi ver
-        if (user && (loadedTotalPoints > 0 || loadedStars > 0 || loadedStreak > 0 || (loadedDailyXP && parseInt(loadedDailyXP) > 0))) {
-            // Backend'den veri yüklendi, geçici bir mesaj göster (sadece ilk yüklemede)
-            const statsLoadedShown = sessionStorage.getItem('backend_stats_loaded_shown');
-            if (!statsLoadedShown) {
-                setTimeout(() => {
-                    if (typeof showSuccessMessage === 'function') {
-                        showSuccessMessage(`✅ Veriler yüklendi: ${formatNumber(loadedTotalPoints)} Hasene, ${loadedStars} ⭐, ${loadedStreak} 🔥 Seri`);
-                    } else {
-                        // showSuccessMessage yoksa, alert göster (sadece test için)
-                        // alert(`✅ Backend verileri yüklendi:\nHasene: ${formatNumber(loadedTotalPoints)}\nYıldız: ${loadedStars}\nSeri: ${loadedStreak}`);
-                    }
-                    sessionStorage.setItem('backend_stats_loaded_shown', 'true');
-                }, 1000);
-            }
-        }
     } catch (error) {
         errorLog('İstatistik yükleme hatası:', error);
     }
@@ -889,6 +872,13 @@ async function addToGlobalPoints(points, correctAnswers) {
  * Üst barı güncelle
  */
 function updateStatsBar() {
+    // Elementler henüz yüklenmemişse, yeniden oluştur
+    if (!elements.totalPointsEl || !elements.starPointsEl || !elements.currentLevelEl) {
+        elements.totalPointsEl = document.getElementById('total-points');
+        elements.starPointsEl = document.getElementById('star-points');
+        elements.currentLevelEl = document.getElementById('current-level');
+    }
+    
     if (elements.totalPointsEl) {
         elements.totalPointsEl.textContent = formatNumber(totalPoints);
     }
@@ -956,14 +946,13 @@ function updateDailyGoalDisplay() {
  * Streak görüntüsünü güncelle
  */
 function updateStreakDisplay() {
-    console.log('🔄 updateStreakDisplay çağrıldı:', {
-        currentStreak: streakData.currentStreak,
-        element: !!elements.currentStreakEl
-    });
+    // Element henüz yüklenmemişse, yeniden oluştur
+    if (!elements.currentStreakEl) {
+        elements.currentStreakEl = document.getElementById('current-streak');
+    }
     
     if (elements.currentStreakEl) {
         elements.currentStreakEl.textContent = streakData.currentStreak;
-        console.log('✅ currentStreak güncellendi:', streakData.currentStreak);
     }
     
     // Bugün ilerlemesi artık "Günlük Vird" bölümünde gösteriliyor
