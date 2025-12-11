@@ -882,6 +882,62 @@ async function loadDailyStat(date) {
     return saved ? JSON.parse(saved) : null;
 }
 
+/**
+ * Haftalık istatistikleri yükle
+ */
+async function loadWeeklyStat(weekStart) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
+        return saved ? JSON.parse(saved) : null;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from('weekly_stats')
+            .select('stats')
+            .eq('user_id', user.id)
+            .eq('week_start', weekStart)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        return data ? data.stats : null;
+    }
+    
+    // Fallback: localStorage
+    const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
+    return saved ? JSON.parse(saved) : null;
+}
+
+/**
+ * Aylık istatistikleri yükle
+ */
+async function loadMonthlyStat(month) {
+    const user = await getCurrentUser();
+    if (!user) {
+        // Fallback: localStorage
+        const saved = localStorage.getItem(`hasene_monthly_${month}`);
+        return saved ? JSON.parse(saved) : null;
+    }
+    
+    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from('monthly_stats')
+            .select('stats')
+            .eq('user_id', user.id)
+            .eq('month', month)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        return data ? data.stats : null;
+    }
+    
+    // Fallback: localStorage
+    const saved = localStorage.getItem(`hasene_monthly_${month}`);
+    return saved ? JSON.parse(saved) : null;
+}
+
 // ============================================
 // ACHIEVEMENTS API
 // ============================================
@@ -1412,6 +1468,8 @@ if (typeof window !== 'undefined') {
     window.removeFavorite = removeFavorite;
     window.saveDailyStat = saveDailyStat;
     window.loadDailyStat = loadDailyStat;
+    window.loadWeeklyStat = loadWeeklyStat;
+    window.loadMonthlyStat = loadMonthlyStat;
     window.loadAllDailyStatsDates = loadAllDailyStatsDates;
     
     /**

@@ -46,28 +46,31 @@ function showDetailedStatsModal() {
 /**
  * Tab içeriğini yükler
  */
-function loadTabContent(tab) {
+async function loadTabContent(tab) {
     if (tab === 'daily') {
-        loadDailyStats();
+        await loadDailyStats();
     } else if (tab === 'weekly') {
-        loadWeeklyStats();
+        await loadWeeklyStats();
     } else if (tab === 'monthly') {
-        loadMonthlyStats();
+        await loadMonthlyStats();
     } else if (tab === 'words') {
-        loadWordsStats();
+        await loadWordsStats();
     } else if (tab === 'favorites') {
-        loadFavoritesStats();
+        await loadFavoritesStats();
     }
 }
 
 /**
  * Günlük istatistikleri yükler
  */
-function loadDailyStats() {
+async function loadDailyStats() {
     const content = document.getElementById('daily-stats-content');
     if (!content) return;
     
     console.log('📊 loadDailyStats çağrıldı');
+    
+    // Yükleniyor mesajı göster
+    content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Yükleniyor...</div>';
     
     const today = getLocalDateString();
     const dailyStats = [];
@@ -82,16 +85,33 @@ function loadDailyStats() {
         date.setDate(date.getDate() - i);
         const dateStr = getLocalDateString(date);
         
-        // Bu tarih için veri yoksa varsayılan değerler
-        const dailyData = safeGetItem(`hasene_daily_${dateStr}`, {
-            correct: 0,
-            wrong: 0,
-            points: 0,
-            gamesPlayed: 0,
-            perfectLessons: 0,
-            maxCombo: 0,
-            gameModes: {}
-        });
+        // Önce Supabase'den yüklemeyi dene
+        let dailyData = null;
+        if (typeof window.loadDailyStat === 'function') {
+            try {
+                dailyData = await window.loadDailyStat(dateStr);
+            } catch (error) {
+                console.warn(`Supabase'den ${dateStr} tarihi yüklenemedi:`, error);
+            }
+        }
+        
+        // Supabase'den yüklenemediyse localStorage'dan yükle
+        if (!dailyData) {
+            dailyData = safeGetItem(`hasene_daily_${dateStr}`, {
+                correct: 0,
+                wrong: 0,
+                points: 0,
+                gamesPlayed: 0,
+                perfectLessons: 0,
+                maxCombo: 0,
+                gameModes: {}
+            });
+        }
+        
+        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+        if (dailyData && typeof window.loadDailyStat === 'function') {
+            localStorage.setItem(`hasene_daily_${dateStr}`, JSON.stringify(dailyData));
+        }
         
         const isToday = dateStr === today;
         
@@ -224,9 +244,12 @@ function loadDailyStats() {
 /**
  * Haftalık istatistikleri yükler
  */
-function loadWeeklyStats() {
+async function loadWeeklyStats() {
     const content = document.getElementById('weekly-stats-content');
     if (!content) return;
+    
+    // Yükleniyor mesajı göster
+    content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Yükleniyor...</div>';
     
     const today = new Date();
     const weeklyStats = [];
@@ -244,16 +267,34 @@ function loadWeeklyStats() {
         weekEnd.setDate(weekEnd.getDate() + 6);
         const weekEndStr = getLocalDateString(weekEnd);
         
-        const weeklyData = safeGetItem(`hasene_weekly_${weekStartStr}`, {
-            hasene: 0,
-            correct: 0,
-            wrong: 0,
-            daysPlayed: 0,
-            gamesPlayed: 0,
-            perfectLessons: 0,
-            maxCombo: 0,
-            streakDays: 0
-        });
+        // Önce Supabase'den yüklemeyi dene
+        let weeklyData = null;
+        if (typeof window.loadWeeklyStat === 'function') {
+            try {
+                weeklyData = await window.loadWeeklyStat(weekStartStr);
+            } catch (error) {
+                console.warn(`Supabase'den ${weekStartStr} haftası yüklenemedi:`, error);
+            }
+        }
+        
+        // Supabase'den yüklenemediyse localStorage'dan yükle
+        if (!weeklyData) {
+            weeklyData = safeGetItem(`hasene_weekly_${weekStartStr}`, {
+                hasene: 0,
+                correct: 0,
+                wrong: 0,
+                daysPlayed: 0,
+                gamesPlayed: 0,
+                perfectLessons: 0,
+                maxCombo: 0,
+                streakDays: 0
+            });
+        }
+        
+        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+        if (weeklyData && typeof window.loadWeeklyStat === 'function') {
+            localStorage.setItem(`hasene_weekly_${weekStartStr}`, JSON.stringify(weeklyData));
+        }
         
         const isCurrentWeek = weekStart <= today && weekEnd >= today;
         const accuracy = (weeklyData.correct + weeklyData.wrong) > 0 
@@ -374,9 +415,12 @@ function loadWeeklyStats() {
 /**
  * Aylık istatistikleri yükler
  */
-function loadMonthlyStats() {
+async function loadMonthlyStats() {
     const content = document.getElementById('monthly-stats-content');
     if (!content) return;
+    
+    // Yükleniyor mesajı göster
+    content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Yükleniyor...</div>';
     
     const today = new Date();
     const monthlyStats = [];
@@ -391,18 +435,36 @@ function loadMonthlyStats() {
         month.setMonth(month.getMonth() - i);
         const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
         
-        const monthlyData = safeGetItem(`hasene_monthly_${monthStr}`, {
-            hasene: 0,
-            correct: 0,
-            wrong: 0,
-            daysPlayed: 0,
-            gamesPlayed: 0,
-            perfectLessons: 0,
-            maxCombo: 0,
-            maxConsecutiveCorrect: 0,
-            streakDays: 0,
-            bestStreak: 0
-        });
+        // Önce Supabase'den yüklemeyi dene
+        let monthlyData = null;
+        if (typeof window.loadMonthlyStat === 'function') {
+            try {
+                monthlyData = await window.loadMonthlyStat(monthStr);
+            } catch (error) {
+                console.warn(`Supabase'den ${monthStr} ayı yüklenemedi:`, error);
+            }
+        }
+        
+        // Supabase'den yüklenemediyse localStorage'dan yükle
+        if (!monthlyData) {
+            monthlyData = safeGetItem(`hasene_monthly_${monthStr}`, {
+                hasene: 0,
+                correct: 0,
+                wrong: 0,
+                daysPlayed: 0,
+                gamesPlayed: 0,
+                perfectLessons: 0,
+                maxCombo: 0,
+                maxConsecutiveCorrect: 0,
+                streakDays: 0,
+                bestStreak: 0
+            });
+        }
+        
+        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+        if (monthlyData && typeof window.loadMonthlyStat === 'function') {
+            localStorage.setItem(`hasene_monthly_${monthStr}`, JSON.stringify(monthlyData));
+        }
         
         const isCurrentMonth = month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear();
         const accuracy = (monthlyData.correct + monthlyData.wrong) > 0 
@@ -534,7 +596,25 @@ async function loadWordsStats() {
         // Kelime verilerini yükle
         const loadKelimeDataFunc = window.loadKelimeData || loadKelimeData;
         const allWords = await loadKelimeDataFunc();
-        const wordStatsData = safeGetItem('hasene_wordStats', {});
+        
+        // Önce Supabase'den yüklemeyi dene
+        let wordStatsData = {};
+        if (typeof window.loadWordStats === 'function') {
+            try {
+                wordStatsData = await window.loadWordStats();
+                // Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+                if (wordStatsData && Object.keys(wordStatsData).length > 0) {
+                    localStorage.setItem('hasene_wordStats', JSON.stringify(wordStatsData));
+                }
+            } catch (error) {
+                console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);
+                // Fallback: localStorage
+                wordStatsData = safeGetItem('hasene_wordStats', {});
+            }
+        } else {
+            // Fallback: localStorage
+            wordStatsData = safeGetItem('hasene_wordStats', {});
+        }
         const words = Object.keys(wordStatsData);
         
         if (words.length === 0) {
