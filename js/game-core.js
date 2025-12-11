@@ -851,6 +851,20 @@ async function saveStats() {
         safeSetItem('unlockedBadges', unlockedBadges);
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
         safeSetItem('gameStats', gameStats);
+        
+        // Kelime istatistiklerini Supabase'e kaydet (async, hata olsa bile devam et)
+        if (typeof window.saveWordStat === 'function' && wordStats && Object.keys(wordStats).length > 0) {
+            // Tüm kelime istatistiklerini kaydet (paralel olarak)
+            const savePromises = Object.keys(wordStats).map(wordId => {
+                return window.saveWordStat(wordId, wordStats[wordId]).catch(error => {
+                    console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
+                });
+            });
+            // Tüm kayıtların tamamlanmasını bekle (ama hata olsa bile devam et)
+            Promise.all(savePromises).catch(() => {
+                // Hatalar zaten yukarıda yakalandı, burada sadece log
+            });
+        }
 
         debugLog('İstatistikler kaydedildi');
     } catch (error) {
@@ -3646,6 +3660,25 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     }
     
     safeSetItem(monthlyKey, monthlyData);
+    
+    // Supabase'e kaydet (async, hata olsa bile devam et)
+    if (typeof window.saveDailyStat === 'function') {
+        window.saveDailyStat(today, dailyData).catch(error => {
+            console.warn('Supabase\'e daily_stat kaydedilemedi:', error);
+        });
+    }
+    
+    if (typeof window.saveWeeklyStat === 'function') {
+        window.saveWeeklyStat(weekStartStr, weeklyData).catch(error => {
+            console.warn('Supabase\'e weekly_stat kaydedilemedi:', error);
+        });
+    }
+    
+    if (typeof window.saveMonthlyStat === 'function') {
+        window.saveMonthlyStat(monthStr, monthlyData).catch(error => {
+            console.warn('Supabase\'e monthly_stat kaydedilemedi:', error);
+        });
+    }
 }
 
 // getStrugglingWords ve selectIntelligentWords artık word-stats-manager.js modülünde

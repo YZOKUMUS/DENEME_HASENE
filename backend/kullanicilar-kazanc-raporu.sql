@@ -70,17 +70,48 @@ SELECT
     (SELECT COALESCE((stats->>'correct')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Doğru",
     (SELECT COALESCE((stats->>'wrong')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Yanlış",
     (SELECT COALESCE((stats->>'gamesPlayed')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Oyun",
+    (SELECT COALESCE((stats->>'perfectLessons')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Mükemmel",
     (SELECT MAX((stats->>'points')::INTEGER) FROM daily_stats ds WHERE ds.user_id = au.id) AS "En Yüksek Günlük Puan",
+    (SELECT MAX((stats->>'maxCombo')::INTEGER) FROM daily_stats ds WHERE ds.user_id = au.id) AS "En Yüksek Combo",
+    (SELECT SUM(COALESCE((stats->>'points')::INTEGER, 0)) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Toplam Günlük Puan",
+    (SELECT SUM(COALESCE((stats->>'correct')::INTEGER, 0)) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Toplam Günlük Doğru",
+    (SELECT SUM(COALESCE((stats->>'wrong')::INTEGER, 0)) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Toplam Günlük Yanlış",
+    (SELECT SUM(COALESCE((stats->>'gamesPlayed')::INTEGER, 0)) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Toplam Günlük Oyun",
+    (SELECT SUM(COALESCE((stats->>'perfectLessons')::INTEGER, 0)) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Toplam Günlük Mükemmel",
+    (SELECT COUNT(DISTINCT date) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Oynanan Gün Sayısı",
     (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Toplam",
+    (SELECT COALESCE((stats->>'correct')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Doğru",
+    (SELECT COALESCE((stats->>'wrong')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Yanlış",
+    (SELECT COALESCE((stats->>'gamesPlayed')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Oyun",
+    (SELECT COALESCE((stats->>'daysPlayed')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Oynanan Gün",
+    (SELECT COALESCE((stats->>'streakDays')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Seri Gün",
     (SELECT MAX((stats->>'hasene')::INTEGER) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "En Yüksek Haftalık Puan",
+    (SELECT SUM(COALESCE((stats->>'hasene')::INTEGER, 0)) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "Toplam Haftalık Puan",
+    (SELECT SUM(COALESCE((stats->>'correct')::INTEGER, 0)) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "Toplam Haftalık Doğru",
+    (SELECT SUM(COALESCE((stats->>'wrong')::INTEGER, 0)) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "Toplam Haftalık Yanlış",
+    (SELECT SUM(COALESCE((stats->>'gamesPlayed')::INTEGER, 0)) FROM weekly_stats ws WHERE ws.user_id = au.id) AS "Toplam Haftalık Oyun",
     (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Toplam",
+    (SELECT COALESCE((stats->>'correct')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Doğru",
+    (SELECT COALESCE((stats->>'wrong')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Yanlış",
+    (SELECT COALESCE((stats->>'gamesPlayed')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Oyun",
+    (SELECT COALESCE((stats->>'daysPlayed')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Oynanan Gün",
+    (SELECT COALESCE((stats->>'streakDays')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Seri Gün",
+    (SELECT COALESCE((stats->>'bestStreak')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay En İyi Seri",
     (SELECT MAX((stats->>'hasene')::INTEGER) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "En Yüksek Aylık Puan",
+    (SELECT SUM(COALESCE((stats->>'hasene')::INTEGER, 0)) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "Toplam Aylık Puan",
+    (SELECT SUM(COALESCE((stats->>'correct')::INTEGER, 0)) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "Toplam Aylık Doğru",
+    (SELECT SUM(COALESCE((stats->>'wrong')::INTEGER, 0)) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "Toplam Aylık Yanlış",
+    (SELECT SUM(COALESCE((stats->>'gamesPlayed')::INTEGER, 0)) FROM monthly_stats ms WHERE ms.user_id = au.id) AS "Toplam Aylık Oyun",
     
     -- En Aktif Gün (En çok puan kazanılan gün)
     (SELECT date FROM daily_stats ds WHERE ds.user_id = au.id 
         ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün",
     (SELECT (stats->>'points')::INTEGER FROM daily_stats ds WHERE ds.user_id = au.id 
         ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün Puanı",
+    (SELECT (stats->>'correct')::INTEGER FROM daily_stats ds WHERE ds.user_id = au.id 
+        ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün Doğru",
+    (SELECT (stats->>'gamesPlayed')::INTEGER FROM daily_stats ds WHERE ds.user_id = au.id 
+        ORDER BY (stats->>'points')::INTEGER DESC LIMIT 1) AS "En Aktif Gün Oyun",
     
     -- Ortalama Hesaplamalar
     CASE 
@@ -143,6 +174,12 @@ SELECT
         AND (ws.stats->>'attempts')::INTEGER >= 3) AS "İyi Bilinen Kelime",
     (SELECT COUNT(*) FROM word_stats ws WHERE ws.user_id = au.id 
         AND (ws.stats->>'attempts')::INTEGER >= 5) AS "Çok Denenen Kelime",
+    (SELECT SUM(COALESCE((ws.stats->>'attempts')::INTEGER, 0)) FROM word_stats ws WHERE ws.user_id = au.id) AS "Toplam Kelime Denemesi",
+    (SELECT SUM(COALESCE((ws.stats->>'correct')::INTEGER, 0)) FROM word_stats ws WHERE ws.user_id = au.id) AS "Toplam Kelime Doğru",
+    (SELECT SUM(COALESCE((ws.stats->>'wrong')::INTEGER, 0)) FROM word_stats ws WHERE ws.user_id = au.id) AS "Toplam Kelime Yanlış",
+    (SELECT AVG(COALESCE((ws.stats->>'successRate')::NUMERIC, 0)) FROM word_stats ws WHERE ws.user_id = au.id 
+        AND (ws.stats->>'attempts')::INTEGER >= 1) AS "Ortalama Kelime Başarı Oranı %",
+    (SELECT MAX(COALESCE((ws.stats->>'masteryLevel')::INTEGER, 0)) FROM word_stats ws WHERE ws.user_id = au.id) AS "En Yüksek Kelime Ustalık Seviyesi",
     
     -- Favori Kelime Sayısı
     (SELECT COUNT(*) FROM favorite_words fw WHERE fw.user_id = au.id) AS "Favori Kelime",
