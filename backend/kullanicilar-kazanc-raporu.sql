@@ -1,0 +1,130 @@
+-- ============================================
+-- TÜM KULLANICILARIN KAZANÇ RAPORU
+-- ============================================
+-- Bu sorgu tüm oyuna giriş yapan kullanıcıların
+-- kazançlarını detaylı bir şekilde gösterir
+-- ============================================
+
+SELECT 
+    -- Kullanıcı Bilgileri
+    COALESCE(p.username, au.email) AS "Kullanıcı Adı",
+    au.email AS "Email",
+    COALESCE(p.created_at, au.created_at) AS "Kayıt Tarihi",
+    au.last_sign_in_at AS "Son Giriş",
+    
+    -- Puan Bilgileri
+    COALESCE(us.total_points, 0) AS "Toplam Hasene",
+    COALESCE(us.perfect_lessons_count, 0) AS "Mükemmel Ders",
+    
+    -- Rozet Bilgileri
+    COALESCE((us.badges->>'stars')::INTEGER, 0) AS "⭐ Yıldız",
+    COALESCE((us.badges->>'bronze')::INTEGER, 0) AS "🥉 Bronz",
+    COALESCE((us.badges->>'silver')::INTEGER, 0) AS "🥈 Gümüş",
+    COALESCE((us.badges->>'gold')::INTEGER, 0) AS "🥇 Altın",
+    COALESCE((us.badges->>'diamond')::INTEGER, 0) AS "💎 Elmas",
+    
+    -- Seri Bilgileri
+    COALESCE((us.streak_data->>'currentStreak')::INTEGER, 0) AS "Aktif Seri",
+    COALESCE((us.streak_data->>'bestStreak')::INTEGER, 0) AS "En İyi Seri",
+    COALESCE((us.streak_data->>'totalPlayDays')::INTEGER, 0) AS "Toplam Oyun Günü",
+    
+    -- Oyun İstatistikleri
+    COALESCE((us.game_stats->>'totalCorrect')::INTEGER, 0) AS "Toplam Doğru",
+    COALESCE((us.game_stats->>'totalWrong')::INTEGER, 0) AS "Toplam Yanlış",
+    CASE 
+        WHEN COALESCE((us.game_stats->>'totalCorrect')::INTEGER, 0) + COALESCE((us.game_stats->>'totalWrong')::INTEGER, 0) > 0
+        THEN ROUND(
+            (COALESCE((us.game_stats->>'totalCorrect')::INTEGER, 0)::NUMERIC / 
+             (COALESCE((us.game_stats->>'totalCorrect')::INTEGER, 0) + COALESCE((us.game_stats->>'totalWrong')::INTEGER, 0))::NUMERIC) * 100, 
+            2
+        )
+        ELSE 0
+    END AS "Başarı Oranı %",
+    
+    -- Oyun Modu Sayıları
+    COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) AS "📝 Kelime Çevir",
+    COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) AS "🎧 Dinle Bul",
+    COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) AS "✍️ Boşluk Doldur",
+    COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) AS "📖 Ayet Oku",
+    COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) AS "🤲 Dua Et",
+    COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0) AS "📚 Hadis Oku",
+    
+    -- Toplam Oyun Sayısı
+    (
+        COALESCE((us.game_stats->'gameModeCounts'->>'kelime-cevir')::INTEGER, 0) +
+        COALESCE((us.game_stats->'gameModeCounts'->>'dinle-bul')::INTEGER, 0) +
+        COALESCE((us.game_stats->'gameModeCounts'->>'bosluk-doldur')::INTEGER, 0) +
+        COALESCE((us.game_stats->'gameModeCounts'->>'ayet-oku')::INTEGER, 0) +
+        COALESCE((us.game_stats->'gameModeCounts'->>'dua-et')::INTEGER, 0) +
+        COALESCE((us.game_stats->'gameModeCounts'->>'hadis-oku')::INTEGER, 0)
+    ) AS "🎮 Toplam Oyun",
+    
+    -- Haftalık XP (Bu Hafta)
+    COALESCE(wl.weekly_xp, 0) AS "Bu Hafta XP",
+    COALESCE(wl.league, 'mubtedi') AS "Lig",
+    
+    -- Günlük/Haftalık/Aylık İstatistikler
+    (SELECT MAX(date) FROM daily_stats ds WHERE ds.user_id = au.id) AS "Son Oyun Tarihi",
+    (SELECT COALESCE((stats->>'points')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Puan",
+    (SELECT COALESCE((stats->>'gamesPlayed')::INTEGER, 0) FROM daily_stats ds WHERE ds.user_id = au.id AND ds.date = CURRENT_DATE) AS "Bugünkü Oyun",
+    (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM weekly_stats ws WHERE ws.user_id = au.id AND ws.week_start = DATE_TRUNC('week', CURRENT_DATE)::DATE) AS "Bu Hafta Toplam",
+    (SELECT COALESCE((stats->>'hasene')::INTEGER, 0) FROM monthly_stats ms WHERE ms.user_id = au.id AND ms.month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')) AS "Bu Ay Toplam",
+    
+    -- Ortalama Hesaplamalar
+    CASE 
+        WHEN COALESCE((us.streak_data->>'totalPlayDays')::INTEGER, 0) > 0
+        THEN ROUND(COALESCE(us.total_points, 0)::NUMERIC / (us.streak_data->>'totalPlayDays')::NUMERIC, 2)
+        ELSE 0
+    END AS "Ortalama Günlük Puan",
+    
+    -- Rozet ve Başarım Sayıları
+    (SELECT COUNT(*) FROM badges b WHERE b.user_id = au.id) AS "Toplam Rozet",
+    (SELECT COUNT(*) FROM achievements a WHERE a.user_id = au.id) AS "Toplam Başarım",
+    
+    -- Favori Kelime Sayısı
+    (SELECT COUNT(*) FROM favorite_words fw WHERE fw.user_id = au.id) AS "Favori Kelime",
+    
+    -- Son Güncelleme
+    COALESCE(us.updated_at, p.created_at, au.created_at) AS "Son Güncelleme",
+    
+    -- Durum Bilgisi
+    CASE 
+        WHEN us.user_id IS NOT NULL THEN '✅ Oyun Oynamış'
+        WHEN p.id IS NOT NULL THEN '📝 Profil Var (Oyun Yok)'
+        ELSE '👤 Sadece Kayıt'
+    END AS "Durum"
+    
+FROM auth.users au
+LEFT JOIN profiles p ON au.id = p.id
+LEFT JOIN user_stats us ON au.id = us.user_id
+LEFT JOIN weekly_leaderboard wl ON au.id = wl.user_id 
+    AND wl.week_start = (
+        SELECT DATE_TRUNC('week', CURRENT_DATE)::DATE + 1
+    )
+ORDER BY 
+    COALESCE(us.total_points, 0) DESC,  -- Önce en yüksek puanlılar
+    COALESCE((us.streak_data->>'bestStreak')::INTEGER, 0) DESC,  -- Sonra en iyi seri
+    au.created_at ASC;  -- Son olarak kayıt tarihi
+
+-- ============================================
+-- ÖZET İSTATİSTİKLER (Ayrı bir sorgu)
+-- ============================================
+-- Yukarıdaki sorguyu çalıştırdıktan sonra,
+-- aşağıdaki sorguyu da çalıştırarak özet görebilirsiniz:
+
+/*
+SELECT 
+    COUNT(DISTINCT p.id) AS "Toplam Kullanıcı",
+    COUNT(DISTINCT CASE WHEN us.total_points > 0 THEN p.id END) AS "Oyun Oynayan",
+    SUM(COALESCE(us.total_points, 0)) AS "Toplam Hasene (Tüm Kullanıcılar)",
+    AVG(COALESCE(us.total_points, 0)) AS "Ortalama Hasene",
+    MAX(COALESCE(us.total_points, 0)) AS "En Yüksek Hasene",
+    SUM(COALESCE((us.game_stats->>'totalCorrect')::INTEGER, 0)) AS "Toplam Doğru Cevap",
+    SUM(COALESCE((us.game_stats->>'totalWrong')::INTEGER, 0)) AS "Toplam Yanlış Cevap",
+    AVG(COALESCE((us.streak_data->>'bestStreak')::INTEGER, 0)) AS "Ortalama En İyi Seri",
+    MAX(COALESCE((us.streak_data->>'bestStreak')::INTEGER, 0)) AS "En Yüksek Seri"
+FROM profiles p
+LEFT JOIN user_stats us ON p.id = us.user_id
+LEFT JOIN auth.users au ON p.id = au.id
+WHERE au.email IS NOT NULL;
+*/

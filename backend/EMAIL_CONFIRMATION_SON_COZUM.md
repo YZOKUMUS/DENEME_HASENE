@@ -32,3 +32,5 @@ Eğer ayar gerçekten kapalıysa, yeni kayıt olan kullanıcılar için çalış
 Hangi çözümü denerseniz deneyin, sonra tekrar giriş yapmayı deneyin.
 
 
+
+

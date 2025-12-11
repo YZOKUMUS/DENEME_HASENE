@@ -39,3 +39,5 @@ Eğer CORS ayarlarını bulamazsanız:
 4. CORS hatası yoksa → Her şey çalışıyor! ✅
 
 
+
+

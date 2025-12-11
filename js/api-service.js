@@ -330,24 +330,62 @@ async function getCurrentUser() {
  */
 async function loadUserStats() {
     const user = await getCurrentUser();
-    if (!user) return null;
+    if (!user) {
+        console.log('⚠️ loadUserStats: Kullanıcı yok, null döndürülüyor');
+        return null;
+    }
+    
+    console.log('📥 loadUserStats: Kullanıcı ID:', user.id);
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('user_stats')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-        
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
-        
-        return data || {
-            total_points: 0,
-            badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
-            streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
-            game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
-            perfect_lessons_count: 0
-        };
+        try {
+            console.log('📥 loadUserStats: Supabase\'den veri çekiliyor...');
+            const { data, error } = await supabaseClient
+                .from('user_stats')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // PGRST116 = not found - bu normal, kullanıcının henüz verisi yok
+                    console.log('⚠️ loadUserStats: Backend\'de veri bulunamadı (PGRST116) - Kullanıcının henüz verisi yok');
+                    console.log('💡 İpucu: Oyun oynadığınızda veriler otomatik olarak backend\'e kaydedilecek');
+                    return {
+                        total_points: 0,
+                        badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                        streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                        game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                        perfect_lessons_count: 0
+                    };
+                } else {
+                    console.error('❌ loadUserStats: Backend hatası:', error);
+                    throw error;
+                }
+            }
+            
+            if (data) {
+                console.log('✅ loadUserStats: Backend\'den veri yüklendi:', {
+                    total_points: data.total_points,
+                    badges: data.badges,
+                    currentStreak: data.streak_data?.currentStreak || 0,
+                    totalCorrect: data.game_stats?.totalCorrect || 0
+                });
+                return data;
+            } else {
+                console.log('⚠️ loadUserStats: Backend\'den data null döndü');
+                return {
+                    total_points: 0,
+                    badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                    streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                    game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                    perfect_lessons_count: 0
+                };
+            }
+        } catch (apiError) {
+            console.error('❌ loadUserStats: Beklenmeyen hata:', apiError);
+            throw apiError;
+        }
     }
     
     // Fallback: localStorage

@@ -163,3 +163,5 @@ service cloud.firestore {
 6. ✅ Real-time özellikler ekle (isteğe bağlı)
 
 
+
+

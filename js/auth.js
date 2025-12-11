@@ -560,6 +560,20 @@ async function syncUserData() {
         }
         
         console.log('✅ Kullanıcı verileri backend\'e senkronize edildi');
+        
+        // ÖNEMLİ: Backend'e gönderdikten sonra backend'den güncel verileri çek ve UI'ı güncelle
+        // Böylece backend'deki diğer cihazlardan gelen veriler de görünür
+        // NOT: Eğer çağıran kod zaten loadStats() çağıracaksa, burada tekrar çağırmaya gerek yok
+        // Ama güvenli olmak için her zaman çağırıyoruz (idempotent)
+        if (typeof window.loadStats === 'function') {
+            console.log('📥 Backend\'den güncel veriler yükleniyor (syncUserData sonrası)...');
+            try {
+                await window.loadStats();
+                console.log('✅ Backend\'den veriler yüklendi ve UI güncellendi');
+            } catch (loadError) {
+                console.warn('⚠️ Backend\'den veri yükleme hatası (normal olabilir):', loadError);
+            }
+        }
     } catch (error) {
         console.error('❌ Veri senkronizasyon hatası:', error);
     }

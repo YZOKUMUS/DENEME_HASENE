@@ -124,3 +124,5 @@ SQL dosyasında sorun varsa:
 - Supabase Dashboard'dan logları kontrol edin
 
 
+
+

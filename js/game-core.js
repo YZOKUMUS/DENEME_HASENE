@@ -145,19 +145,57 @@ const elements = {
 async function loadStats() {
     console.log('📥 loadStats() çağrıldı');
     try {
+        // ÖNEMLİ: Auth session'ın restore edilmesini bekle
+        // Supabase session restore için biraz daha bekle
+        if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
+            try {
+                // Session'ı kontrol et ve restore edilmesini bekle
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+                if (session) {
+                    console.log('✅ Auth session restore edildi:', session.user.email);
+                    // Session restore edildi, biraz daha bekle (güvenli olmak için)
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            } catch (sessionError) {
+                console.warn('⚠️ Session kontrolü hatası (normal olabilir):', sessionError);
+            }
+        }
+        
         // Önce kullanıcı kontrolü yap (session yüklenmesini bekle)
         let user = null;
+        console.log('🔍 Kullanıcı kontrolü başlatılıyor...');
+        console.log('🔍 window.getCurrentUser mevcut mu?', typeof window.getCurrentUser === 'function');
+        console.log('🔍 window.loadUserStats mevcut mu?', typeof window.loadUserStats === 'function');
+        
         if (typeof window.getCurrentUser === 'function') {
             try {
                 user = await window.getCurrentUser();
-                console.log('📥 getCurrentUser() sonucu:', user ? `Kullanıcı var (${user.id})` : 'Kullanıcı yok');
+                console.log('📥 getCurrentUser() sonucu:', user ? `✅ Kullanıcı var (${user.id}, ${user.email || 'email yok'})` : '❌ Kullanıcı yok');
+                
+                // Eğer kullanıcı yoksa ama session varsa, tekrar dene (session restore gecikmesi olabilir)
+                if (!user && typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
+                    try {
+                        const { data: { session } } = await window.supabaseClient.auth.getSession();
+                        console.log('🔍 Session kontrolü:', session ? `✅ Session var (${session.user.email})` : '❌ Session yok');
+                        if (session && session.user) {
+                            console.log('🔄 Session var ama getCurrentUser null döndü, tekrar deneniyor...');
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            user = await window.getCurrentUser();
+                            console.log('📥 getCurrentUser() tekrar deneme sonucu:', user ? `✅ Kullanıcı var (${user.id})` : '❌ Kullanıcı yok');
+                        }
+                    } catch (sessionError) {
+                        console.warn('⚠️ Session kontrolü hatası:', sessionError);
+                    }
+                }
             } catch (e) {
                 console.warn('📥 getCurrentUser() hatası:', e);
                 // Kullanıcı kontrolü başarısız, devam et
             }
         } else {
-            console.warn('📥 window.getCurrentUser fonksiyonu bulunamadı');
+            console.warn('⚠️ window.getCurrentUser fonksiyonu bulunamadı - Backend entegrasyonu eksik olabilir');
         }
+        
+        console.log('🔍 Kullanıcı kontrolü tamamlandı:', user ? `✅ Kullanıcı giriş yapmış (${user.id})` : '❌ Kullanıcı giriş yapmamış');
         
         // KULLANICI DEĞİŞİKLİĞİ KONTROLÜ
         // Eğer farklı bir kullanıcı giriş yaptıysa, localStorage'ı temizle
@@ -181,80 +219,140 @@ async function loadStats() {
         }
         
         // Backend API'den yükle (eğer mevcut ve kullanıcı giriş yapmışsa)
+        console.log('🔍 Backend yükleme kontrolü:', {
+            user: user ? `✅ Var (${user.id})` : '❌ Yok',
+            loadUserStats: typeof window.loadUserStats === 'function' ? '✅ Mevcut' : '❌ Yok'
+        });
+        
+        // Backend'den veri yüklendi mi? (0 değerleri de geçerli - kullanıcının henüz oyun oynamamış olması normal)
+        let backendDataLoaded = false;
+        
         if (user && typeof window.loadUserStats === 'function') {
-            try {
-                console.log('📥 Backend\'den user_stats yükleniyor...');
-                const userStats = await window.loadUserStats();
-                console.log('📥 Backend\'den user_stats yüklendi:', userStats ? 'Veri var' : 'Veri yok');
-                if (userStats) {
-                    totalPoints = parseInt(userStats.total_points) || 0;
-                    if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+            console.log('✅ Backend\'den veri yükleme başlatılıyor...');
+            let userStats = null;
+            let retryCount = 0;
+            const maxRetries = 2;
+            
+            // Backend'den veri yüklemeyi dene (retry mekanizması ile)
+            while (retryCount <= maxRetries && !userStats) {
+                try {
+                    console.log(`📥 Backend'den user_stats yükleniyor... (deneme ${retryCount + 1}/${maxRetries + 1})`);
+                    userStats = await window.loadUserStats();
+                    console.log('📥 Backend\'den user_stats yüklendi:', userStats ? 'Veri var' : 'Veri yok');
                     
-                    badges = userStats.badges || badges;
-                    streakData = userStats.streak_data || streakData;
-                    gameStats = userStats.game_stats || gameStats;
-                    perfectLessonsCount = userStats.perfect_lessons_count || 0;
-                    
-                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                    // Böylece her yerde aynı veriler görünür
-                    localStorage.setItem('hasene_totalPoints', totalPoints.toString());
-                    if (badges) {
-                        safeSetItem('hasene_badges', badges);
-                        if (db) {
-                            saveToIndexedDB('hasene_badges', badges).catch(() => {});
-                        }
+                    if (!userStats && retryCount < maxRetries) {
+                        // Veri yüklenemedi, tekrar dene
+                        console.log(`⚠️ Backend'den veri yüklenemedi, ${500 * (retryCount + 1)}ms sonra tekrar deneniyor...`);
+                        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+                        retryCount++;
+                    } else {
+                        break;
                     }
-                    if (streakData) {
-                        // playDates array'ini güncelle: daily_stats tablosundan oynanan günleri çek
-                        // Böylece takvim hem streakData.playDates hem de daily_stats'tan güncellenir
-                        try {
-                            if (typeof window.loadAllDailyStatsDates === 'function') {
-                                const allDates = await window.loadAllDailyStatsDates();
-                                if (allDates && allDates.length > 0) {
-                                    // daily_stats'tan gelen tarihleri playDates'e ekle (duplicate olmasın)
-                                    const existingDates = new Set(streakData.playDates || []);
-                                    allDates.forEach(date => {
-                                        if (!existingDates.has(date)) {
-                                            existingDates.add(date);
-                                        }
-                                    });
-                                    streakData.playDates = Array.from(existingDates).sort();
-                                    streakData.totalPlayDays = streakData.playDates.length;
-                                }
-                            }
-                        } catch (error) {
-                            // daily_stats'tan yükleme hatası, mevcut playDates'i kullan
-                            console.warn('daily_stats tarihlerini yükleme hatası (normal olabilir):', error);
-                        }
-                        
-                        safeSetItem('hasene_streakData', streakData);
-                        if (db) {
-                            saveToIndexedDB('hasene_streakData', streakData).catch(() => {});
-                        }
+                } catch (apiError) {
+                    console.warn(`⚠️ Backend yükleme hatası (deneme ${retryCount + 1}):`, apiError);
+                    if (retryCount < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+                        retryCount++;
+                    } else {
+                        // Son deneme de başarısız, localStorage'a düş
+                        console.warn('⚠️ Backend yükleme başarısız, localStorage kullanılacak');
+                        break;
                     }
-                    if (gameStats) {
-                        safeSetItem('gameStats', gameStats);
-                    }
-                    if (perfectLessonsCount !== undefined) {
-                        localStorage.setItem('perfectLessonsCount', perfectLessonsCount.toString());
-                    }
-                    
-                    // IndexedDB'ye de kaydet
-                    if (db) {
-                        saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(() => {});
-                    }
-                    
-                    // Backend'den başarıyla yüklendi
-                    infoLog('İstatistikler backend\'den yüklendi ve localStorage\'a senkronize edildi');
                 }
-            } catch (apiError) {
-                // Backend hatası, localStorage'a düş
-                console.warn('Backend yükleme hatası, localStorage kullanılıyor:', apiError);
+            }
+            
+            if (userStats) {
+                // Backend'den veri yüklendi (0 değerleri de geçerli!)
+                backendDataLoaded = true;
+                
+                totalPoints = parseInt(userStats.total_points) || 0;
+                if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+                
+                badges = userStats.badges || badges;
+                streakData = userStats.streak_data || streakData;
+                gameStats = userStats.game_stats || gameStats;
+                perfectLessonsCount = userStats.perfect_lessons_count || 0;
+                
+                // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
+                // Böylece her yerde aynı veriler görünür
+                localStorage.setItem('hasene_totalPoints', totalPoints.toString());
+                if (badges) {
+                    safeSetItem('hasene_badges', badges);
+                    if (db) {
+                        saveToIndexedDB('hasene_badges', badges).catch(() => {});
+                    }
+                }
+                if (streakData) {
+                    // playDates array'ini güncelle: daily_stats tablosundan oynanan günleri çek
+                    // Böylece takvim hem streakData.playDates hem de daily_stats'tan güncellenir
+                    try {
+                        if (typeof window.loadAllDailyStatsDates === 'function') {
+                            const allDates = await window.loadAllDailyStatsDates();
+                            if (allDates && allDates.length > 0) {
+                                // daily_stats'tan gelen tarihleri playDates'e ekle (duplicate olmasın)
+                                const existingDates = new Set(streakData.playDates || []);
+                                allDates.forEach(date => {
+                                    if (!existingDates.has(date)) {
+                                        existingDates.add(date);
+                                    }
+                                });
+                                streakData.playDates = Array.from(existingDates).sort();
+                                streakData.totalPlayDays = streakData.playDates.length;
+                            }
+                        }
+                    } catch (error) {
+                        // daily_stats'tan yükleme hatası, mevcut playDates'i kullan
+                        console.warn('daily_stats tarihlerini yükleme hatası (normal olabilir):', error);
+                    }
+                    
+                    safeSetItem('hasene_streakData', streakData);
+                    if (db) {
+                        saveToIndexedDB('hasene_streakData', streakData).catch(() => {});
+                    }
+                }
+                if (gameStats) {
+                    safeSetItem('gameStats', gameStats);
+                }
+                if (perfectLessonsCount !== undefined) {
+                    localStorage.setItem('perfectLessonsCount', perfectLessonsCount.toString());
+                }
+                
+                // IndexedDB'ye de kaydet
+                if (db) {
+                    saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(() => {});
+                }
+                
+                // Backend'den başarıyla yüklendi
+                infoLog('İstatistikler backend\'den yüklendi ve localStorage\'a senkronize edildi');
+                console.log('✅ Backend\'den veriler başarıyla yüklendi:', {
+                    totalPoints,
+                    badges: badges.stars,
+                    currentStreak: streakData.currentStreak
+                });
+            } else {
+                console.warn('⚠️ Backend\'den veri yüklenemedi (userStats null veya boş)');
+            }
+        } else {
+            if (!user) {
+                console.warn('⚠️ Kullanıcı giriş yapmamış, backend\'den veri yüklenemiyor');
+            }
+            if (typeof window.loadUserStats !== 'function') {
+                console.warn('⚠️ window.loadUserStats fonksiyonu bulunamadı, backend entegrasyonu eksik');
             }
         }
         
         // Eğer backend'den yüklenmediyse, localStorage/IndexedDB'den yükle
-        if (totalPoints === 0 && badges.stars === 0 && streakData.currentStreak === 0) {
+        console.log('🔍 Backend yükleme sonrası durum:', {
+            totalPoints,
+            badgesStars: badges.stars,
+            currentStreak: streakData.currentStreak,
+            backendDataLoaded: backendDataLoaded ? '✅ Backend\'den yüklendi (0 değerleri de geçerli)' : '❌ Backend\'den yüklenemedi'
+        });
+        
+        // ÖNEMLİ: Backend'den veri yüklendiyse (backendDataLoaded = true), localStorage'a düşme
+        // Backend'den 0 gelmesi ile veri yüklenememesi farklı şeyler!
+        if (!backendDataLoaded && totalPoints === 0 && badges.stars === 0 && streakData.currentStreak === 0) {
+            console.log('📥 Backend\'den yüklenemedi, localStorage/IndexedDB\'den yükleniyor...');
             // IndexedDB'den yükle (öncelikli)
             const savedPoints = await loadFromIndexedDB('hasene_totalPoints');
             if (savedPoints !== null) {
@@ -602,20 +700,45 @@ async function loadStats() {
 
         // UI'ı güncelle - ÖNEMLİ: Backend verileri yüklendikten SONRA güncelle
         // DOM hazır olana kadar bekle
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                updateUIAfterLoad();
-            });
-        } else {
-            // DOM zaten hazır, hemen güncelle
-            updateUIAfterLoad();
-        }
-        
         function updateUIAfterLoad() {
+            console.log('🔄 UI güncelleniyor...', {
+                totalPoints,
+                badges: badges.stars,
+                currentStreak: streakData.currentStreak,
+                dailyXP: localStorage.getItem('dailyXP')
+            });
+            
+            // Elementleri yeniden bul (DOM henüz hazır olmayabilir)
+            elements.totalPointsEl = document.getElementById('total-points');
+            elements.starPointsEl = document.getElementById('star-points');
+            elements.currentLevelEl = document.getElementById('current-level');
+            elements.dailyGoalProgress = document.getElementById('daily-goal-progress');
+            elements.dailyGoalCurrent = document.getElementById('daily-goal-current');
+            elements.dailyGoalTarget = document.getElementById('daily-goal-target');
+            elements.dailyGoalPercent = document.getElementById('daily-goal-percent');
+            elements.currentStreakEl = document.getElementById('current-streak');
+            
             updateStatsBar();
             updateDailyGoalDisplay();
             updateStreakDisplay(); // Streak'i de güncelle
             updateTasksDisplay(); // Görev sayacını güncelle
+            
+            console.log('✅ UI güncellendi');
+        }
+        
+        // DOM hazır olana kadar bekle, sonra UI'ı güncelle
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                // DOM hazır, biraz daha bekle (elementlerin render edilmesi için)
+                setTimeout(() => {
+                    updateUIAfterLoad();
+                }, 100);
+            });
+        } else {
+            // DOM zaten hazır, biraz bekle ve güncelle
+            setTimeout(() => {
+                updateUIAfterLoad();
+            }, 100);
         }
 
         infoLog('İstatistikler yüklendi');
@@ -5192,6 +5315,24 @@ window.addEventListener('load', async () => {
     
     // İstatistikleri yükle
     await loadStats();
+    
+    // UI'ın güncellendiğinden emin olmak için tekrar kontrol et
+    // (loadStats içinde güncellenmiş olabilir ama emin olmak için)
+    setTimeout(() => {
+        if (typeof updateStatsBar === 'function') {
+            updateStatsBar();
+        }
+        if (typeof updateDailyGoalDisplay === 'function') {
+            updateDailyGoalDisplay();
+        }
+        if (typeof updateStreakDisplay === 'function') {
+            updateStreakDisplay();
+        }
+        if (typeof updateTasksDisplay === 'function') {
+            updateTasksDisplay();
+        }
+        console.log('✅ Sayfa yüklendi, UI son kontrol ile güncellendi');
+    }, 500);
     
     // Gece yarısı otomatik sıfırlama zamanlayıcısını başlat
     setupMidnightReset();
