@@ -851,19 +851,52 @@ async function saveDailyStat(date, stats) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { error } = await supabaseClient
-            .from('daily_stats')
-            .upsert({
-                user_id: user.id,
-                date: date,
-                stats: stats,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
-            }, {
-                onConflict: 'user_id,date'
-            });
-        
-        if (error) throw error;
-        return;
+        try {
+            const { error } = await supabaseClient
+                .from('daily_stats')
+                .upsert({
+                    user_id: user.id,
+                    date: date,
+                    stats: stats,
+                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                }, {
+                    onConflict: 'user_id,date'
+                });
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(stats));
+                    return;
+                }
+                throw error;
+            }
+            return;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (is406Error) {
+                // 406 hatası için sessiz fallback
+                localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(stats));
+                return;
+            }
+            // Diğer hatalar için localStorage'a fallback ama hata fırlatma
+            console.warn('saveDailyStat hatası (localStorage\'a fallback):', err);
+            localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(stats));
+        }
     }
     
     // Fallback: localStorage
@@ -882,19 +915,52 @@ async function saveWeeklyStat(weekStart, stats) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { error } = await supabaseClient
-            .from('weekly_stats')
-            .upsert({
-                user_id: user.id,
-                week_start: weekStart,
-                stats: stats,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
-            }, {
-                onConflict: 'user_id,week_start'
-            });
-        
-        if (error) throw error;
-        return;
+        try {
+            const { error } = await supabaseClient
+                .from('weekly_stats')
+                .upsert({
+                    user_id: user.id,
+                    week_start: weekStart,
+                    stats: stats,
+                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                }, {
+                    onConflict: 'user_id,week_start'
+                });
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+                    return;
+                }
+                throw error;
+            }
+            return;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (is406Error) {
+                // 406 hatası için sessiz fallback
+                localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+                return;
+            }
+            // Diğer hatalar için localStorage'a fallback ama hata fırlatma
+            console.warn('saveWeeklyStat hatası (localStorage\'a fallback):', err);
+            localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+        }
     }
     
     // Fallback: localStorage
@@ -913,19 +979,52 @@ async function saveMonthlyStat(month, stats) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { error } = await supabaseClient
-            .from('monthly_stats')
-            .upsert({
-                user_id: user.id,
-                month: month,
-                stats: stats,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
-            }, {
-                onConflict: 'user_id,month'
-            });
-        
-        if (error) throw error;
-        return;
+        try {
+            const { error } = await supabaseClient
+                .from('monthly_stats')
+                .upsert({
+                    user_id: user.id,
+                    month: month,
+                    stats: stats,
+                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                }, {
+                    onConflict: 'user_id,month'
+                });
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+                    return;
+                }
+                throw error;
+            }
+            return;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (is406Error) {
+                // 406 hatası için sessiz fallback
+                localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+                return;
+            }
+            // Diğer hatalar için localStorage'a fallback ama hata fırlatma
+            console.warn('saveMonthlyStat hatası (localStorage\'a fallback):', err);
+            localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+        }
     }
     
     // Fallback: localStorage
@@ -944,15 +1043,54 @@ async function loadDailyStat(date) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('daily_stats')
-            .select('stats')
-            .eq('user_id', user.id)
-            .eq('date', date)
-            .single();
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        return data ? data.stats : null;
+        try {
+            const { data, error } = await supabaseClient
+                .from('daily_stats')
+                .select('stats')
+                .eq('user_id', user.id)
+                .eq('date', date)
+                .maybeSingle();
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // PGRST116 = kayıt bulunamadı (normal durum)
+                if (error.code === 'PGRST116') {
+                    return null;
+                }
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    const saved = localStorage.getItem(`hasene_daily_${date}`);
+                    return saved ? JSON.parse(saved) : null;
+                }
+                
+                // Diğer hatalar için localStorage'a fallback
+                console.warn('daily_stats yükleme hatası (localStorage\'a fallback):', error);
+                const saved = localStorage.getItem(`hasene_daily_${date}`);
+                return saved ? JSON.parse(saved) : null;
+            }
+            
+            return data ? data.stats : null;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                console.warn('daily_stats yükleme hatası (localStorage\'a fallback):', err);
+            }
+            const saved = localStorage.getItem(`hasene_daily_${date}`);
+            return saved ? JSON.parse(saved) : null;
+        }
     }
     
     // Fallback: localStorage
@@ -972,15 +1110,54 @@ async function loadWeeklyStat(weekStart) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('weekly_stats')
-            .select('stats')
-            .eq('user_id', user.id)
-            .eq('week_start', weekStart)
-            .single();
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        return data ? data.stats : null;
+        try {
+            const { data, error } = await supabaseClient
+                .from('weekly_stats')
+                .select('stats')
+                .eq('user_id', user.id)
+                .eq('week_start', weekStart)
+                .maybeSingle();
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // PGRST116 = kayıt bulunamadı (normal durum)
+                if (error.code === 'PGRST116') {
+                    return null;
+                }
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
+                    return saved ? JSON.parse(saved) : null;
+                }
+                
+                // Diğer hatalar için localStorage'a fallback
+                console.warn('weekly_stats yükleme hatası (localStorage\'a fallback):', error);
+                const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
+                return saved ? JSON.parse(saved) : null;
+            }
+            
+            return data ? data.stats : null;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                console.warn('weekly_stats yükleme hatası (localStorage\'a fallback):', err);
+            }
+            const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
+            return saved ? JSON.parse(saved) : null;
+        }
     }
     
     // Fallback: localStorage
@@ -1000,15 +1177,54 @@ async function loadMonthlyStat(month) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('monthly_stats')
-            .select('stats')
-            .eq('user_id', user.id)
-            .eq('month', month)
-            .single();
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        return data ? data.stats : null;
+        try {
+            const { data, error } = await supabaseClient
+                .from('monthly_stats')
+                .select('stats')
+                .eq('user_id', user.id)
+                .eq('month', month)
+                .maybeSingle();
+            
+            // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+            // Bu durumda localStorage'a fallback yap
+            if (error) {
+                // PGRST116 = kayıt bulunamadı (normal durum)
+                if (error.code === 'PGRST116') {
+                    return null;
+                }
+                // 406 hatası kontrolü (farklı formatlarda gelebilir)
+                const is406Error = error.status === 406 || 
+                                  error.code === '406' || 
+                                  error.message?.includes('406') ||
+                                  error.message?.includes('Not Acceptable');
+                
+                if (is406Error) {
+                    // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    const saved = localStorage.getItem(`hasene_monthly_${month}`);
+                    return saved ? JSON.parse(saved) : null;
+                }
+                
+                // Diğer hatalar için localStorage'a fallback
+                console.warn('monthly_stats yükleme hatası (localStorage\'a fallback):', error);
+                const saved = localStorage.getItem(`hasene_monthly_${month}`);
+                return saved ? JSON.parse(saved) : null;
+            }
+            
+            return data ? data.stats : null;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            // 406 hatası için sessiz fallback
+            const is406Error = err?.status === 406 || 
+                              err?.code === '406' || 
+                              err?.message?.includes('406') ||
+                              err?.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                console.warn('monthly_stats yükleme hatası (localStorage\'a fallback):', err);
+            }
+            const saved = localStorage.getItem(`hasene_monthly_${month}`);
+            return saved ? JSON.parse(saved) : null;
+        }
     }
     
     // Fallback: localStorage
@@ -1567,13 +1783,25 @@ if (typeof window !== 'undefined') {
                     .eq('user_id', user.id)
                     .order('date', { ascending: false });
                 
-                if (error) throw error;
+                // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
+                if (error) {
+                    // 406 hatası için özel mesaj
+                    if (error.status === 406 || error.code === '406') {
+                        console.warn('loadAllDailyStatsDates: 406 Not Acceptable - RLS politikası veya yapılandırma sorunu olabilir');
+                    }
+                    throw error;
+                }
                 
                 // Sadece oyun oynanmış günleri döndür (stats.correct > 0 veya stats.wrong > 0)
                 // Ama şimdilik tüm tarihleri döndürüyoruz (daily_stats varsa oyun oynanmış sayılır)
                 return (data || []).map(item => item.date).filter(Boolean);
             } catch (error) {
-                console.warn('loadAllDailyStatsDates error:', error);
+                // 406 hatası için daha açıklayıcı mesaj
+                if (error.status === 406 || error.code === '406') {
+                    console.warn('loadAllDailyStatsDates: 406 Not Acceptable hatası - Boş array döndürülüyor. RLS politikalarını kontrol edin.');
+                } else {
+                    console.warn('loadAllDailyStatsDates error:', error);
+                }
                 return [];
             }
         }
