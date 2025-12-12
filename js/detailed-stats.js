@@ -260,12 +260,17 @@ async function loadWeeklyStats() {
     
     // Son 4 hafta
     for (let i = 3; i >= 0; i--) {
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - (i * 7));
-        const weekStartStr = getWeekStartDateString(weekStart);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        const weekEndStr = getLocalDateString(weekEnd);
+        // Bugünden i hafta geriye git
+        const referenceDate = new Date();
+        referenceDate.setDate(referenceDate.getDate() - (i * 7));
+        
+        // Hafta başlangıcını hesapla (Pazartesi)
+        const weekStartDate = getWeekStartDate(referenceDate);
+        const weekStartStr = getLocalDateString(weekStartDate);
+        
+        // Hafta sonunu hesapla (Pazar = Pazartesi + 6 gün)
+        const weekEndDate = getWeekEndDate(referenceDate);
+        const weekEndStr = getLocalDateString(weekEndDate);
         
         // Önce Supabase'den yüklemeyi dene
         let weeklyData = null;
@@ -296,7 +301,7 @@ async function loadWeeklyStats() {
             localStorage.setItem(`hasene_weekly_${weekStartStr}`, JSON.stringify(weeklyData));
         }
         
-        const isCurrentWeek = weekStart <= today && weekEnd >= today;
+        const isCurrentWeek = weekStartDate <= today && weekEndDate >= today;
         const accuracy = (weeklyData.correct + weeklyData.wrong) > 0 
             ? Math.round((weeklyData.correct / (weeklyData.correct + weeklyData.wrong)) * 100) 
             : 0;
@@ -309,8 +314,8 @@ async function loadWeeklyStats() {
         weeklyStats.push({
             weekStart: weekStartStr,
             weekEnd: weekEndStr,
-            weekStartObj: weekStart,
-            weekEndObj: weekEnd,
+            weekStartObj: weekStartDate,
+            weekEndObj: weekEndDate,
             ...weeklyData,
             accuracy,
             isCurrentWeek
