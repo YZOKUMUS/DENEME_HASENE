@@ -52,3 +52,4 @@ Bu kayıtları görebiliyorsanız, SQL script başarıyla çalışmış demektir
 
 
 
+

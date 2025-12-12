@@ -42,3 +42,4 @@ Eğer CORS ayarlarını bulamazsanız:
 
 
 
+

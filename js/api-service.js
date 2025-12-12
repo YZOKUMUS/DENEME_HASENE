@@ -725,17 +725,17 @@ async function saveWordStat(wordId, stats) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { error } = await supabaseClient
-                .from('word_stats')
-                .upsert({
-                    user_id: user.id,
-                    word_id: wordId,
-                    stats: stats,
+        const { error } = await supabaseClient
+            .from('word_stats')
+            .upsert({
+                user_id: user.id,
+                word_id: wordId,
+                stats: stats,
                     updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'user_id,word_id'
-                });
-            
+            }, {
+                onConflict: 'user_id,word_id'
+            });
+        
             // RLS politikası hatası (42501) veya diğer hatalar için localStorage'a fallback
             if (error) {
                 // 42501 = RLS policy violation
@@ -749,7 +749,7 @@ async function saveWordStat(wordId, stats) {
                     const allStats = JSON.parse(localStorage.getItem('hasene_wordStats') || '{}');
                     allStats[wordId] = stats;
                     localStorage.setItem('hasene_wordStats', JSON.stringify(allStats));
-                    return;
+        return;
                 }
                 throw error;
             }
@@ -889,17 +889,17 @@ async function saveDailyStat(date, stats) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { error } = await supabaseClient
-                .from('daily_stats')
-                .upsert({
-                    user_id: user.id,
-                    date: date,
-                    stats: stats,
+        const { error } = await supabaseClient
+            .from('daily_stats')
+            .upsert({
+                user_id: user.id,
+                date: date,
+                stats: stats,
                     updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'user_id,date'
-                });
-            
+            }, {
+                onConflict: 'user_id,date'
+            });
+        
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
             // Bu durumda localStorage'a fallback yap
             if (error) {
@@ -912,7 +912,7 @@ async function saveDailyStat(date, stats) {
                 if (is406Error) {
                     // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
                     localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(stats));
-                    return;
+        return;
                 }
                 throw error;
             }
@@ -953,17 +953,17 @@ async function saveWeeklyStat(weekStart, stats) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { error } = await supabaseClient
-                .from('weekly_stats')
-                .upsert({
-                    user_id: user.id,
-                    week_start: weekStart,
-                    stats: stats,
+        const { error } = await supabaseClient
+            .from('weekly_stats')
+            .upsert({
+                user_id: user.id,
+                week_start: weekStart,
+                stats: stats,
                     updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'user_id,week_start'
-                });
-            
+            }, {
+                onConflict: 'user_id,week_start'
+            });
+        
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
             // Bu durumda localStorage'a fallback yap
             if (error) {
@@ -976,7 +976,7 @@ async function saveWeeklyStat(weekStart, stats) {
                 if (is406Error) {
                     // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
                     localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
-                    return;
+        return;
                 }
                 throw error;
             }
@@ -1017,17 +1017,17 @@ async function saveMonthlyStat(month, stats) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { error } = await supabaseClient
-                .from('monthly_stats')
-                .upsert({
-                    user_id: user.id,
-                    month: month,
-                    stats: stats,
+        const { error } = await supabaseClient
+            .from('monthly_stats')
+            .upsert({
+                user_id: user.id,
+                month: month,
+                stats: stats,
                     updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'user_id,month'
-                });
-            
+            }, {
+                onConflict: 'user_id,month'
+            });
+        
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
             // Bu durumda localStorage'a fallback yap
             if (error) {
@@ -1040,7 +1040,7 @@ async function saveMonthlyStat(month, stats) {
                 if (is406Error) {
                     // 406 hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
                     localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
-                    return;
+        return;
                 }
                 throw error;
             }
@@ -1081,11 +1081,11 @@ async function loadDailyStat(date) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { data, error } = await supabaseClient
-                .from('daily_stats')
-                .select('stats')
-                .eq('user_id', user.id)
-                .eq('date', date)
+        const { data, error } = await supabaseClient
+            .from('daily_stats')
+            .select('stats')
+            .eq('user_id', user.id)
+            .eq('date', date)
                 .maybeSingle();
             
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
@@ -1113,7 +1113,7 @@ async function loadDailyStat(date) {
                 return saved ? JSON.parse(saved) : null;
             }
             
-            return data ? data.stats : null;
+        return data ? data.stats : null;
         } catch (err) {
             // Beklenmeyen hatalar için de localStorage'a fallback
             // 406 hatası için sessiz fallback
@@ -1148,11 +1148,11 @@ async function loadWeeklyStat(weekStart) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { data, error } = await supabaseClient
-                .from('weekly_stats')
-                .select('stats')
-                .eq('user_id', user.id)
-                .eq('week_start', weekStart)
+        const { data, error } = await supabaseClient
+            .from('weekly_stats')
+            .select('stats')
+            .eq('user_id', user.id)
+            .eq('week_start', weekStart)
                 .maybeSingle();
             
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
@@ -1180,7 +1180,7 @@ async function loadWeeklyStat(weekStart) {
                 return saved ? JSON.parse(saved) : null;
             }
             
-            return data ? data.stats : null;
+        return data ? data.stats : null;
         } catch (err) {
             // Beklenmeyen hatalar için de localStorage'a fallback
             // 406 hatası için sessiz fallback
@@ -1215,11 +1215,11 @@ async function loadMonthlyStat(month) {
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
         try {
-            const { data, error } = await supabaseClient
-                .from('monthly_stats')
-                .select('stats')
-                .eq('user_id', user.id)
-                .eq('month', month)
+        const { data, error } = await supabaseClient
+            .from('monthly_stats')
+            .select('stats')
+            .eq('user_id', user.id)
+            .eq('month', month)
                 .maybeSingle();
             
             // 406 Not Acceptable hatası RLS politikaları veya başka bir sorun olabilir
@@ -1247,7 +1247,7 @@ async function loadMonthlyStat(month) {
                 return saved ? JSON.parse(saved) : null;
             }
             
-            return data ? data.stats : null;
+        return data ? data.stats : null;
         } catch (err) {
             // Beklenmeyen hatalar için de localStorage'a fallback
             // 406 hatası için sessiz fallback
@@ -1837,7 +1837,7 @@ if (typeof window !== 'undefined') {
                 if (error.status === 406 || error.code === '406') {
                     console.warn('loadAllDailyStatsDates: 406 Not Acceptable hatası - Boş array döndürülüyor. RLS politikalarını kontrol edin.');
                 } else {
-                    console.warn('loadAllDailyStatsDates error:', error);
+                console.warn('loadAllDailyStatsDates error:', error);
                 }
                 return [];
             }

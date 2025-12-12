@@ -865,7 +865,7 @@ async function saveStats() {
                     
                     if (!isRLSError) {
                         // RLS dışındaki hatalar için uyarı göster
-                        console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
+                    console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
                     }
                     // RLS hatası için sessiz fallback (saveWordStat içinde zaten localStorage'a kaydediliyor)
                 });
@@ -996,7 +996,7 @@ async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = fal
     // Bu parametre sadece endGame içinde kullanılır, bonus puanlar için false olmalı
     if (!skipDetailedStats) {
         // Bonus puanlar (günlük hedef, perfect lesson vb.) için detaylı istatistiklere ekle
-        saveDetailedStats(points, 0, 0, 0, 0, false);
+    saveDetailedStats(points, 0, 0, 0, 0, false);
     }
     
     // Kaydet
@@ -5168,7 +5168,8 @@ async function resetAllStats() {
             // dailyGoalHasene ve dailyGoalLevel kullanıcı tercihleri olduğu için korunmalı
             key === 'dailyGoalCompleted' ||
             key === 'hasene_statsJustReset' ||
-            key === 'hasene_onboarding_seen_v2') {
+            key === 'hasene_onboarding_seen_v2' ||
+            key === 'hasene_wordStats') { // Kelime istatistikleri
             keysToRemove.push(key);
         }
     });
@@ -5298,6 +5299,27 @@ async function resetAllStats() {
     unlockedBadges = [];
     perfectLessonsCount = 0;
     
+    // Backend'den kelime istatistiklerini sil
+    if (typeof window.getCurrentUser === 'function') {
+        try {
+            const user = await window.getCurrentUser();
+            if (user && window.supabaseClient && (window.BACKEND_TYPE === 'supabase' || !window.BACKEND_TYPE)) {
+                const { error } = await window.supabaseClient
+                    .from('word_stats')
+                    .delete()
+                    .eq('user_id', user.id);
+                
+                if (error && error.code !== '42501' && error.code !== 'PGRST301') {
+                    console.warn('Backend kelime istatistikleri silme hatası:', error);
+                } else if (!error) {
+                    console.log('✅ Backend kelime istatistikleri silindi');
+                }
+            }
+        } catch (e) {
+            console.warn('Backend kelime istatistikleri silme hatası (normal olabilir):', e);
+        }
+    }
+    
     // Favori kelimeleri de sıfırla (eğer favorites-manager.js yüklüyse)
     if (typeof window.loadFavorites === 'function' && typeof window.removeFromFavorites === 'function') {
         // Tüm favorileri temizlemek için loadFavorites çağır ve sonra temizle
@@ -5342,6 +5364,21 @@ async function resetAllStats() {
     // Rozet modalını yenile (eğer açıksa)
     if (document.getElementById('badges-modal') && document.getElementById('badges-modal').style.display !== 'none') {
         showBadgesModal();
+    }
+    
+    // Kelime istatistikleri panelini yenile (eğer açıksa)
+    if (typeof window.loadWordsStats === 'function') {
+        const wordsStatsContent = document.getElementById('words-stats-content');
+        const detailedStatsModal = document.getElementById('detailed-stats-modal');
+        if (wordsStatsContent && detailedStatsModal && 
+            detailedStatsModal.style.display !== 'none') {
+            // Panel açıksa yenile
+            try {
+                await window.loadWordsStats();
+            } catch (e) {
+                console.warn('Kelime istatistikleri paneli yenilenirken hata:', e);
+            }
+        }
     }
     
     // Flag set et

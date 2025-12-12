@@ -1043,6 +1043,7 @@ if (typeof window !== 'undefined') {
     // toggleFavorite artık favorites-manager.js'de tanımlı
     window.startFavoritesGame = startFavoritesGame;
     window.loadFavoritesStats = loadFavoritesStats;
+    window.loadWordsStats = loadWordsStats;
     window.refreshDetailedStatsIfOpen = refreshDetailedStatsIfOpen;
 }
 
