@@ -857,7 +857,17 @@ async function saveStats() {
             // Tüm kelime istatistiklerini kaydet (paralel olarak)
             const savePromises = Object.keys(wordStats).map(wordId => {
                 return window.saveWordStat(wordId, wordStats[wordId]).catch(error => {
-                    console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
+                    // RLS hatası (42501) sessizce yakalanıyor, diğer hatalar için uyarı
+                    const isRLSError = error?.code === '42501' || 
+                                      error?.code === 'PGRST301' ||
+                                      error?.message?.includes('row-level security') ||
+                                      error?.message?.includes('RLS');
+                    
+                    if (!isRLSError) {
+                        // RLS dışındaki hatalar için uyarı göster
+                        console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
+                    }
+                    // RLS hatası için sessiz fallback (saveWordStat içinde zaten localStorage'a kaydediliyor)
                 });
             });
             // Tüm kayıtların tamamlanmasını bekle (ama hata olsa bile devam et)

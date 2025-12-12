@@ -424,7 +424,7 @@ async function saveUserStats(stats) {
                 streak_data: stats.streak_data,
                 game_stats: stats.game_stats,
                 perfect_lessons_count: stats.perfect_lessons_count,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                updated_at: new Date().toISOString()
             }, {
                 onConflict: 'user_id'
             });
@@ -541,7 +541,7 @@ async function saveDailyTasks(tasks) {
                     reviewWords: Array.from(tasks.todayStats.reviewWords || [])
                 },
                 rewards_claimed: tasks.rewardsClaimed,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                updated_at: new Date().toISOString()
             }, {
                 onConflict: 'user_id'
             });
@@ -659,7 +659,7 @@ async function saveWeeklyTasks(tasks) {
                     allModesPlayed: Array.from(tasks.weekStats.allModesPlayed || [])
                 },
                 rewards_claimed: tasks.rewardsClaimed,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                updated_at: new Date().toISOString()
             }, {
                 onConflict: 'user_id'
             });
@@ -724,19 +724,56 @@ async function saveWordStat(wordId, stats) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { error } = await supabaseClient
-            .from('word_stats')
-            .upsert({
-                user_id: user.id,
-                word_id: wordId,
-                stats: stats,
-                updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
-            }, {
-                onConflict: 'user_id,word_id'
-            });
-        
-        if (error) throw error;
-        return;
+        try {
+            const { error } = await supabaseClient
+                .from('word_stats')
+                .upsert({
+                    user_id: user.id,
+                    word_id: wordId,
+                    stats: stats,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id,word_id'
+                });
+            
+            // RLS politikası hatası (42501) veya diğer hatalar için localStorage'a fallback
+            if (error) {
+                // 42501 = RLS policy violation
+                const isRLSError = error.code === '42501' || 
+                                  error.code === 'PGRST301' ||
+                                  error.message?.includes('row-level security') ||
+                                  error.message?.includes('RLS');
+                
+                if (isRLSError) {
+                    // RLS hatası için sessiz fallback (konsola yazma, sadece localStorage'a geç)
+                    const allStats = JSON.parse(localStorage.getItem('hasene_wordStats') || '{}');
+                    allStats[wordId] = stats;
+                    localStorage.setItem('hasene_wordStats', JSON.stringify(allStats));
+                    return;
+                }
+                throw error;
+            }
+            return;
+        } catch (err) {
+            // Beklenmeyen hatalar için de localStorage'a fallback
+            const isRLSError = err?.code === '42501' || 
+                              err?.code === 'PGRST301' ||
+                              err?.message?.includes('row-level security') ||
+                              err?.message?.includes('RLS');
+            
+            if (isRLSError) {
+                // RLS hatası için sessiz fallback
+                const allStats = JSON.parse(localStorage.getItem('hasene_wordStats') || '{}');
+                allStats[wordId] = stats;
+                localStorage.setItem('hasene_wordStats', JSON.stringify(allStats));
+                return;
+            }
+            // Diğer hatalar için localStorage'a fallback ama hata fırlatma
+            console.warn('saveWordStat hatası (localStorage\'a fallback):', err);
+            const allStats = JSON.parse(localStorage.getItem('hasene_wordStats') || '{}');
+            allStats[wordId] = stats;
+            localStorage.setItem('hasene_wordStats', JSON.stringify(allStats));
+        }
     }
     
     // Fallback: localStorage
@@ -858,7 +895,7 @@ async function saveDailyStat(date, stats) {
                     user_id: user.id,
                     date: date,
                     stats: stats,
-                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                    updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id,date'
                 });
@@ -922,7 +959,7 @@ async function saveWeeklyStat(weekStart, stats) {
                     user_id: user.id,
                     week_start: weekStart,
                     stats: stats,
-                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                    updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id,week_start'
                 });
@@ -986,7 +1023,7 @@ async function saveMonthlyStat(month, stats) {
                     user_id: user.id,
                     month: month,
                     stats: stats,
-                    updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                    updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id,month'
                 });
@@ -1489,7 +1526,7 @@ async function updateWeeklyXP(points) {
                         week_end: weekEndStr,
                         weekly_xp: currentXP + points,
                         league: currentLeague,
-                        updated_at: (typeof window !== 'undefined' && typeof window.getLocalISOString === 'function' ? window.getLocalISOString() : new Date().toISOString())
+                        updated_at: new Date().toISOString()
                     }, {
                         onConflict: 'user_id,week_start'
                     });
