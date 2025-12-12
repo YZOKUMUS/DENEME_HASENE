@@ -962,7 +962,7 @@ function addDailyXP(points) {
 /**
  * Global puanlara ekler
  */
-async function addToGlobalPoints(points, correctAnswers) {
+async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = false) {
     const oldLevel = calculateLevel(totalPoints);
     totalPoints += points;
     const newLevel = calculateLevel(totalPoints);
@@ -982,9 +982,12 @@ async function addToGlobalPoints(points, correctAnswers) {
     updateStatsBar();
     
     // Detaylı istatistiklere ekle (haftalık/aylık için)
-    // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor,
-    // ama burada bonus puanlar (günlük hedef, perfect lesson vb.) için de ekleniyor
-    saveDetailedStats(points, 0, 0, 0, 0, false);
+    // NOT: skipDetailedStats=true ise atla (çünkü her soru zaten saveDetailedStats ile kaydedildi)
+    // Bu parametre sadece endGame içinde kullanılır, bonus puanlar için false olmalı
+    if (!skipDetailedStats) {
+        // Bonus puanlar (günlük hedef, perfect lesson vb.) için detaylı istatistiklere ekle
+        saveDetailedStats(points, 0, 0, 0, 0, false);
+    }
     
     // Kaydet
     await saveStatsImmediate();
@@ -1077,7 +1080,8 @@ function updateDailyGoalDisplay() {
     if (dailyXP >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
         localStorage.setItem('dailyGoalCompleted', 'true');
         const dailyGoalBonus = 1000;
-        addToGlobalPoints(dailyGoalBonus, 0); // Bonus
+        // skipDetailedStats=true çünkü aşağıda manuel olarak saveDetailedStats çağrılıyor
+        addToGlobalPoints(dailyGoalBonus, 0, true); // Bonus
         // Günlük vird bonusunu detaylı istatistiklere ekle
         saveDetailedStats(dailyGoalBonus, 0, 0, 0, 0);
         showSuccessMessage('🎉 Günlük virdi tamamladınız! +1,000 Hasene');
@@ -2482,7 +2486,9 @@ async function saveCurrentGameProgress() {
     });
     
     // Global puanlara ekle
-    await addToGlobalPoints(sessionScore, sessionCorrect);
+    // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
+    // Bu şekilde çift sayma önlenir
+    await addToGlobalPoints(sessionScore, sessionCorrect, true);
     
     // NOT: saveDetailedStats() çağrılmıyor çünkü her soru cevaplandığında zaten çağrılıyor!
     // Burada duplicate kayıt yapmamak için sadece localStorage senkronizasyonu yapıyoruz.
@@ -2591,7 +2597,9 @@ async function endGame() {
     }
     
     // Global puanlara ekle
-    await addToGlobalPoints(sessionScore, sessionCorrect);
+    // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
+    // Bu şekilde çift sayma önlenir
+    await addToGlobalPoints(sessionScore, sessionCorrect, true);
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle
@@ -2618,15 +2626,12 @@ async function endGame() {
     dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
     
     // Perfect bonus'u detaylı istatistiklere ekle
+    // NOT: saveDetailedStats zaten perfect bonus'u ekleyecek, bu yüzden burada manuel ekleme yapmıyoruz
     if (perfectBonus > 0) {
-        dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
-        dailyData.points = (dailyData.points || 0) + perfectBonus;
-        console.log('🔴 endGame - perfect bonus eklendi:', {
-            perfectBonus,
-            yeniPoints: dailyData.points
-        });
         // Perfect bonus'u haftalık/aylık istatistiklere de ekle
+        // saveDetailedStats perfect bonus'u dailyData.points'e de ekleyecek
         saveDetailedStats(perfectBonus, 0, 0, 0, 1, false);
+        console.log('🔴 endGame - perfect bonus saveDetailedStats ile eklendi:', perfectBonus);
     }
     
     // localStorage'daki dailyCorrect ve dailyWrong'u hasene_daily_ verilerinden senkronize et
@@ -2647,11 +2652,8 @@ async function endGame() {
             wrong: localStorage.getItem('dailyWrong')
         }
     });
-    // Perfect bonus'u detaylı istatistiklere ekle
-    if (perfectBonus > 0) {
-        dailyData.perfectLessons = (dailyData.perfectLessons || 0) + 1;
-        dailyData.points = (dailyData.points || 0) + perfectBonus;
-    }
+    
+    // dailyData'yı güncelle (saveDetailedStats zaten perfect bonus'u ekledi, burada sadece gamesPlayed'i güncelle)
     safeSetItem(dailyKey, dailyData);
     
     // UI'ı hemen güncelle (rakamların görünmesi için)
@@ -2681,12 +2683,8 @@ async function endGame() {
         playedDates: []
     });
     // Oyun tamamlandığı için gamesPlayed artırılır
+    // NOT: Perfect bonus zaten saveDetailedStats ile eklendi, burada tekrar eklemiyoruz
     weeklyData.gamesPlayed = (weeklyData.gamesPlayed || 0) + 1;
-    // Perfect bonus'u detaylı istatistiklere ekle
-    if (perfectBonus > 0) {
-        weeklyData.perfectLessons = (weeklyData.perfectLessons || 0) + 1;
-        weeklyData.hasene = (weeklyData.hasene || 0) + perfectBonus;
-    }
     safeSetItem(weeklyKey, weeklyData);
     
     const monthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
@@ -2703,12 +2701,8 @@ async function endGame() {
         bestStreak: 0,
         playedDates: []
     });
+    // NOT: Perfect bonus zaten saveDetailedStats ile eklendi, burada tekrar eklemiyoruz
     monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
-    // Perfect bonus'u detaylı istatistiklere ekle
-    if (perfectBonus > 0) {
-        monthlyData.perfectLessons = (monthlyData.perfectLessons || 0) + 1;
-        monthlyData.hasene = (monthlyData.hasene || 0) + perfectBonus;
-    }
     safeSetItem(monthlyKey, monthlyData);
     
     // Modal açıksa yenile
@@ -3413,7 +3407,8 @@ async function claimDailyRewards() {
     
     dailyTasks.rewardsClaimed = true;
     const rewardPoints = 2500;
-    await addToGlobalPoints(rewardPoints, 0);
+    // skipDetailedStats=true çünkü aşağıda manuel olarak saveDetailedStats çağrılıyor
+    await addToGlobalPoints(rewardPoints, 0, true);
     // Görev ödülünü detaylı istatistiklere ekle
     saveDetailedStats(rewardPoints, 0, 0, 0, 0);
     showSuccessMessage('🎉 Günlük görevler tamamlandı! +2,500 Hasene');
@@ -3429,7 +3424,8 @@ async function claimWeeklyRewards() {
     
     weeklyTasks.rewardsClaimed = true;
     const rewardPoints = 5000;
-    await addToGlobalPoints(rewardPoints, 0);
+    // skipDetailedStats=true çünkü aşağıda manuel olarak saveDetailedStats çağrılıyor
+    await addToGlobalPoints(rewardPoints, 0, true);
     // Görev ödülünü detaylı istatistiklere ekle
     saveDetailedStats(rewardPoints, 0, 0, 0, 0);
     showSuccessMessage('🎉 Haftalık görevler tamamlandı! +5,000 Hasene');
