@@ -5321,13 +5321,43 @@ async function resetAllStats() {
     }
     
     // Favori kelimeleri de sıfırla (eğer favorites-manager.js yüklüyse)
-    if (typeof window.loadFavorites === 'function' && typeof window.removeFromFavorites === 'function') {
-        // Tüm favorileri temizlemek için loadFavorites çağır ve sonra temizle
-        window.loadFavorites();
-        const favoriteWords = window.getFavoriteWords ? window.getFavoriteWords() : [];
-        favoriteWords.forEach(wordId => {
-            window.removeFromFavorites(wordId);
-        });
+    if (typeof window.loadFavorites === 'function') {
+        try {
+            // Önce favorileri yükle (async)
+            await window.loadFavorites();
+            const favoriteWords = window.getFavoriteWords ? window.getFavoriteWords() : [];
+            
+            // Her bir favoriyi backend'den ve local'den sil
+            if (favoriteWords.length > 0) {
+                for (const wordId of favoriteWords) {
+                    // Backend'den sil (eğer removeFavorite fonksiyonu varsa)
+                    if (typeof window.removeFavorite === 'function') {
+                        try {
+                            await window.removeFavorite(wordId);
+                        } catch (e) {
+                            console.warn(`Backend'den favori ${wordId} silinirken hata:`, e);
+                        }
+                    }
+                    
+                    // Local'den sil
+                    if (typeof window.removeFromFavorites === 'function') {
+                        await window.removeFromFavorites(wordId);
+                    }
+                }
+            }
+            
+            // Ek olarak localStorage ve IndexedDB'den de temizle
+            localStorage.removeItem('hasene_favoriteWords');
+            if (typeof deleteFromIndexedDB === 'function') {
+                try {
+                    await deleteFromIndexedDB('hasene_favoriteWords');
+                } catch (e) {
+                    console.warn('IndexedDB\'den favoriler silinirken hata:', e);
+                }
+            }
+        } catch (e) {
+            console.warn('Favoriler sıfırlanırken hata:', e);
+        }
     }
     gameStats = {
         totalCorrect: 0,
