@@ -17,13 +17,15 @@
 -- 1. TEMİZLEME: MEVCUT YAPILARI SİL
 -- ============================================
 
--- View'ları sil
+-- View'ları sil (SECURITY DEFINER sorununu çözmek için)
 DROP VIEW IF EXISTS league_rankings CASCADE;
 DROP VIEW IF EXISTS leaderboard CASCADE;
 
 -- Fonksiyonları sil
 DROP FUNCTION IF EXISTS increment_weekly_xp(UUID, DATE, INTEGER) CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS get_achievement_name(TEXT) CASCADE;
+DROP FUNCTION IF EXISTS get_badge_name(TEXT) CASCADE;
 
 -- Trigger'ları sil
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
@@ -232,7 +234,11 @@ CREATE INDEX idx_word_stats_user_id ON word_stats(user_id);
 CREATE INDEX idx_word_stats_word_id ON word_stats(word_id);
 CREATE INDEX idx_favorite_words_user_id ON favorite_words(user_id);
 CREATE INDEX idx_achievements_user_id ON achievements(user_id);
+CREATE INDEX idx_achievements_achievement_id ON achievements(achievement_id);
+CREATE INDEX idx_achievements_unlocked_at ON achievements(unlocked_at);
 CREATE INDEX idx_badges_user_id ON badges(user_id);
+CREATE INDEX idx_badges_badge_id ON badges(badge_id);
+CREATE INDEX idx_badges_unlocked_at ON badges(unlocked_at);
 CREATE INDEX idx_daily_stats_user_id ON daily_stats(user_id);
 CREATE INDEX idx_daily_stats_date ON daily_stats(date);
 CREATE INDEX idx_weekly_stats_user_id ON weekly_stats(user_id);
@@ -246,23 +252,173 @@ CREATE INDEX idx_user_leagues_league ON user_leagues(current_league);
 -- 4. FONKSİYONLAR
 -- ============================================
 
+-- Achievement ID'yi İsme Çevir
+CREATE OR REPLACE FUNCTION get_achievement_name(achievement_id TEXT)
+RETURNS TEXT 
+LANGUAGE plpgsql
+IMMUTABLE
+SET search_path = ''
+AS $$
+BEGIN
+    RETURN CASE achievement_id
+        WHEN 'first_step' THEN '🌱 İlk Adım'
+        WHEN 'level_1' THEN '📖 Mübtedi'
+        WHEN 'perfect_lesson_1' THEN '✨ Mükemmel Ders'
+        WHEN 'alhamdulillah' THEN 'الْحَمْدُ لِلَّهِ'
+        WHEN 'combo_10' THEN '🕋 On Muvazebet'
+        WHEN 'bronze_traveler' THEN '📿 Mübtedi Talebe'
+        WHEN 'streak_3' THEN '📿 Üç Gün Vird'
+        WHEN 'daily_hero' THEN '📿 Günlük Vird'
+        WHEN 'mashallah' THEN 'مَا شَاءَ اللَّهُ'
+        WHEN 'fast_student' THEN '🕌 Hızlı Talebe'
+        WHEN 'perfect_lesson_5' THEN '🌟 Beş Mükemmel'
+        WHEN 'all_modes' THEN '📚 Tüm Modlar'
+        WHEN 'streak_7' THEN '🕌 Haftalık Vird'
+        WHEN 'level_5' THEN '🕌 Mütebahhir'
+        WHEN 'thousand_correct_250' THEN '🕌 İki Yüz Elli Doğru'
+        WHEN 'silver_master' THEN '🕋 Gümüş Mertebe'
+        WHEN 'combo_20' THEN '☪️ Yirmi Muvazebet'
+        WHEN 'perfect_lesson_10' THEN '💎 On Mükemmel'
+        WHEN 'streak_14' THEN '🌙 İki Hafta Vird'
+        WHEN 'thousand_correct_500' THEN '🕌 Beş Yüz Doğru'
+        WHEN 'level_10' THEN '🕋 Alim'
+        WHEN 'streak_21' THEN '☪️ Üç Hafta Vird'
+        WHEN 'streak_30' THEN '🕋 Ramazan Virdi'
+        WHEN 'second_silver' THEN '☪️ İkinci Gümüş'
+        WHEN 'thousand_correct' THEN '🕌 Bin Doğru'
+        WHEN 'gold_master' THEN '🌟 Altın Mertebe'
+        WHEN 'level_15' THEN '☪️ Fakih'
+        WHEN 'streak_40' THEN '🌟 Kırk Gün Vird'
+        WHEN 'level_20' THEN '🌟 Muhaddis'
+        WHEN 'second_gold' THEN '💎 İkinci Altın'
+        ELSE achievement_id
+    END;
+END;
+$$;
+
+-- Badge ID'yi İsme Çevir
+CREATE OR REPLACE FUNCTION get_badge_name(badge_id TEXT)
+RETURNS TEXT 
+LANGUAGE plpgsql
+IMMUTABLE
+SET search_path = ''
+AS $$
+BEGIN
+    RETURN CASE badge_id
+        -- Normal Rozetler
+        WHEN 'badge_1' THEN '🏅 İlk Adım'
+        WHEN 'badge_2' THEN '🏅 Başlangıç'
+        WHEN 'badge_3' THEN '🏅 İlk Seri'
+        WHEN 'badge_4' THEN '🏅 Hızlı Öğrenci'
+        WHEN 'badge_5' THEN '🏅 Combo Ustası'
+        WHEN 'badge_6' THEN '🏅 Mükemmel Ders'
+        WHEN 'badge_7' THEN '🏅 Haftalık Kahraman'
+        WHEN 'badge_8' THEN '🏅 Kelime Ustası'
+        WHEN 'badge_9' THEN '🏅 İlerleme'
+        WHEN 'badge_10' THEN '🏅 Çoklu Mod'
+        WHEN 'badge_11' THEN '🏅 2 Hafta Seri'
+        WHEN 'badge_12' THEN '🏅 Bronz Yolcu'
+        WHEN 'badge_14' THEN '🏅 10x Combo'
+        WHEN 'badge_15' THEN '🏅 100 Doğru'
+        WHEN 'badge_16' THEN '🏅 3 Hafta Seri'
+        WHEN 'badge_17' THEN '🏅 5 Mükemmel'
+        WHEN 'badge_18' THEN '🏅 Gümüş Yolcu'
+        WHEN 'badge_19' THEN '🏅 Ay Boyunca'
+        WHEN 'badge_20' THEN '🏅 250 Doğru'
+        WHEN 'badge_21' THEN '🏅 Mertebe 5'
+        WHEN 'badge_22' THEN '🏅 Altın Yolcu'
+        WHEN 'badge_23' THEN '🏅 20x Combo'
+        WHEN 'badge_24' THEN '🏅 500 Doğru'
+        WHEN 'badge_25' THEN '🏅 10 Mükemmel'
+        WHEN 'badge_26' THEN '🏅 Mertebe 10'
+        WHEN 'badge_27' THEN '🏅 Elmas Yolcu'
+        WHEN 'badge_28' THEN '🏅 1000 Doğru'
+        WHEN 'badge_29' THEN '🏅 50 Gün Seri'
+        WHEN 'badge_30' THEN '🏅 Ustalar Ustası'
+        WHEN 'badge_32' THEN '🏅 Mertebe 20'
+        WHEN 'badge_33' THEN '🏅 100 Mükemmel'
+        WHEN 'badge_34' THEN '🏅 100 Gün Seri'
+        WHEN 'badge_35' THEN '🏅 5000 Doğru'
+        WHEN 'badge_36' THEN '🏅 HAFIZ'
+        WHEN 'badge_42' THEN '🏅 Efsane'
+        -- Asr-ı Saadet Rozetleri
+        WHEN 'asr_1' THEN '🕌 Doğum'
+        WHEN 'asr_2' THEN '🕌 Sütannesi Halime'
+        WHEN 'asr_3' THEN '🕌 Dedesi Abdülmuttalib'
+        WHEN 'asr_4' THEN '🕌 Amcası Ebu Talib'
+        WHEN 'asr_5' THEN '🕌 Hz. Hatice ile Evlilik'
+        WHEN 'asr_6' THEN '🕌 İlk Vahiy'
+        WHEN 'asr_7' THEN '🕌 İlk Müslümanlar'
+        WHEN 'asr_8' THEN '🕌 Açık Davet'
+        WHEN 'asr_9' THEN '🕌 Habeşistan Hicreti'
+        WHEN 'asr_10' THEN '🕌 Hüzün Yılı'
+        WHEN 'asr_11' THEN '🕌 İsra ve Miraç'
+        WHEN 'asr_12' THEN '🕌 Birinci Akabe Biatı'
+        WHEN 'asr_13' THEN '🕌 İkinci Akabe Biatı'
+        WHEN 'asr_14' THEN '🕌 Hicret'
+        WHEN 'asr_15' THEN '🕌 Mescid-i Nebevi İnşası'
+        WHEN 'asr_16' THEN '🕌 Kardeşlik Antlaşması'
+        WHEN 'asr_17' THEN '🕌 Bedir Savaşı'
+        WHEN 'asr_18' THEN '🕌 Ramazan Orucu'
+        WHEN 'asr_19' THEN '🕌 Uhud Savaşı'
+        WHEN 'asr_20' THEN '🕌 Hendek Savaşı'
+        WHEN 'asr_21' THEN '🕌 Hudeybiye Antlaşması'
+        WHEN 'asr_22' THEN '🕌 Hayber' || chr(39) || 'in Fethi'
+        WHEN 'asr_23' THEN '🕌 Mekke' || chr(39) || 'nin Fethi'
+        WHEN 'asr_24' THEN '🕌 Veda Haccı'
+        WHEN 'asr_25' THEN '🕌 Veda Hutbesi'
+        WHEN 'asr_26' THEN '🕌 Son Ayetler'
+        WHEN 'asr_27' THEN '🕌 Vefat'
+        WHEN 'asr_28' THEN '🕌 Hz. Ebu Bekir Halife'
+        WHEN 'asr_29' THEN '🕌 Ridde Savaşları'
+        WHEN 'asr_30' THEN '🕌 Hz. Ömer Halife'
+        WHEN 'asr_31' THEN '🕌 Kadisiyye Savaşı'
+        WHEN 'asr_32' THEN '🕌 Kudüs' || chr(39) || 'ün Fethi'
+        WHEN 'asr_33' THEN '🕌 Hicri Takvim'
+        WHEN 'asr_34' THEN '🕌 Hz. Ömer Şehit'
+        WHEN 'asr_35' THEN '🕌 Hz. Osman Halife'
+        WHEN 'asr_36' THEN '🕌 Kuran Çoğaltılması'
+        WHEN 'asr_37' THEN '🕌 Hz. Osman Şehit'
+        WHEN 'asr_38' THEN '🕌 Hz. Ali Halife'
+        WHEN 'asr_39' THEN '🕌 Cemel Vakası'
+        WHEN 'asr_40' THEN '🕌 Sıffin Savaşı'
+        WHEN 'asr_41' THEN '🕌 Hz. Ali Şehit'
+        ELSE badge_id
+    END;
+END;
+$$;
+
 -- Updated_at Trigger Fonksiyonu
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$;
 
 -- Weekly XP Artırma Fonksiyonu
+-- SECURITY DEFINER kullanılıyor çünkü RLS politikalarını bypass etmek gerekiyor
+-- Ancak güvenlik için auth.uid() kontrolü eklendi
 CREATE OR REPLACE FUNCTION increment_weekly_xp(
     p_user_id UUID,
     p_week_start DATE,
     p_points INTEGER
 )
-RETURNS void AS $$
+RETURNS void 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
+    -- Güvenlik kontrolü: Kullanıcı sadece kendi verilerini güncelleyebilir
+    IF p_user_id != auth.uid() THEN
+        RAISE EXCEPTION 'Permission denied: You can only update your own data';
+    END IF;
+    
     INSERT INTO weekly_leaderboard (user_id, week_start, week_end, weekly_xp, league)
     VALUES (
         p_user_id,
@@ -284,7 +440,7 @@ BEGIN
     VALUES (p_user_id, 'mubtedi', p_week_start)
     ON CONFLICT (user_id) DO NOTHING;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- ============================================
 -- 5. TRİGGER'LAR
@@ -345,7 +501,11 @@ CREATE TRIGGER update_user_leagues_updated_at
 -- ============================================
 
 -- Leaderboard View (Genel)
-CREATE OR REPLACE VIEW leaderboard AS
+-- SECURITY INVOKER: View sorguyu çalıştıran kullanıcının yetkileriyle çalışır
+-- Bu sayede RLS politikaları düzgün şekilde uygulanır
+-- Not: PostgreSQL 15+ gerektirir. Eğer hata alırsanız, ALTER VIEW komutunu kullanın.
+CREATE OR REPLACE VIEW leaderboard
+WITH (security_invoker = true) AS
 SELECT 
     p.id,
     p.username,
@@ -358,8 +518,15 @@ JOIN user_stats us ON p.id = us.user_id
 ORDER BY us.total_points DESC, us.updated_at DESC
 LIMIT 100;
 
+-- Eğer CREATE VIEW WITH (security_invoker = true) çalışmazsa, bu komutu kullanın:
+-- ALTER VIEW leaderboard SET (security_invoker = true);
+
 -- League Rankings View
-CREATE OR REPLACE VIEW league_rankings AS
+-- SECURITY INVOKER: View sorguyu çalıştıran kullanıcının yetkileriyle çalışır
+-- Bu sayede RLS politikaları düzgün şekilde uygulanır
+-- Not: PostgreSQL 15+ gerektirir. Eğer hata alırsanız, ALTER VIEW komutunu kullanın.
+CREATE OR REPLACE VIEW league_rankings
+WITH (security_invoker = true) AS
 SELECT 
     wl.id,
     wl.user_id,
@@ -376,6 +543,9 @@ JOIN profiles p ON wl.user_id = p.id
 WHERE wl.week_start = (
     SELECT DATE_TRUNC('week', CURRENT_DATE)::DATE + 1
 );
+
+-- Eğer CREATE VIEW WITH (security_invoker = true) çalışmazsa, bu komutu kullanın:
+-- ALTER VIEW league_rankings SET (security_invoker = true);
 
 -- ============================================
 -- 7. RLS AKTİF ET
@@ -408,15 +578,15 @@ DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 
 CREATE POLICY "Users can view own profile" 
     ON profiles FOR SELECT 
-    USING (auth.uid() = id);
+    USING ((SELECT auth.uid()) = id);
 
 CREATE POLICY "Users can update own profile" 
     ON profiles FOR UPDATE 
-    USING (auth.uid() = id);
+    USING ((SELECT auth.uid()) = id);
 
 CREATE POLICY "Users can insert own profile" 
     ON profiles FOR INSERT 
-    WITH CHECK (auth.uid() = id);
+    WITH CHECK ((SELECT auth.uid()) = id);
 
 -- User Stats Policies
 DROP POLICY IF EXISTS "Users can view own stats" ON user_stats;
@@ -425,15 +595,15 @@ DROP POLICY IF EXISTS "Users can insert own stats" ON user_stats;
 
 CREATE POLICY "Users can view own stats" 
     ON user_stats FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own stats" 
     ON user_stats FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own stats" 
     ON user_stats FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Daily Tasks Policies
 DROP POLICY IF EXISTS "Users can view own daily tasks" ON daily_tasks;
@@ -442,15 +612,15 @@ DROP POLICY IF EXISTS "Users can insert own daily tasks" ON daily_tasks;
 
 CREATE POLICY "Users can view own daily tasks" 
     ON daily_tasks FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own daily tasks" 
     ON daily_tasks FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own daily tasks" 
     ON daily_tasks FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Weekly Tasks Policies
 DROP POLICY IF EXISTS "Users can view own weekly tasks" ON weekly_tasks;
@@ -459,15 +629,15 @@ DROP POLICY IF EXISTS "Users can insert own weekly tasks" ON weekly_tasks;
 
 CREATE POLICY "Users can view own weekly tasks" 
     ON weekly_tasks FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own weekly tasks" 
     ON weekly_tasks FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own weekly tasks" 
     ON weekly_tasks FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Word Stats Policies
 DROP POLICY IF EXISTS "Users can view own word stats" ON word_stats;
@@ -476,15 +646,15 @@ DROP POLICY IF EXISTS "Users can insert own word stats" ON word_stats;
 
 CREATE POLICY "Users can view own word stats" 
     ON word_stats FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own word stats" 
     ON word_stats FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own word stats" 
     ON word_stats FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Favorite Words Policies
 DROP POLICY IF EXISTS "Users can view own favorites" ON favorite_words;
@@ -493,15 +663,15 @@ DROP POLICY IF EXISTS "Users can delete own favorites" ON favorite_words;
 
 CREATE POLICY "Users can view own favorites" 
     ON favorite_words FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own favorites" 
     ON favorite_words FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete own favorites" 
     ON favorite_words FOR DELETE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 -- Achievements Policies
 DROP POLICY IF EXISTS "Users can view own achievements" ON achievements;
@@ -509,11 +679,15 @@ DROP POLICY IF EXISTS "Users can insert own achievements" ON achievements;
 
 CREATE POLICY "Users can view own achievements" 
     ON achievements FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own achievements" 
     ON achievements FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own achievements" 
+    ON achievements FOR DELETE 
+    USING ((SELECT auth.uid()) = user_id);
 
 -- Badges Policies
 DROP POLICY IF EXISTS "Users can view own badges" ON badges;
@@ -521,11 +695,15 @@ DROP POLICY IF EXISTS "Users can insert own badges" ON badges;
 
 CREATE POLICY "Users can view own badges" 
     ON badges FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own badges" 
     ON badges FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own badges" 
+    ON badges FOR DELETE 
+    USING ((SELECT auth.uid()) = user_id);
 
 -- Daily Stats Policies
 DROP POLICY IF EXISTS "Users can view own daily stats" ON daily_stats;
@@ -534,15 +712,15 @@ DROP POLICY IF EXISTS "Users can insert own daily stats" ON daily_stats;
 
 CREATE POLICY "Users can view own daily stats" 
     ON daily_stats FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own daily stats" 
     ON daily_stats FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own daily stats" 
     ON daily_stats FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Weekly Stats Policies
 DROP POLICY IF EXISTS "Users can view own weekly stats" ON weekly_stats;
@@ -551,15 +729,15 @@ DROP POLICY IF EXISTS "Users can insert own weekly stats" ON weekly_stats;
 
 CREATE POLICY "Users can view own weekly stats" 
     ON weekly_stats FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own weekly stats" 
     ON weekly_stats FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own weekly stats" 
     ON weekly_stats FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Monthly Stats Policies
 DROP POLICY IF EXISTS "Users can view own monthly stats" ON monthly_stats;
@@ -568,15 +746,15 @@ DROP POLICY IF EXISTS "Users can insert own monthly stats" ON monthly_stats;
 
 CREATE POLICY "Users can view own monthly stats" 
     ON monthly_stats FOR SELECT 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own monthly stats" 
     ON monthly_stats FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own monthly stats" 
     ON monthly_stats FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- Weekly Leaderboard Policies
 DROP POLICY IF EXISTS "Anyone can view weekly_leaderboard" ON weekly_leaderboard;
@@ -589,11 +767,11 @@ CREATE POLICY "Anyone can view weekly_leaderboard"
 
 CREATE POLICY "Users can update own weekly_leaderboard" 
     ON weekly_leaderboard FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own weekly_leaderboard" 
     ON weekly_leaderboard FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- User Leagues Policies
 DROP POLICY IF EXISTS "Anyone can view user_leagues" ON user_leagues;
@@ -606,11 +784,11 @@ CREATE POLICY "Anyone can view user_leagues"
 
 CREATE POLICY "Users can update own user_leagues" 
     ON user_leagues FOR UPDATE 
-    USING (auth.uid() = user_id);
+    USING ((SELECT auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert own user_leagues" 
     ON user_leagues FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK ((SELECT auth.uid()) = user_id);
 
 -- League Config Policies (Security Advisor Düzeltmeleri ile)
 DROP POLICY IF EXISTS "Anyone can view league_config" ON league_config;
