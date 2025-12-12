@@ -125,3 +125,4 @@ SELECT * FROM user_stats WHERE user_id = 'SİZİN-KULLANICI-ID-NİZ';
 4. **RLS politikaları**: Eğer veri kaydedilemiyorsa RLS politikalarını kontrol edin
 
 
+

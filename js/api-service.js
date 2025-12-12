@@ -521,11 +521,16 @@ async function saveDailyTasks(tasks) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // Empty string date fields should be null for PostgreSQL
+        const lastTaskDate = (tasks.lastTaskDate && typeof tasks.lastTaskDate === 'string' && tasks.lastTaskDate.trim() !== '') 
+            ? tasks.lastTaskDate 
+            : null;
+        
         const { error } = await supabaseClient
             .from('daily_tasks')
             .upsert({
                 user_id: user.id,
-                last_task_date: tasks.lastTaskDate,
+                last_task_date: lastTaskDate,
                 tasks: tasks.tasks,
                 bonus_tasks: tasks.bonusTasks,
                 completed_tasks: tasks.completedTasks,
@@ -629,13 +634,24 @@ async function saveWeeklyTasks(tasks) {
     }
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+        // Empty string date fields should be null for PostgreSQL
+        const lastWeekStart = (tasks.lastWeekStart && typeof tasks.lastWeekStart === 'string' && tasks.lastWeekStart.trim() !== '') 
+            ? tasks.lastWeekStart 
+            : null;
+        const weekStart = (tasks.weekStart && typeof tasks.weekStart === 'string' && tasks.weekStart.trim() !== '') 
+            ? tasks.weekStart 
+            : null;
+        const weekEnd = (tasks.weekEnd && typeof tasks.weekEnd === 'string' && tasks.weekEnd.trim() !== '') 
+            ? tasks.weekEnd 
+            : null;
+        
         const { error } = await supabaseClient
             .from('weekly_tasks')
             .upsert({
                 user_id: user.id,
-                last_week_start: tasks.lastWeekStart,
-                week_start: tasks.weekStart,
-                week_end: tasks.weekEnd,
+                last_week_start: lastWeekStart,
+                week_start: weekStart,
+                week_end: weekEnd,
                 tasks: tasks.tasks,
                 completed_tasks: tasks.completedTasks,
                 week_stats: {

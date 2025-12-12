@@ -103,3 +103,4 @@ Supabase Dashboard'da **Authentication** > **URL Configuration** sekmesinde:
 
 
 
+
