@@ -8,7 +8,7 @@
 | **Combo Bonusu** | Her doğru cevap için | 2 Hasene | **Doğru sayısına endeksli** - her doğru cevap combo bonusu verir |
 | **Mükemmel Ders Bonusu** | Hiç yanlış yapmadan ders tamamlama (min 3 soru) | 50 Hasene | **Ders sayısına endeksli** - her mükemmel ders için sabit bonus |
 | **Günlük Görev Ödülü** | Günlük görevleri tamamlama | 100/250/500 Hasene (rastgele) | Rastgele seçilir - İslami öğreti ile birlikte verilir |
-| **Günlük Vird Bonusu** | Günlük virdi tamamlama | 1,000 Hasene | Günlük hedefe ulaşınca otomatik verilir |
+| **Günlük Vird Bonusu** | Günlük virdi tamamlama | 100 Hasene | Günlük hedefe ulaşınca otomatik verilir |
 
 ---
 
