@@ -17,14 +17,16 @@ Kuran-ı Kerim kelimelerini eğlenceli bir şekilde öğrenerek hem bilginizi ar
 - 💰 Hasene Puan Sistemi (tüm bonuslar dahil)
 - 🏆 41 Kronolojik Rozet (Asr-ı Saadet)
 - 🎖️ 44 Başarım (mantıklı sıralama)
-- 📅 Günlük ve Haftalık Görevler
+- 📅 Günlük Görevler (sadeleştirilmiş ve İslami içerik odaklı)
 - 🔥 Seri (Streak) Takibi
-- 📊 Detaylı İstatistikler (günlük, haftalık, aylık)
+- 📊 Detaylı İstatistikler (Kelimeler ve Favoriler)
 - 🎯 Günlük Vird Sistemi
+- 🎁 Günlük Ödül Kutusu (İslami öğretiler ile sürpriz ödüller)
 - 📱 Tam Responsive Tasarım (mobil, tablet, desktop)
 - 💾 Offline Çalışma (PWA)
-- 🎨 Modern ve Kullanıcı Dostu Arayüz
+- 🎨 iOS 16 Liquid Glass Tasarımı (Glassmorphism)
 - 📖 Rozet Detay Modalı (tarihsel bilgiler, Arapça terimler)
+- 🎯 iPhone Tarzı Bottom Navigation
 
 ## 🚀 Kurulum
 
@@ -76,11 +78,11 @@ deneme_hasene/
 - **Mükemmel ders** (0 yanlış): %50 ekstra bonus
 
 ### Bonuslar
-- **Günlük Görev Ödülleri**: Her görev için bonus Hasene
-- **Haftalık Görev Ödülleri**: Haftalık görevler için bonus Hasene
+- **Günlük Görev Ödülleri**: Tüm görevler tamamlandığında sürpriz ödül (2,500 - 3,500 Hasene)
+- **Günlük Ödül Kutusu**: Her gün kurdelalı kutu ile İslami öğreti ve sürpriz Hasene ödülü
 - **Günlük Vird Bonusu**: Günlük hedefi tamamlayınca bonus Hasene
 
-Tüm bonuslar detaylı istatistiklere kaydedilir (günlük, haftalık, aylık).
+Tüm bonuslar detaylı istatistiklere kaydedilir.
 
 ## 🏆 Rozetler ve Başarımlar
 
@@ -104,6 +106,46 @@ Her rozet tıklanabilir ve detaylı tarihsel bilgi gösterir (Miladi/Hicri tarih
 - **Efsane**: En zor (Kurra Hafız: 1,000,000 Hasene)
 
 Sıralama: Kolaydan zora, hızlıdan yavaşa doğru mantıklı ilerleme.
+
+## 📅 Günlük Görevler
+
+Sadeleştirilmiş ve İslami içerik odaklı günlük görevler:
+
+### Temel Görevler (4 adet)
+1. **🎮 3 Oyun Modu** - 3 farklı oyun modu oyna
+2. **📖 Ayet Oku** - 5 ayet okuması yap
+3. **🤲 Dua Et** - 5 dua et
+4. **📚 Hadis Oku** - 5 hadis okuması yap
+
+### Fazilet Vazifeleri (Bonus - 2 adet)
+1. **✅ 30 Doğru Cevap** - 30 sahih cevap ver
+2. **⭐ 500 Hasene** - 500 Hasene kazan
+
+### Günlük Ödül Kutusu
+- Tüm görevler tamamlandığında kurdelalı kutu ile sürpriz ödül
+- Her gün farklı İslami öğreti (zikir, dua, hadis)
+- Rastgele ödül miktarı: 2,500 - 3,500 Hasene
+- Arapça metin, Türkçe çeviri ve eğitici açıklama
+
+## 🎨 UI/UX Tasarımı
+
+### iOS 16 Liquid Glass (Glassmorphism)
+- Modern cam efekti (backdrop-filter blur)
+- Yarı saydam arka planlar
+- Yumuşak gölgeler ve kenarlar
+- Apple SF Pro font ailesi
+
+### Responsive Tasarım
+- Mobil: 2 sütunlu oyun grid'i
+- Tablet: 3 sütunlu oyun grid'i
+- Desktop: 3 sütunlu oyun grid'i
+- iPhone tarzı bottom navigation (safe area desteği)
+- Optimize edilmiş compact daily goal section
+
+### İstatistikler Paneli
+- Sadeleştirilmiş görünüm: Sadece "Kelimeler" ve "Favoriler" bölümleri
+- Detaylı istatistikler modalı: Doğrudan erişim
+- Kullanıcı profil butonu: Combined stats card içinde konumlandırılmış
 
 ## 📅 Takvim Sistemi
 

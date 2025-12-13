@@ -6,58 +6,11 @@
  * Detaylı istatistikler modalını gösterir
  */
 function showDetailedStatsModal() {
-    // Tab'ları yönet
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.dataset.tab;
-            
-            // Tüm tab'ları gizle
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.style.display = 'none';
-            });
-            
-            // Tüm butonları pasif yap
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('active');
-            });
-            
-            // Seçili tab'ı göster
-            const selectedTab = document.getElementById(`${tab}-stats-tab`);
-            if (selectedTab) {
-                selectedTab.style.display = 'block';
-            }
-            
-            btn.classList.add('active');
-            
-            // İçeriği yükle
-            loadTabContent(tab);
-        });
-    });
-    
-    // İlk tab'ı göster
-    const firstTab = document.querySelector('.tab-btn.active');
-    if (firstTab) {
-        firstTab.click();
-    }
+    // Her iki bölümün içeriğini yükle
+    loadWordsStats();
+    loadFavoritesStats();
     
     openModal('detailed-stats-modal');
-}
-
-/**
- * Tab içeriğini yükler
- */
-async function loadTabContent(tab) {
-    if (tab === 'daily') {
-        await loadDailyStats();
-    } else if (tab === 'weekly') {
-        await loadWeeklyStats();
-    } else if (tab === 'monthly') {
-        await loadMonthlyStats();
-    } else if (tab === 'words') {
-        await loadWordsStats();
-    } else if (tab === 'favorites') {
-        await loadFavoritesStats();
-    }
 }
 
 /**
@@ -1026,11 +979,12 @@ function refreshDetailedStatsIfOpen() {
     // 300ms sonra yenile (çok sık yenilemeyi önlemek için)
     refreshStatsTimer = setTimeout(() => {
         // Aktif tab'ı bul
-        const activeTab = document.querySelector('.tab-btn.active');
-        if (activeTab && typeof loadTabContent === 'function') {
-            const tab = activeTab.dataset.tab;
-            // Tab içeriğini yenile
-            loadTabContent(tab);
+        // Her iki bölümü yenile
+        if (typeof loadWordsStats === 'function') {
+            loadWordsStats();
+        }
+        if (typeof loadFavoritesStats === 'function') {
+            loadFavoritesStats();
         }
         refreshStatsTimer = null;
     }, 300);
@@ -1039,7 +993,6 @@ function refreshDetailedStatsIfOpen() {
 // Export
 if (typeof window !== 'undefined') {
     window.showDetailedStatsModal = showDetailedStatsModal;
-    window.loadTabContent = loadTabContent;
     // toggleFavorite artık favorites-manager.js'de tanımlı
     window.startFavoritesGame = startFavoritesGame;
     window.loadFavoritesStats = loadFavoritesStats;

@@ -322,38 +322,6 @@ const ACHIEVEMENTS = [
 // Analiz: 15 dk/gün = ~2 oyun = ~15 doğru = ~300 puan
 const DAILY_TASKS_TEMPLATE = [
     {
-        id: 'daily_10_correct',
-        name: '10 Doğru Cevap',
-        description: '✅ 10 sahih cevap ver',
-        target: 10,
-        type: 'correct',
-        reward: 0
-    },
-    {
-        id: 'daily_20_correct',
-        name: '20 Doğru Cevap',
-        description: '✅ 20 sahih cevap ver',
-        target: 20,
-        type: 'correct',
-        reward: 0
-    },
-    {
-        id: 'daily_100_hasene',
-        name: '100 Hasene',
-        description: '⭐ 100 Hasene kazan',
-        target: 100,
-        type: 'hasene',
-        reward: 0
-    },
-    {
-        id: 'daily_300_hasene',
-        name: '300 Hasene',
-        description: '⭐ 300 Hasene kazan',
-        target: 300,
-        type: 'hasene',
-        reward: 0
-    },
-    {
         id: 'daily_3_modes',
         name: '3 Oyun Modu',
         description: '🎮 3 farklı oyun modu oyna',
@@ -362,26 +330,10 @@ const DAILY_TASKS_TEMPLATE = [
         reward: 0
     },
     {
-        id: 'daily_3_difficulties',
-        name: 'Tüm Zorluk Seviyeleri',
-        description: '📊 Kolay, Orta ve Zor seviyelerinde oyun oyna',
-        target: 3,
-        type: 'difficulties',
-        reward: 0
-    },
-    {
-        id: 'daily_streak',
-        name: 'Seri Koru',
-        description: '🔥 Günlük serini koru',
-        target: 1,
-        type: 'streak',
-        reward: 0
-    },
-    {
         id: 'daily_ayet_oku',
         name: 'Ayet Oku',
         description: '📖 Ayet okuması yap',
-        target: 1,
+        target: 5,
         type: 'ayet_oku',
         reward: 0
     },
@@ -389,7 +341,7 @@ const DAILY_TASKS_TEMPLATE = [
         id: 'daily_dua_et',
         name: 'Dua Et',
         description: '🤲 Bugünkü duanı et',
-        target: 1,
+        target: 5,
         type: 'dua_et',
         reward: 0
     },
@@ -397,7 +349,7 @@ const DAILY_TASKS_TEMPLATE = [
         id: 'daily_hadis_oku',
         name: 'Hadis Oku',
         description: '📚 Hadis okuması yap',
-        target: 1,
+        target: 5,
         type: 'hadis_oku',
         reward: 0
     }
@@ -420,14 +372,6 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
         description: '⭐ 500 Hasene kazan',
         target: 500,
         type: 'hasene',
-        reward: 0
-    },
-    {
-        id: 'daily_all_modes',
-        name: 'Tüm Oyun Modları',
-        description: '🎮 Tüm 6 oyun modunu oyna',
-        target: 6,
-        type: 'game_modes',
         reward: 0
     }
 ];

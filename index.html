@@ -318,40 +318,61 @@
 
     <!-- Main Container -->
     <div class="container" id="main-container">
-        <!-- User Profile Button (Top Right - Giriş yapmış kullanıcılar için) -->
-        <div id="user-profile-btn" class="user-profile-btn" style="display: none;">
-            <div class="user-avatar" id="user-avatar">
-                <span id="user-avatar-initial">U</span>
-            </div>
-            <span id="logout-span" onclick="handleLogout()" class="logout-btn">Çıkış</span>
-        </div>
-
-        <!-- Auth Nav Button (Top Right - Giriş yapmamış kullanıcılar için) -->
-        <button id="auth-nav-btn" class="auth-nav-btn" onclick="showAuthModal()" style="display: flex;">
-            <span>🔐</span>
-            <span>Giriş</span>
-        </button>
-
         <!-- Ana Menü -->
         <div id="main-menu" class="main-menu">
             <!-- Hero Section -->
             <div class="hero-section">
-                <div class="stats-bar">
-                    <div class="stat-item">
-                        <span class="stat-label">Hasene</span>
-                        <span class="stat-value" id="total-points">0</span>
+                <!-- Birleşik Stats ve Günlük Vird Kartı -->
+                <div class="combined-stats-card">
+                    <!-- Giriş/Profil Butonu (Kart içinde sağ üst köşe) -->
+                    <button id="auth-nav-btn" class="auth-nav-btn-inline" onclick="showAuthModal()" style="display: none;">
+                        <span>🔐</span>
+                        <span>Giriş</span>
+                    </button>
+                    <div id="user-profile-btn" class="user-profile-btn-inline" style="display: none;">
+                        <div class="user-avatar-inline" id="user-avatar">
+                            <span id="user-avatar-initial">U</span>
+                        </div>
+                        <span id="logout-span" onclick="handleLogout()" class="logout-btn-inline">Çıkış</span>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">⭐ Yıldız</span>
-                        <span class="stat-value" id="star-points">0</span>
+                    <!-- Üst kısım: İstatistikler -->
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-label">Hasene</span>
+                            <span class="stat-value" id="total-points">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⭐ Yıldız</span>
+                            <span class="stat-value" id="star-points">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Mertebe</span>
+                            <span class="stat-value" id="current-level">1</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🔥 Seri</span>
+                            <span class="stat-value" id="current-streak">0</span>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Mertebe</span>
-                        <span class="stat-value" id="current-level">1</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">🔥 Seri</span>
-                        <span class="stat-value" id="current-streak">0</span>
+                    
+                    <!-- Alt kısım: Günlük Vird -->
+                    <div class="daily-goal-inline">
+                        <div class="daily-goal-left">
+                            <span class="daily-goal-icon">🎯</span>
+                            <span class="daily-goal-label">Günlük Vird</span>
+                        </div>
+                        <div class="daily-goal-right">
+                            <div class="daily-goal-progress-inline">
+                                <div class="progress-bar-inline">
+                                    <div class="progress-fill" id="daily-goal-progress"></div>
+                                </div>
+                                <div class="progress-text-inline">
+                                    <span id="daily-goal-current">0</span> / <span id="daily-goal-target">2700</span>
+                                    <span id="daily-goal-percent">(0%)</span>
+                                </div>
+                            </div>
+                            <button class="settings-btn-inline" id="daily-goal-settings-btn" aria-label="Günlük vird ayarları">⚙️</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -365,25 +386,6 @@
                         </div>
                         <button id="pwa-install-btn" class="pwa-install-btn">Yükle</button>
                         <button id="pwa-install-close" class="pwa-install-close">×</button>
-                    </div>
-                </div>
-                
-                <!-- Günlük Vird -->
-                <div class="daily-goal-section">
-                    <div class="daily-goal-header">
-                        <div class="daily-goal-title-section">
-                            <h3>🎯 Günlük Vird</h3>
-                            <div class="progress-text">
-                                <span id="daily-goal-current">0</span> / <span id="daily-goal-target">2700</span> Hasene
-                                <span id="daily-goal-percent">(0%)</span>
-                            </div>
-                        </div>
-                        <button class="settings-btn" id="daily-goal-settings-btn" aria-label="Günlük vird ayarları">⚙️</button>
-                    </div>
-                    <div class="daily-goal-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="daily-goal-progress"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -766,7 +768,7 @@
                     <div class="feature-item">📚 6 Farklı Oyun Modu</div>
                     <div class="feature-item">💰 Hasene Puan Sistemi</div>
                     <div class="feature-item">🏆 Rozet ve Başarım Sistemi</div>
-                    <div class="feature-item">📅 Günlük ve Haftalık Görevler</div>
+                    <div class="feature-item">📅 Günlük Görevler</div>
                 </div>
             </div>
             
@@ -838,6 +840,12 @@
                             <strong>Mükemmel Ders:</strong> Tüm sorular doğru → %50 bonus Hasene
                         </div>
                     </div>
+                    <div class="reward-item">
+                        <span class="reward-icon">🎁</span>
+                        <div>
+                            <strong>Günlük Ödül:</strong> Kurdelalı kutu ile sürpriz (2,500-3,500 Hasene + İslami öğreti)
+                        </div>
+                    </div>
                 </div>
                 <p style="margin-top: 1rem;"><strong>Yıldız ve Mertebe:</strong></p>
                 <p>Hasene kazandıkça yıldız toplayın ve mertebe atlayın. Her mertebe yeni başarımların kapısını açar!</p>
@@ -845,16 +853,16 @@
             
             <div class="onboarding-slide" data-slide="4" style="display:none;">
                 <div class="onboarding-icon">📅</div>
-                <h2>Görevler ve Seri</h2>
-                <p><strong>Günlük Görevler:</strong></p>
+                <h2>Günlük Görevler</h2>
+                <p><strong>İslami İçerik Odaklı Görevler:</strong></p>
                 <div class="onboarding-feature-list">
-                    <div class="feature-item">✅ Belirli sayıda doğru cevap ver</div>
-                    <div class="feature-item">✅ Farklı oyun modlarını dene</div>
-                    <div class="feature-item">✅ Combo yap ve bonus kazan</div>
-                    <div class="feature-item">✅ Günlük ödül: +2,500 Hasene</div>
+                    <div class="feature-item">📖 5 Ayet okuması yap</div>
+                    <div class="feature-item">🤲 5 Dua et</div>
+                    <div class="feature-item">📚 5 Hadis okuması yap</div>
+                    <div class="feature-item">🎮 3 farklı oyun modu oyna</div>
                 </div>
-                <p style="margin-top: 1rem;"><strong>Haftalık Görevler:</strong></p>
-                <p>Haftalık hedefleri tamamlayarak <strong>+5,000 Hasene</strong> bonus kazanın!</p>
+                <p style="margin-top: 1rem;"><strong>🎁 Günlük Ödül Kutusu:</strong></p>
+                <p>Tüm görevler tamamlandığında kurdelalı kutu ile sürpriz ödül al! Her gün farklı İslami öğreti ve rastgele Hasene miktarı (2,500-3,500) kazan.</p>
                 <p style="margin-top: 1rem;"><strong>🔥 Seri (Streak):</strong></p>
                 <p>Her gün oynayarak serinizi koruyun. Uzun seriler özel başarımların anahtarı!</p>
             </div>
@@ -897,81 +905,6 @@
         </div>
     </div>
 
-    <!-- İstatistikler Modal -->
-    <div id="stats-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>📊 İstatistikler</h2>
-                <button class="modal-close" onclick="closeModal('stats-modal')">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="stats-section">
-                    <h3>Bugünkü Amel</h3>
-                    <div class="stat-row">
-                        <span>Toplam Sahih:</span>
-                        <span id="stats-daily-correct">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Hatalı:</span>
-                        <span id="stats-daily-wrong">0</span>
-                    </div>
-                </div>
-
-                <div class="stats-section">
-                    <h3>Toplam İstatistikler</h3>
-                    <div class="stat-row">
-                        <span>Toplam Hasene:</span>
-                        <span id="stats-total-points">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Toplam Sahih:</span>
-                        <span id="stats-total-correct">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Toplam Hatalı:</span>
-                        <span id="stats-total-wrong">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Başarı Oranı:</span>
-                        <span id="stats-accuracy">0%</span>
-                    </div>
-                </div>
-
-                <div class="stats-section">
-                    <h3>Oyun Türü İstatistikleri</h3>
-                    <div class="stat-row">
-                        <span>Kelime Çevir:</span>
-                        <span id="stats-kelime-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Dinle Bul:</span>
-                        <span id="stats-dinle-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Boşluk Doldur:</span>
-                        <span id="stats-bosluk-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Ayet Oku:</span>
-                        <span id="stats-ayet-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Dua Et:</span>
-                        <span id="stats-dua-count">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Hadis Oku:</span>
-                        <span id="stats-hadis-count">0</span>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn-primary" onclick="showDetailedStats()">Detaylı İstatistikler</button>
-                    <button class="btn-secondary" onclick="showDataStatus()">Veri Durumu</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Rozet Detay Modal -->
     <div id="badge-detail-modal" class="modal" style="display:none;">
@@ -1102,16 +1035,15 @@
                     <div class="tasks-list" id="daily-tasks-list">
                         <!-- Günlük görevler buraya dinamik olarak eklenecek -->
                     </div>
-                    <button class="btn-primary" id="claim-daily-reward" onclick="claimDailyRewards()" disabled>Günlük Ödülü Al (+2,500 Hasene)</button>
+                    <div class="daily-reward-box-container">
+                        <button class="daily-reward-box" id="claim-daily-reward" onclick="claimDailyRewards()" disabled>
+                            <div class="reward-box-shimmer"></div>
+                            <span class="reward-box-icon">🎁</span>
+                            <span class="reward-box-mystery">???</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="tasks-section">
-                    <h3>Haftalık Görevler</h3>
-                    <div class="tasks-list" id="weekly-tasks-list">
-                        <!-- Haftalık görevler buraya dinamik olarak eklenecek -->
-                    </div>
-                    <button class="btn-primary" id="claim-weekly-reward" onclick="claimWeeklyRewards()" disabled>Haftalık Ödülü Al (+5,000 Hasene)</button>
-                </div>
             </div>
         </div>
     </div>
@@ -1242,6 +1174,38 @@
         </div>
     </div>
 
+    <!-- Günlük Ödül Açılış Modal -->
+    <div id="daily-reward-modal" class="modal" style="display:none;">
+        <div class="modal-content daily-reward-modal-content">
+            <div class="reward-box-animation">
+                <div class="reward-box-large">🎁</div>
+                <div class="reward-sparkles">
+                    <span class="sparkle">✨</span>
+                    <span class="sparkle">✨</span>
+                    <span class="sparkle">✨</span>
+                    <span class="sparkle">✨</span>
+                </div>
+            </div>
+            <h2 class="reward-title">🎉 Günlük Ödülünüz!</h2>
+            <div class="reward-amount">
+                <span id="reward-points" class="reward-points-text">+2,500</span>
+                <span class="reward-label">Hasene</span>
+            </div>
+            <div class="reward-teaching">
+                <div class="teaching-arabic" id="reward-arabic-text">
+                    لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللهِ
+                </div>
+                <div class="teaching-turkish" id="reward-turkish-text">
+                    Güç ve kuvvet ancak Allah iledir
+                </div>
+                <div class="teaching-explanation" id="reward-explanation">
+                    Bu zikir, zorluklar karşısında Allah'a sığınmayı ve O'ndan yardım istemeyi hatırlatır.
+                </div>
+            </div>
+            <button class="btn-primary reward-claim-btn" onclick="closeDailyRewardModal()">Teşekkürler! 🤲</button>
+        </div>
+    </div>
+
     <!-- Detaylı İstatistikler Modal -->
     <div id="detailed-stats-modal" class="modal" style="display:none;">
         <div class="modal-content">
@@ -1250,36 +1214,13 @@
                 <button class="modal-close" onclick="closeModal('detailed-stats-modal')">×</button>
             </div>
             <div class="modal-body">
-                <div class="stats-tabs">
-                    <button class="tab-btn active" data-tab="daily">Günlük</button>
-                    <button class="tab-btn" data-tab="weekly">Haftalık</button>
-                    <button class="tab-btn" data-tab="monthly">Aylık</button>
-                    <button class="tab-btn" data-tab="words">Kelimeler</button>
-                    <button class="tab-btn" data-tab="favorites">⭐ Favoriler</button>
-                </div>
-
-                <div class="tab-content active" id="daily-stats-tab">
-                    <h3>Son 7 Gün</h3>
-                    <div id="daily-stats-content"></div>
-                </div>
-
-                <div class="tab-content" id="weekly-stats-tab" style="display:none;">
-                    <h3>Son 4 Hafta</h3>
-                    <div id="weekly-stats-content"></div>
-                </div>
-
-                <div class="tab-content" id="monthly-stats-tab" style="display:none;">
-                    <h3>Son 3 Ay</h3>
-                    <div id="monthly-stats-content"></div>
-                </div>
-
-                <div class="tab-content" id="words-stats-tab" style="display:none;">
-                    <h3>Kelime İstatistikleri</h3>
+                <div class="stats-section">
+                    <h3>Kelimeler</h3>
                     <div id="words-stats-content"></div>
                 </div>
 
-                <div class="tab-content" id="favorites-stats-tab" style="display:none;">
-                    <h3>⭐ Favori Kelimeler</h3>
+                <div class="stats-section" style="margin-top: var(--spacing-xl);">
+                    <h3>⭐ Favoriler</h3>
                     <div id="favorites-stats-content"></div>
                 </div>
             </div>
@@ -1322,7 +1263,7 @@
                             </ul>
                             <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
                                 💡 <strong>Ekstra Kazançlar:</strong> Günlük virdinizi tamamlayarak +1,000 Hasene, 
-                                günlük görevleri tamamlayarak +2,500 Hasene, haftalık görevleri tamamlayarak +5,000 Hasene kazanabilirsiniz!
+                                günlük görevleri tamamlayarak +2,500 Hasene kazanabilirsiniz!
                             </p>
                             <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
                                 💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
@@ -1366,9 +1307,6 @@
                         <div class="info-item">
                             <strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda +2,500 Hasene
                         </div>
-                        <div class="info-item">
-                            <strong>📋 Haftalık Görev Ödülü:</strong> Tüm haftalık görevleri tamamladığınızda +5,000 Hasene
-                        </div>
                     </div>
                     
                     <!-- Combo -->
@@ -1398,7 +1336,6 @@
                         <ul>
                             <li><strong>🎯 Günlük Vird Bonusu:</strong> Günlük virdinizi tamamladığınızda otomatik olarak +1,000 Hasene kazanırsınız</li>
                             <li><strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda "Günlük Ödülü Al" butonuna tıklayarak +2,500 Hasene kazanabilirsiniz</li>
-                            <li><strong>📋 Haftalık Görev Ödülü:</strong> Tüm haftalık görevleri tamamladığınızda "Haftalık Ödülü Al" butonuna tıklayarak +5,000 Hasene kazanabilirsiniz</li>
                         </ul>
                     </div>
                     
@@ -1413,7 +1350,7 @@
                                 <li><strong>✅ İstatistikler güncellenir:</strong> Doğru ve yanlış cevap sayıları kaydedilir</li>
                                 <li><strong>✅ Oyun sayısı artırılır:</strong> Oynadığınız oyun modunun sayacı 1 artar</li>
                                 <li><strong>✅ Perfect bonus verilir:</strong> Tüm soruları doğru cevapladıysanız %50 ekstra puan kazanırsınız</li>
-                                <li><strong>✅ Görevler güncellenir:</strong> Günlük ve haftalık görevlerde ilerleme kaydedilir</li>
+                                <li><strong>✅ Görevler güncellenir:</strong> Günlük görevlerde ilerleme kaydedilir</li>
                                 <li><strong>✅ Rozetler kontrol edilir:</strong> Yeni rozetler kazanabilirsiniz</li>
                             </ul>
                         </div>
@@ -1463,9 +1400,6 @@
                 </div>
 
                 <div class="data-status-section">
-                    <h3>Haftalık Görevler</h3>
-                    <div id="weekly-tasks-status"></div>
-                </div>
 
                 <div class="data-status-section">
                     <h3>Streak Durumu</h3>

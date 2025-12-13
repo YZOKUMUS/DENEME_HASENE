@@ -16,6 +16,15 @@
     --accent-error: #ef4444;
     --accent-gold: #fbbf24;
 
+    /* iOS 16 Liquid Glass (Glassmorphism) */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg-dark: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-border-strong: rgba(255, 255, 255, 0.3);
+    --glass-blur: blur(20px);
+    --glass-blur-strong: blur(40px);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
     /* Spacing */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
@@ -24,23 +33,23 @@
     --spacing-xl: 2rem;
     --spacing-2xl: 3rem;
 
-    /* Border Radius */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
+    /* Border Radius - iOS 16 style */
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
     --radius-xl: 30px;
 
-    /* Transitions */
-    --transition-fast: 0.15s ease;
+    /* Transitions - iOS style smooth */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
-    --shadow-lg: 0 10px 35px rgba(0, 0, 0, 0.08);
-    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12);
+    /* Shadows - iOS style soft shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.2);
 }
 
 /* ============================================
@@ -71,7 +80,7 @@ html {
 }
 
 body {
-    font-family: 'Nunito', 'Segoe UI', 'Roboto', -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -81,6 +90,8 @@ body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Arapça Font - KFGQPC Uthmanic Script HAFS */
@@ -154,11 +165,14 @@ body {
    ============================================ */
 .container {
     max-width: 600px;
-    margin: 10px auto 90px auto;
-    padding: var(--spacing-lg);
-    background: var(--bg-secondary);
+    margin: 0 auto 90px auto;
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--glass-shadow);
     min-height: calc(100vh - 165px);
     width: 100%;
     box-sizing: border-box;
@@ -188,16 +202,188 @@ body {
     margin-bottom: var(--spacing-sm);
 }
 
+/* Birleşik Stats ve Günlük Vird Kartı */
+.combined-stats-card {
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    position: relative;
+    z-index: 1;
+}
+
+/* Giriş/Profil Butonları (Kart içinde sağ üst köşe) */
+.auth-nav-btn-inline,
+.user-profile-btn-inline {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    z-index: 10;
+    background: rgba(118, 75, 162, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+
+.auth-nav-btn-inline:hover,
+.user-profile-btn-inline:hover {
+    background: rgba(118, 75, 162, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.user-profile-btn-inline {
+    padding: 4px 10px 4px 4px;
+    gap: 8px;
+}
+
+.user-avatar-inline {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.7rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.logout-btn-inline {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+/* Eski stats-bar için geriye dönük uyumluluk */
 .stats-bar {
     display: flex;
     justify-content: space-around;
     gap: var(--spacing-xs);
     margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
     position: relative;
-    z-index: 1; /* Butonların altında kalması için */
+    z-index: 1;
+}
+
+/* Günlük Vird Inline */
+.daily-goal-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+}
+
+.daily-goal-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+}
+
+.daily-goal-icon {
+    font-size: 1rem;
+}
+
+.daily-goal-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.daily-goal-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 0;
+}
+
+.daily-goal-progress-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 0;
+}
+
+.progress-bar-inline {
+    flex: 1;
+    height: 6px;
+    background: rgba(229, 231, 235, 0.5);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    min-width: 60px;
+}
+
+.progress-bar-inline .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-success) 0%, var(--accent-primary) 100%);
+    border-radius: var(--radius-xl);
+    transition: width var(--transition-normal);
+    width: 0%;
+}
+
+.progress-text-inline {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.settings-btn-inline {
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+    transition: transform var(--transition-fast);
+    opacity: 0.7;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-btn-inline:hover {
+    transform: rotate(90deg);
+    opacity: 1;
 }
 
 .stat-item {
@@ -224,8 +410,11 @@ body {
 
 /* Daily Goal Section */
 .daily-goal-section {
-    background: #fff;
-    border-radius: var(--radius-sm);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-sm);
     box-shadow: var(--shadow-sm);
@@ -235,43 +424,46 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 6px;
 }
 
 .daily-goal-title-section {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex: 1;
 }
 
 .daily-goal-header h3 {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     margin: 0;
     white-space: nowrap;
+    font-weight: 600;
 }
 
 .settings-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
-    padding: var(--spacing-xs);
+    padding: 2px;
     transition: transform var(--transition-fast);
+    opacity: 0.7;
 }
 
 .settings-btn:hover {
     transform: rotate(90deg);
+    opacity: 1;
 }
 
 .progress-bar {
     width: 100%;
-    height: 10px;
-    background: #e5e7eb;
+    height: 8px;
+    background: rgba(229, 231, 235, 0.5);
     border-radius: var(--radius-xl);
     overflow: hidden;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .progress-fill {
@@ -287,9 +479,10 @@ body {
     justify-content: flex-start;
     align-items: center;
     gap: 4px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
     flex-wrap: wrap;
+    line-height: 1.2;
 }
 
 /* Streak Display */
@@ -299,8 +492,11 @@ body {
     margin-bottom: var(--spacing-md);
     justify-content: center;
     padding: var(--spacing-sm) var(--spacing-md);
-    background: #fff;
-    border-radius: var(--radius-sm);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
 }
 
@@ -325,9 +521,12 @@ body {
 /* Difficulty Selector */
 .difficulty-selector {
     margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: #fff;
-    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
 }
 
@@ -345,73 +544,115 @@ body {
 
 .difficulty-btn {
     flex: 1;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid #e5e7eb;
-    border-radius: var(--radius-sm);
-    background: #fff;
-    font-size: 0.8rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .difficulty-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    border-color: var(--glass-border-strong);
+    background: var(--glass-bg-dark);
 }
 
 .difficulty-btn.active {
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     color: #fff;
-    border-color: var(--accent-primary);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
-/* Game Modes Grid */
+/* Game Modes - Grid Layout (3 üstte, 3 altta) */
 .game-modes-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
 }
 
 .game-card {
-    background: #fff;
-    border-radius: var(--radius-sm);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     cursor: pointer;
     transition: all var(--transition-normal);
     text-align: center;
-    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
 }
 
 .game-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.game-card:hover::before {
+    opacity: 1;
+}
+
+.game-card:active {
+    transform: translateY(-2px) scale(1.01);
+    transition: all var(--transition-fast);
 }
 
 .game-icon {
     font-size: 2.5rem;
     margin-bottom: var(--spacing-sm);
+    position: relative;
+    z-index: 1;
 }
 
 .game-icon img {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .game-card h3 {
-    font-size: 0.95rem;
+    font-size: 1rem;
     margin-bottom: var(--spacing-xs);
     color: var(--text-primary);
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -0.01em;
 }
 
 .game-card p {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    line-height: 1.3;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================
@@ -427,23 +668,36 @@ body {
     align-items: center;
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 1px solid var(--glass-border);
+    position: relative;
+}
+
+.game-header h2 {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    text-align: center;
 }
 
 .back-btn {
-    background: var(--accent-secondary);
+    background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);
     color: #fff;
-    border: none;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sm);
 }
 
 .back-btn:hover {
-    background: var(--accent-primary);
     transform: translateX(-3px);
+    box-shadow: var(--shadow-md);
 }
 
 .game-info {
@@ -497,9 +751,11 @@ body {
 
 .submode-btn {
     padding: var(--spacing-md);
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: var(--radius-sm);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -508,12 +764,14 @@ body {
     white-space: normal;
     text-align: center;
     line-height: 1.4;
+    box-shadow: var(--shadow-sm);
 }
 
 .submode-btn:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
+    border-color: var(--glass-border-strong);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 /* Game Content */
@@ -524,9 +782,13 @@ body {
 .question-section {
     text-align: center;
     margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
     position: relative;
 }
 
@@ -540,10 +802,14 @@ body {
     gap: var(--spacing-xs);
     margin-bottom: var(--spacing-xs);
     position: relative;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
     min-height: 120px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
 }
 
 .arabic-word,
@@ -771,14 +1037,17 @@ body {
 
 .option-btn {
     padding: var(--spacing-md);
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: var(--radius-sm);
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
     font-size: clamp(0.95rem, 2.5vw, 1.1rem); /* Responsive Türkçe cevap şıkları */
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
     min-height: 50px;
+    box-shadow: var(--shadow-sm);
 }
 
 /* Dinle Bul oyunu için Arapça font */
@@ -802,7 +1071,8 @@ body {
 .option-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
+    border-color: var(--glass-border-strong);
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .option-btn.correct {
@@ -1070,20 +1340,28 @@ body {
 }
 
 .nav-btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--accent-secondary);
-    color: #fff;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    color: var(--text-primary);
     border: none;
     border-radius: var(--radius-md);
-    font-size: 1rem;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    opacity: 0.7;
 }
 
-.nav-btn:hover {
-    background: var(--accent-primary);
+.nav-btn:hover,
+.nav-btn.active {
+    opacity: 1;
     transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn:disabled {
@@ -1092,83 +1370,109 @@ body {
 }
 
 /* ============================================
-   BOTTOM NAVIGATION
+   BOTTOM NAVIGATION (iPhone Style)
    ============================================ */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 90px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    min-height: 88px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -0.5px 0 rgba(0, 0, 0, 0.1), 0 -4px 20px rgba(0, 0, 0, 0.08);
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
     z-index: 1000;
-    padding: var(--spacing-sm) 0;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)) 0;
 }
 
 .bottom-nav .nav-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-xs);
+    justify-content: center;
+    gap: 4px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: var(--spacing-sm);
-    transition: all var(--transition-fast);
+    padding: 6px 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    min-width: 60px;
+    min-width: 64px;
+    flex: 1;
+    opacity: 0.6;
+    transform: scale(1);
 }
 
 .bottom-nav .nav-btn span:first-child {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    line-height: 1;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bottom-nav .nav-btn span:nth-child(2) {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #000;
+    letter-spacing: -0.01em;
+    transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-nav .nav-btn:active {
+    transform: scale(0.95);
+    opacity: 0.8;
 }
 
 .bottom-nav .nav-btn.active {
-    color: var(--accent-primary);
+    opacity: 1;
+    color: #007AFF;
+}
+
+.bottom-nav .nav-btn.active span:first-child {
+    transform: scale(1.05);
 }
 
 .bottom-nav .nav-btn.active span:nth-child(2) {
-    color: var(--accent-primary);
+    color: #007AFF;
+    font-weight: 600;
 }
 
 .badge-notification {
     position: absolute;
-    top: 0;
-    right: 0;
-    background: var(--accent-error);
+    top: 2px;
+    right: 8px;
+    background: #FF3B30;
     color: #fff;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    border-radius: 10px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .tasks-counter {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    background: var(--accent-primary);
+    top: 0;
+    right: 4px;
+    background: #007AFF;
     color: #fff;
     border-radius: 10px;
     padding: 2px 6px;
     font-size: 0.65rem;
-    font-weight: 700;
-    min-width: 32px;
+    font-weight: 600;
+    min-width: 24px;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     text-align: center;
     display: none;
     z-index: 10;
@@ -1216,11 +1520,15 @@ body {
 }
 
 .modal-content {
-    background: #fff;
+    background: var(--glass-bg-dark);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border: 1px solid var(--glass-border-strong);
     border-radius: var(--radius-lg);
     max-width: 95%;
     max-height: 95vh;
     overflow-y: auto;
+    box-shadow: var(--shadow-xl);
     overflow-x: hidden;
     width: 100%;
     overflow-x: hidden;
@@ -1367,12 +1675,209 @@ body {
     margin-top: var(--spacing-lg);
 }
 
+/* Günlük Ödül Kutusu (Kurdelalı Kutu) */
+.daily-reward-box-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-sm);
+}
+
+.daily-reward-box {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(145deg, #ff6b9d 0%, #c44569 50%, #a03152 100%);
+    border: none;
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 40px rgba(196, 69, 105, 0.4),
+        0 8px 16px rgba(196, 69, 105, 0.3),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.2),
+        inset 0 8px 16px rgba(255, 255, 255, 0.15),
+        0 0 0 4px rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+    padding: 0;
+}
+
+/* Shimmer/Glow efekti (aktif olduğunda) */
+.reward-box-shimmer {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    transition: transform 0.6s ease;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.daily-reward-box:not(:disabled):not(.claimed) .reward-box-shimmer {
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+        opacity: 0;
+    }
+}
+
+/* Kurdele efekti (üstte) */
+.daily-reward-box::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    height: 24px;
+    background: linear-gradient(90deg, #ffd700 0%, #ffed4e 30%, #fff9c4 50%, #ffed4e 70%, #ffd700 100%);
+    border-radius: 12px;
+    box-shadow: 
+        0 4px 12px rgba(255, 215, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+/* Kurdele düğümü */
+.daily-reward-box::after {
+    content: '';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 32px;
+    background: radial-gradient(circle, #fff9c4 0%, #ffed4e 50%, #ffd700 100%);
+    border-radius: 50%;
+    box-shadow: 
+        0 4px 12px rgba(255, 215, 0, 0.6),
+        inset 0 2px 6px rgba(255, 255, 255, 0.5),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 3;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.reward-box-icon {
+    font-size: 4rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    z-index: 4;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.reward-box-mystery {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        0 0 12px rgba(255, 255, 255, 0.5);
+    z-index: 4;
+    position: relative;
+    letter-spacing: 2px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+}
+
+.daily-reward-box:hover:not(:disabled):not(.claimed) {
+    transform: translateY(-8px) scale(1.08) rotateY(5deg);
+    box-shadow: 
+        0 30px 60px rgba(196, 69, 105, 0.5),
+        0 12px 24px rgba(196, 69, 105, 0.4),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.2),
+        inset 0 8px 16px rgba(255, 255, 255, 0.2),
+        0 0 0 4px rgba(255, 255, 255, 0.15),
+        0 0 30px rgba(255, 107, 157, 0.6);
+}
+
+.daily-reward-box:hover:not(:disabled):not(.claimed) .reward-box-icon {
+    transform: scale(1.15) rotate(-8deg);
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4));
+}
+
+.daily-reward-box:active:not(:disabled):not(.claimed) {
+    transform: translateY(-4px) scale(1.04);
+    transition: all 0.1s ease;
+}
+
+.daily-reward-box:disabled,
+.daily-reward-box.claimed {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.7) brightness(0.8);
+    transform: scale(0.92);
+    box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.2),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.15),
+        inset 0 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.daily-reward-box:disabled .reward-box-shimmer,
+.daily-reward-box.claimed .reward-box-shimmer {
+    display: none;
+}
+
+.daily-reward-box:disabled::before,
+.daily-reward-box.claimed::before,
+.daily-reward-box:disabled::after,
+.daily-reward-box.claimed::after {
+    opacity: 0.4;
+    filter: grayscale(0.8);
+}
+
+.daily-reward-box:disabled .reward-box-icon,
+.daily-reward-box.claimed .reward-box-icon {
+    transform: none;
+    animation: none;
+}
+
+.daily-reward-box.claimed {
+    background: linear-gradient(145deg, #7f8c8d 0%, #6c7a7b 50%, #5d6d7e 100%);
+}
+
 .btn-primary {
     flex: 1;
     padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
     color: #fff;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
@@ -1395,9 +1900,11 @@ body {
 .btn-secondary {
     flex: 1;
     padding: var(--spacing-md) var(--spacing-lg);
-    background: #e5e7eb;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: var(--text-primary);
-    border: none;
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
@@ -2711,6 +3218,169 @@ body {
     margin-bottom: var(--spacing-xl);
 }
 
+/* Günlük Ödül Modal */
+.daily-reward-modal-content {
+    text-align: center;
+    padding: var(--spacing-xl);
+    max-width: 500px;
+}
+
+.reward-box-animation {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto var(--spacing-lg) auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reward-box-large {
+    font-size: 6rem;
+    animation: rewardBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+    z-index: 2;
+}
+
+@keyframes rewardBounce {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.reward-sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.reward-sparkles .sparkle {
+    position: absolute;
+    font-size: 2rem;
+    animation: sparkle 1.5s ease-in-out infinite;
+    opacity: 0;
+}
+
+.reward-sparkles .sparkle:nth-child(1) {
+    top: 10%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.reward-sparkles .sparkle:nth-child(2) {
+    top: 20%;
+    right: 15%;
+    animation-delay: 0.3s;
+}
+
+.reward-sparkles .sparkle:nth-child(3) {
+    bottom: 15%;
+    left: 25%;
+    animation-delay: 0.6s;
+}
+
+.reward-sparkles .sparkle:nth-child(4) {
+    bottom: 10%;
+    right: 20%;
+    animation-delay: 0.9s;
+}
+
+@keyframes sparkle {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg);
+    }
+}
+
+.reward-title {
+    font-size: 1.8rem;
+    color: var(--accent-secondary);
+    font-weight: 700;
+    margin-bottom: var(--spacing-md);
+}
+
+.reward-amount {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: var(--radius-md);
+    border: 2px solid var(--accent-gold);
+}
+
+.reward-points-text {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-secondary);
+    display: block;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.reward-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.reward-teaching {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.teaching-arabic {
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    direction: rtl;
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.8;
+    font-weight: 400;
+}
+
+.teaching-turkish {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.teaching-explanation {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    text-align: center;
+    font-style: italic;
+}
+
+.reward-claim-btn {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
 /* Result Modal */
 .result-stats {
     margin-bottom: var(--spacing-xl);
@@ -2870,33 +3540,27 @@ body {
     }
 
     .bottom-nav {
-        height: 70px;
-        padding: var(--spacing-xs) 2px;
-        gap: 2px;
-        justify-content: space-between;
+        min-height: 70px;
+        padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)) 0;
     }
 
     .bottom-nav .nav-btn {
-        padding: 2px;
-        font-size: 0.65rem;
-        min-width: 48px;
-        flex: 1;
-        max-width: 60px;
-        gap: 2px;
+        padding: 4px 8px;
+        min-width: 50px;
+        gap: 3px;
     }
 
     .bottom-nav .nav-btn span:first-child {
-        font-size: 1.1rem;
+        font-size: 1.5rem;
     }
 
     .bottom-nav .nav-btn span:nth-child(2) {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         line-height: 1.1;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 100%;
-        display: block;
     }
 
     .tasks-counter {
@@ -2909,18 +3573,70 @@ body {
 
     /* Container */
     .container {
-        margin: 10px 5px 70px 5px;
+        margin: 0 5px 70px 5px;
         padding: var(--spacing-sm);
         border-radius: var(--radius-sm);
         min-height: calc(100vh - 130px);
     }
 
-    /* Hero Section - Mobilde üstten padding ekle (butonlar için) */
+    /* Hero Section */
     .hero-section {
-        padding-top: 50px; /* Giriş/çıkış butonları için alan */
+        padding-top: 0; /* Giriş butonu artık kart içinde */
     }
     
-    /* Stats Bar - Mobilde 5 öğe yan yana */
+    /* Combined Stats Card - Mobil */
+    .combined-stats-card {
+        padding: var(--spacing-sm);
+        padding-top: 40px; /* Giriş butonu için alan */
+    }
+    
+    .auth-nav-btn-inline,
+    .user-profile-btn-inline {
+        top: var(--spacing-xs);
+        right: var(--spacing-xs);
+        padding: 5px 10px;
+        font-size: 0.7rem;
+    }
+    
+    .user-avatar-inline {
+        width: 20px;
+        height: 20px;
+        font-size: 0.65rem;
+    }
+    
+    .logout-btn-inline {
+        font-size: 0.7rem;
+    }
+    
+    .stats-row {
+        gap: 2px;
+        padding-bottom: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .daily-goal-inline {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+    
+    .daily-goal-right {
+        width: 100%;
+    }
+    
+    .daily-goal-progress-inline {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .progress-bar-inline {
+        min-width: 40px;
+    }
+    
+    .progress-text-inline {
+        font-size: 0.6rem;
+    }
+    
+    /* Stats Bar - Mobilde 5 öğe yan yana (geriye dönük uyumluluk) */
     .stats-bar {
         flex-wrap: nowrap;
         gap: 2px;
@@ -2975,10 +3691,10 @@ body {
         font-size: 0.75rem;
     }
 
-    /* Oyun Kartları */
+    /* Oyun Kartları - Mobil Grid (2 sütun) */
     .game-modes-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-xs);
+        gap: var(--spacing-sm);
         margin-bottom: var(--spacing-sm);
     }
 
@@ -3474,9 +4190,71 @@ body {
     .task-item {
         padding: var(--spacing-xs) var(--spacing-sm);
     }
+    
+    /* Günlük Ödül Kutusu - Mobil */
+    .daily-reward-box {
+        width: 110px;
+        height: 110px;
+        border-radius: 20px;
+    }
+    
+    .reward-box-icon {
+        font-size: 3.2rem;
+    }
+    
+    .reward-box-mystery {
+        font-size: 0.95rem;
+        letter-spacing: 1.5px;
+    }
 
     .task-item .task-name {
         font-size: 0.8rem;
+    }
+    
+    /* Günlük Ödül Kutusu - Küçük Mobil */
+    .daily-reward-box {
+        width: 100px;
+        height: 100px;
+        border-radius: 18px;
+    }
+    
+    .reward-box-icon {
+        font-size: 2.8rem;
+    }
+    
+    .reward-box-mystery {
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    
+    /* Günlük Ödül Modal - Mobil */
+    .daily-reward-modal-content {
+        padding: var(--spacing-md);
+        max-width: 95%;
+    }
+    
+    .reward-box-large {
+        font-size: 4.5rem;
+    }
+    
+    .reward-title {
+        font-size: 1.5rem;
+    }
+    
+    .reward-points-text {
+        font-size: 2rem;
+    }
+    
+    .teaching-arabic {
+        font-size: 1.3rem;
+    }
+    
+    .teaching-turkish {
+        font-size: 1rem;
+    }
+    
+    .teaching-explanation {
+        font-size: 0.9rem;
     }
 
     .task-item .task-progress-text {
@@ -3536,19 +4314,18 @@ body {
     }
 
     .bottom-nav {
-        height: 65px;
-        padding: var(--spacing-xs) 1px;
-        gap: 1px;
+        min-height: 65px;
+        padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px)) 0;
     }
 
     .bottom-nav .nav-btn {
-        min-width: 42px;
-        padding: 1px;
-        gap: 1px;
+        min-width: 45px;
+        padding: 3px 6px;
+        gap: 2px;
     }
 
     .bottom-nav .nav-btn span:first-child {
-        font-size: 1rem;
+        font-size: 1.3rem;
     }
 
     .bottom-nav .nav-btn span:nth-child(2) {
@@ -3557,14 +4334,46 @@ body {
     }
 
     .container {
-        margin: 10px 3px 65px 3px;
+        margin: 0 3px 65px 3px;
         padding: var(--spacing-xs);
         min-height: calc(100vh - 120px);
     }
 
-    /* Hero Section - Çok küçük ekranlarda daha fazla alan */
+    /* Hero Section */
     .hero-section {
-        padding-top: 48px;
+        padding-top: 0;
+    }
+    
+    .combined-stats-card {
+        padding: var(--spacing-xs);
+    }
+    
+    .stats-row {
+        gap: 1px;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+    }
+    
+    .daily-goal-icon {
+        font-size: 0.9rem;
+    }
+    
+    .daily-goal-label {
+        font-size: 0.7rem;
+    }
+    
+    .progress-bar-inline {
+        height: 5px;
+        min-width: 30px;
+    }
+    
+    .progress-text-inline {
+        font-size: 0.55rem;
+    }
+    
+    .settings-btn-inline {
+        font-size: 0.8rem;
+        padding: 2px;
     }
     
     .stats-bar {
@@ -3624,6 +4433,37 @@ body {
 
     .stat-value {
         font-size: 0.8rem;
+    }
+
+    /* Oyun Kartları - Çok küçük ekranlar için (2 sütun) */
+    .game-modes-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .game-card {
+        padding: var(--spacing-xs);
+    }
+
+    .game-icon {
+        font-size: 1.8rem;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .game-icon img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .game-card h3 {
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+    }
+
+    .game-card p {
+        font-size: 0.65rem;
+        line-height: 1.3;
     }
 
     .badges-grid,
@@ -3789,15 +4629,19 @@ body {
     }
 }
 
+/* Tablet için 3 sütun grid */
 @media (min-width: 601px) and (max-width: 900px) {
     .game-modes-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
     }
 }
 
+/* Desktop için 3 sütun grid (aynı kalır) */
 @media (min-width: 901px) {
     .game-modes-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-lg);
     }
 }
 
@@ -4820,39 +5664,10 @@ select:focus {
 /* ============================================
    USER PROFILE & AUTH BUTTONS
    ============================================ */
+/* Eski fixed butonlar - gizlendi (artık inline kullanılıyor) */
 .auth-nav-btn,
 .user-profile-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 999; /* Stats bar'ın görünür olması için düşük z-index */
-    background: rgba(118, 75, 162, 0.9);
-    border: none;
-    border-radius: 18px;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.auth-nav-btn:hover,
-.user-profile-btn:hover {
-    background: rgba(118, 75, 162, 1);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-}
-
-.user-profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 10px 4px 4px;
+    display: none !important;
 }
 
 .user-avatar {
@@ -4891,46 +5706,22 @@ select:focus {
 
 /* Mobil için küçük buton */
 @media (max-width: 600px) {
-    .auth-nav-btn,
-    .user-profile-btn {
-        top: 8px;
-        right: 8px;
-        padding: 5px 10px;
-        font-size: 11px;
-        border-radius: 16px;
-        z-index: 998; /* Stats bar'ın görünür olması için */
-    }
-    
-    .user-profile-btn {
-        padding: 3px 8px 3px 3px;
-        gap: 6px;
-    }
-    
-    .user-avatar {
-        width: 24px;
-        height: 24px;
-        font-size: 11px;
-        border-width: 1.5px;
-    }
-    
-    .logout-btn {
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 360px) {
-    .auth-nav-btn,
-    .user-profile-btn {
-        top: 6px;
-        right: 6px;
+    .auth-nav-btn-inline,
+    .user-profile-btn-inline {
+        top: var(--spacing-xs);
+        right: var(--spacing-xs);
         padding: 4px 8px;
-        font-size: 10px;
+        font-size: 0.65rem;
     }
     
-    .user-avatar {
-        width: 22px;
-        height: 22px;
-        font-size: 10px;
+    .user-avatar-inline {
+        width: 18px;
+        height: 18px;
+        font-size: 0.6rem;
+    }
+    
+    .logout-btn-inline {
+        font-size: 0.65rem;
     }
 }
 
