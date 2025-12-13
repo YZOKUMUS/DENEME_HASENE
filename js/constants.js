@@ -788,7 +788,7 @@ const BADGE_DEFINITIONS = [
     {
         id: 'asr_6',
         name: 'İlk Vahiy',
-        image: 'rozet6.png',
+        image: 'hira-magarasi.png', // Hira Mağarası - İlk Vahiy'in indiği mağara
         description: '610 - Hira Mağarası\'nda ilk vahiy. "Oku! Yaratan Rabbinin adıyla oku!" 1,500 Hasene kazan',
         check: (stats) => stats.totalPoints >= 1500,
         progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 1500) * 100)
@@ -812,7 +812,7 @@ const BADGE_DEFINITIONS = [
     {
         id: 'asr_9',
         name: 'Habeşistan Hicreti',
-        image: 'rozet9.png',
+        image: 'deve-kervani.png', // Deve Kervanı - Habeşistan'a hicret eden Müslümanları taşıyan kervan
         description: '615 - İlk hicret, Habeşistan\'a. 2,500 Hasene kazan',
         check: (stats) => stats.totalPoints >= 2500,
         progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 2500) * 100)
@@ -820,7 +820,7 @@ const BADGE_DEFINITIONS = [
     {
         id: 'asr_10',
         name: 'Hüzün Yılı',
-        image: 'rozet10.png',
+        image: 'mezar-tasi.png', // Mezar Taşı - Hz. Hatice ve Ebu Talib'in vefatı
         description: '619 - Hz. Hatice ve Ebu Talib\'in vefatı. 3,000 Hasene kazan',
         check: (stats) => stats.totalPoints >= 3000,
         progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 3000) * 100)
@@ -828,7 +828,7 @@ const BADGE_DEFINITIONS = [
     {
         id: 'asr_11',
         name: 'İsra ve Miraç',
-        image: 'rozet11.png',
+        image: 'gokyuzu.png', // Gökyüzü - İsra ve Miraç mucizesi, göklere yükselme
         description: '620 - Mescid-i Haram\'dan Mescid-i Aksa\'ya, göklere yükselme. Beş vakit namaz farz kılındı. 3,500 Hasene kazan',
         check: (stats) => stats.totalPoints >= 3500,
         progress: (stats) => Math.min(100, ((stats.totalPoints || 0) / 3500) * 100)

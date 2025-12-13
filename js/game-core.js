@@ -1632,8 +1632,7 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
             // 2 saniye sonra otomatik gizle
             setTimeout(() => {
                 comboDisplay.style.display = 'none';
-                }, 2000);
-            }
+            }, 2000);
         }
         
         playSound('correct');
@@ -4099,7 +4098,7 @@ function showBadgeDetail(badge, isUnlocked) {
     let detailHTML = `
         <div style="margin-bottom: clamp(15px, 4vw, 20px);">
             <img src="assets/badges/${badge.image}" alt="${badge.name}" 
-                 style="width: clamp(80px, 20vw, 120px); height: clamp(80px, 20vw, 120px); object-fit: contain; margin-bottom: clamp(12px, 3vw, 15px); border-radius: var(--radius-md); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                 style="width: clamp(120px, 25vw, 160px); height: clamp(120px, 25vw, 160px); object-fit: contain; margin-bottom: clamp(12px, 3vw, 15px); border-radius: var(--radius-md); box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
                  onerror="this.style.display='none';">
         </div>
         <h3 style="color: var(--accent-primary); margin-bottom: clamp(8px, 2vw, 10px); font-size: clamp(1.2rem, 4vw, 1.5rem); word-wrap: break-word;">${badge.name}</h3>
