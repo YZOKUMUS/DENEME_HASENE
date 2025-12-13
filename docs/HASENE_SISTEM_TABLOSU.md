@@ -38,7 +38,7 @@
 | **💪 Ciddi** | 6,000 Hasene | ~45 dakika oyun |
 | **🎛️ Özel** | 100-10,000 Hasene arası | Kullanıcı kendi hedefini belirler |
 
-**Günlük vird tamamlandığında:** +1,000 Hasene bonus
+**Günlük vird tamamlandığında:** +100 Hasene bonus
 
 ---
 

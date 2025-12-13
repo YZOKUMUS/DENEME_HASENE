@@ -1288,7 +1288,7 @@ wordStats[wordId] = {
 - 💪 Ciddi: 6,000 Hasene (~45 dakika)
 - Özel: 100-10,000 Hasene (manuel)
 
-**Tamamlama Bonusu**: +1,000 Hasene
+**Tamamlama Bonusu**: +100 Hasene
 
 **Görselleştirme**:
 - İlerleme çubuğu (0-100%)

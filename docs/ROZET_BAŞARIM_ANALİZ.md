@@ -7,7 +7,7 @@
 - **Combo Bonusu**: Her 3 doğru cevapta +5 Hasene (ortalama ~15% ekstra)
 - **Perfect Lesson Bonusu**: Tüm sorular doğru → Session skorunun %50'si ekstra
 - **Günlük Görevler**: 100, 250 veya 500 Hasene (rastgele)
-- **Günlük Vird Bonusu**: +1,000 Hasene (vird tamamlanınca)
+- **Günlük Vird Bonusu**: +100 Hasene (vird tamamlanınca)
 
 ### Günlük Kazanç Senaryoları
 
@@ -29,7 +29,7 @@
 - Combo bonusu: ~300 Hasene
 - Perfect lesson bonusu: ~100-200 Hasene
 - Görev ödülü: 100-500 Hasene
-- Vird bonusu: +1,000 Hasene
+- Vird bonusu: +100 Hasene
 - **Toplam: ~3,500-4,000 Hasene/gün**
 
 ---

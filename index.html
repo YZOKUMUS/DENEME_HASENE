@@ -1271,15 +1271,15 @@
                                 <li>4 seçenekten birini seçin</li>
                                 <li>Doğru cevap için kelimenin zorluk seviyesine göre Hasene kazanın (5-21 Hasene)</li>
                                 <li>10 soru tamamlayın</li>
-                                <li>🔥 Combo bonusu için ardışık 3 doğru cevap verin (+5 Hasene)</li>
-                                <li>⭐ Perfect bonus için tüm soruları doğru cevaplayın (%50 ekstra puan)</li>
+                                <li>🔥 Her doğru cevap için combo bonusu kazanın (+2 Hasene)</li>
+                                <li>⭐ Perfect bonus için tüm soruları doğru cevaplayın (+50 Hasene)</li>
                                 <li>İpucu butonunu kullanarak yanlış bir seçeneği devre dışı bırakabilirsiniz (her soruda 1 kez)</li>
                                 <li>Ses butonunu kullanarak kelimeyi dinleyebilirsiniz</li>
                                 <li>Oyunu istediğiniz zaman "Geri" butonu ile çıkabilirsiniz</li>
                             </ul>
                             <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
-                                💡 <strong>Ekstra Kazançlar:</strong> Günlük virdinizi tamamlayarak +1,000 Hasene, 
-                                günlük görevleri tamamlayarak +2,500 Hasene kazanabilirsiniz!
+                                💡 <strong>Ekstra Kazançlar:</strong> Günlük virdinizi tamamlayarak +100 Hasene, 
+                                günlük görevleri tamamlayarak 100, 250 veya 500 Hasene (rastgele) kazanabilirsiniz!
                             </p>
                             <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
                                 💡 <strong>İpucu:</strong> Oyunu yarım bıraksanız bile kazandığınız puanlar kaydedilir. 
@@ -1301,27 +1301,41 @@
                             </p>
                         </div>
                         <div class="info-item">
-                            <strong>✅ Doğru Cevap (Boşluk Doldur):</strong> Ayetin uzunluğuna göre Hasene
+                            <strong>✅ Doğru Cevap (Boşluk Doldur):</strong> Ayetin uzunluğuna göre Hasene + combo bonusu
                             <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
-                                • Kısa ayetler (1-6 kelime): 10 Hasene<br>
-                                • Orta ayetler (7-12 kelime): 15 Hasene<br>
-                                • Uzun ayetler (13+ kelime): 20 Hasene
+                                • Kısa ayetler (1-6 kelime): 10 Hasene (temel) + 2 Hasene (combo) = 12 Hasene<br>
+                                • Orta ayetler (7-12 kelime): 15 Hasene (temel) + 2 Hasene (combo) = 17 Hasene<br>
+                                • Uzun ayetler (13+ kelime): 20 Hasene (temel) + 2 Hasene (combo) = 22 Hasene<br>
+                                • Her doğru cevap için combo bonusu: +2 Hasene (doğru sayısına endeksli)
                             </p>
                         </div>
                         <div class="info-item">
                             <strong>❌ Yanlış Cevap:</strong> 0 Hasene (puan kaybı yok)
                         </div>
                         <div class="info-item">
-                            <strong>🔥 Combo Bonusu:</strong> Her 3 doğru cevapta +5 Hasene
+                            <strong>🔥 Combo Bonusu:</strong> Her doğru cevap için +2 Hasene (doğru sayısına endeksli)
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Örnek: 10 doğru cevap = 20 Hasene combo bonusu (toplam: 100 + 20 = 120 Hasene)
+                            </p>
                         </div>
                         <div class="info-item">
-                            <strong>⭐ Perfect Bonus:</strong> Tüm sorular doğruysa %50 ekstra puan
+                            <strong>⭐ Perfect Bonus:</strong> Her mükemmel ders için +50 Hasene (ders sayısına endeksli)
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Koşul: Tüm sorular doğru, minimum 3 soru, hiç yanlış cevap yok
+                                • Perfect bonus her ders için sabit 50 Hasene'dir (session skorundan bağımsız)
+                            </p>
                         </div>
                         <div class="info-item">
-                            <strong>🎯 Günlük Vird Bonusu:</strong> Günlük virdinizi tamamladığınızda +1,000 Hasene
+                            <strong>🎯 Günlük Vird Bonusu:</strong> Günlük virdinizi tamamladığınızda +100 Hasene
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Günlük vird sadece kazanılan tüm Hasene puanlarına göre endekslenir (doğru cevap sayısına değil)
+                            </p>
                         </div>
                         <div class="info-item">
-                            <strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda +2,500 Hasene
+                            <strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda 100, 250 veya 500 Hasene (rastgele)
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: var(--text-secondary);">
+                                • Ödül miktarı her gün farklıdır ve İslami öğreti ile birlikte verilir
+                            </p>
                         </div>
                     </div>
                     
@@ -1334,7 +1348,8 @@
                             <strong>⭐ Yıldız Kazanma:</strong>
                             <ul style="margin-top: 8px;">
                                 <li><strong>250 Hasene = 1 Yıldız</strong></li>
-                                <li>Yaklaşık 25 doğru cevap gerekir (2-3 oyun)</li>
+                                <li>Her doğru cevap: 10 Hasene (temel) + 2 Hasene (combo) = 12 Hasene toplam</li>
+                                <li>Yaklaşık 21 doğru cevap gerekir (2-3 oyun)</li>
                                 <li>Yıldızlar otomatik olarak hesaplanır</li>
                             </ul>
                         </div>
@@ -1360,30 +1375,40 @@
                     <!-- Combo -->
                     <div class="info-tab-content" id="combo-tab">
                         <h3>🔥 Combo Sistemi</h3>
-                        <p>Ardışık doğru cevaplar combo oluşturur.</p>
+                        <p><strong>Doğru sayısına endeksli combo bonusu:</strong> Her doğru cevap için otomatik combo bonusu kazanırsınız!</p>
                         <ul>
                             <li>Her doğru cevap combo sayısını artırır</li>
+                            <li>Her doğru cevap için +2 Hasene combo bonusu kazanırsınız (doğru sayısına endeksli)</li>
                             <li>Yanlış cevap combo'yu sıfırlar</li>
-                            <li>Her 3 doğru cevapta combo bonusu verilir (+5 Hasene)</li>
+                            <li>Örnek: 10 doğru cevap = 100 Hasene (temel) + 20 Hasene (combo) = 120 Hasene toplam</li>
                             <li>Maksimum combo takip edilir ve rozetler için kullanılır</li>
                         </ul>
+                        <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                            💡 <strong>Yeni sistem:</strong> Artık her 3 doğru cevapta değil, her doğru cevap için combo bonusu verilir. 
+                            Bu sayede daha fazla doğru cevap verdiğinizde daha fazla bonus kazanırsınız!
+                        </p>
                     </div>
                     
                     <!-- Perfect Bonus -->
                     <div class="info-tab-content" id="perfect-tab">
                         <h3>🎯 Perfect Bonus</h3>
-                        <p>Tüm soruları doğru cevapladığınızda perfect bonus kazanırsınız.</p>
+                        <p><strong>Ders sayısına endeksli perfect bonus:</strong> Her mükemmel ders için sabit bonus kazanırsınız!</p>
                         <ul>
-                            <li><strong>Koşul:</strong> Tüm 10 soru doğru cevaplanmalı, hiç yanlış cevap olmamalı</li>
-                            <li><strong>Bonus:</strong> Session skorunun %50'si ekstra Hasene (Math.floor ile yuvarlanır)</li>
-                            <li><strong>Örnek:</strong> 100 Hasene kazandıysanız → 50 Hasene ekstra = 150 Hasene toplam</li>
-                            <li><strong>Not:</strong> Perfect bonus sadece oyun tamamlandığında (10 soru bittikten sonra) verilir</li>
+                            <li><strong>Koşul:</strong> Tüm sorular doğru cevaplanmalı, en az 3 soru, hiç yanlış cevap olmamalı</li>
+                            <li><strong>Bonus:</strong> Her mükemmel ders için +50 Hasene (ders sayısına endeksli, session skorundan bağımsız)</li>
+                            <li><strong>Örnek 1:</strong> 10 soru doğru (100 Hasene temel + 20 Hasene combo) → +50 Hasene perfect bonus = 170 Hasene toplam</li>
+                            <li><strong>Örnek 2:</strong> 5 soru doğru (50 Hasene temel + 10 Hasene combo) → +50 Hasene perfect bonus = 110 Hasene toplam</li>
+                            <li><strong>Not:</strong> Perfect bonus sadece oyun tamamlandığında verilir</li>
                         </ul>
+                        <p style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+                            💡 <strong>Yeni sistem:</strong> Artık session skorunun yüzdesi değil, her mükemmel ders için sabit 50 Hasene bonus verilir. 
+                            Bu sayede perfect bonus daha adil ve tahmin edilebilirdir!
+                        </p>
                         
                         <h4 style="margin-top: 24px;">🎁 Diğer Bonuslar</h4>
                         <ul>
                             <li><strong>🎯 Günlük Vird Bonusu:</strong> Günlük virdinizi tamamladığınızda otomatik olarak +1,000 Hasene kazanırsınız</li>
-                            <li><strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda "Günlük Ödülü Al" butonuna tıklayarak +2,500 Hasene kazanabilirsiniz</li>
+                            <li><strong>📋 Günlük Görev Ödülü:</strong> Tüm günlük görevleri tamamladığınızda kurdelalı kutu ile sürpriz ödül: 100, 250 veya 500 Hasene (rastgele)</li>
                         </ul>
                     </div>
                     

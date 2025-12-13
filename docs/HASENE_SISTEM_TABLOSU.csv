@@ -3,7 +3,7 @@ Puan Sistemi,Doğru Cevap Puanı,Her doğru cevap için,10 Hasene,"Temel puan - 
 Puan Sistemi,Combo Bonusu,Her doğru cevap için,2 Hasene,"Doğru sayısına endeksli - her doğru cevap combo bonusu verir"
 Puan Sistemi,Mükemmel Ders Bonusu,Hiç yanlış yapmadan ders tamamlama (min 3 soru),50 Hasene,"Ders sayısına endeksli - her mükemmel ders için sabit bonus"
 Puan Sistemi,Günlük Görev Ödülü,Günlük görevleri tamamlama,100/250/500 Hasene (rastgele),"Rastgele seçilir - İslami öğreti ile birlikte verilir"
-Puan Sistemi,Günlük Vird Bonusu,Günlük virdi tamamlama,1000 Hasene,"Günlük hedefe ulaşınca otomatik verilir"
+Puan Sistemi,Günlük Vird Bonusu,Günlük virdi tamamlama,100 Hasene,"Günlük hedefe ulaşınca otomatik verilir"
 Yıldız Sistemi,Yıldız,250 Hasene kazanınca,1 Yıldız,"250 Hasene = 1 Yıldız"
 Yıldız Sistemi,Bronz,5 Yıldız kazanınca,1 Bronz,"5 Yıldız = 1 Bronz (1,250 Hasene)"
 Yıldız Sistemi,Gümüş,5 Bronz kazanınca,1 Gümüş,"25 Yıldız = 5 Bronz = 1 Gümüş (6,250 Hasene)"

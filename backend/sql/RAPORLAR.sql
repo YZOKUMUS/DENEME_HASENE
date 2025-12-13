@@ -193,6 +193,9 @@ SELECT
     (SELECT COUNT(*) FROM achievements a WHERE a.user_id = auth.uid()) as "Toplam Başarım",
     (SELECT STRING_AGG(
         CASE achievement_id
+            WHEN 'first_victory' THEN '🕌 İlk Kelime'
+            WHEN 'bismillah' THEN 'بِسْمِ اللَّهِ'
+            WHEN 'combo_master' THEN '🕌 Muvazebet Ustası'
             WHEN 'first_step' THEN '🌱 İlk Adım'
             WHEN 'level_1' THEN '📖 Mübtedi'
             WHEN 'perfect_lesson_1' THEN '✨ Mükemmel Ders'
@@ -223,6 +226,17 @@ SELECT
             WHEN 'streak_40' THEN '🌟 Kırk Gün Vird'
             WHEN 'level_20' THEN '🌟 Muhaddis'
             WHEN 'second_gold' THEN '💎 İkinci Altın'
+            WHEN 'perfect_lesson_50' THEN '🌟 Elli Mükemmel'
+            WHEN 'diamond_master' THEN '✨ Elmas Mertebe'
+            WHEN 'level_25' THEN '💎 Müfessir'
+            WHEN 'streak_100' THEN '💎 Yüz Gün Vird'
+            WHEN 'master_of_masters' THEN '📖 Ustalar Ustası'
+            WHEN 'level_30' THEN '✨ Hafız'
+            WHEN 'perfect_lesson_100' THEN '🕋 Yüz Mükemmel'
+            WHEN 'five_thousand_correct' THEN '🕋 Beş Bin Doğru'
+            WHEN 'diamond_master_final' THEN '✨ Elmas Mertebe'
+            WHEN 'master_of_masters_final' THEN '📖 Ustalar Ustası'
+            WHEN 'hafiz' THEN '🕋 Kurra Hafız'
             ELSE achievement_id
         END, ', ' ORDER BY unlocked_at) 
      FROM achievements a 
@@ -344,6 +358,9 @@ SELECT
     (SELECT COUNT(*) FROM achievements a WHERE a.user_id = u.id) as "Toplam Başarım",
     (SELECT STRING_AGG(
         CASE achievement_id
+            WHEN 'first_victory' THEN '🕌 İlk Kelime'
+            WHEN 'bismillah' THEN 'بِسْمِ اللَّهِ'
+            WHEN 'combo_master' THEN '🕌 Muvazebet Ustası'
             WHEN 'first_step' THEN '🌱 İlk Adım'
             WHEN 'level_1' THEN '📖 Mübtedi'
             WHEN 'perfect_lesson_1' THEN '✨ Mükemmel Ders'
@@ -374,6 +391,17 @@ SELECT
             WHEN 'streak_40' THEN '🌟 Kırk Gün Vird'
             WHEN 'level_20' THEN '🌟 Muhaddis'
             WHEN 'second_gold' THEN '💎 İkinci Altın'
+            WHEN 'perfect_lesson_50' THEN '🌟 Elli Mükemmel'
+            WHEN 'diamond_master' THEN '✨ Elmas Mertebe'
+            WHEN 'level_25' THEN '💎 Müfessir'
+            WHEN 'streak_100' THEN '💎 Yüz Gün Vird'
+            WHEN 'master_of_masters' THEN '📖 Ustalar Ustası'
+            WHEN 'level_30' THEN '✨ Hafız'
+            WHEN 'perfect_lesson_100' THEN '🕋 Yüz Mükemmel'
+            WHEN 'five_thousand_correct' THEN '🕋 Beş Bin Doğru'
+            WHEN 'diamond_master_final' THEN '✨ Elmas Mertebe'
+            WHEN 'master_of_masters_final' THEN '📖 Ustalar Ustası'
+            WHEN 'hafiz' THEN '🕋 Kurra Hafız'
             ELSE achievement_id
         END, ', ' ORDER BY unlocked_at) 
      FROM achievements a 
@@ -604,6 +632,9 @@ SELECT
     COALESCE((SELECT COUNT(*) FROM achievements a WHERE a.user_id = au.id), 0) AS "Toplam Başarım",
     COALESCE((SELECT STRING_AGG(
         CASE achievement_id
+            WHEN 'first_victory' THEN '🕌 İlk Kelime'
+            WHEN 'bismillah' THEN 'بِسْمِ اللَّهِ'
+            WHEN 'combo_master' THEN '🕌 Muvazebet Ustası'
             WHEN 'first_step' THEN '🌱 İlk Adım'
             WHEN 'level_1' THEN '📖 Mübtedi'
             WHEN 'perfect_lesson_1' THEN '✨ Mükemmel Ders'
@@ -634,6 +665,17 @@ SELECT
             WHEN 'streak_40' THEN '🌟 Kırk Gün Vird'
             WHEN 'level_20' THEN '🌟 Muhaddis'
             WHEN 'second_gold' THEN '💎 İkinci Altın'
+            WHEN 'perfect_lesson_50' THEN '🌟 Elli Mükemmel'
+            WHEN 'diamond_master' THEN '✨ Elmas Mertebe'
+            WHEN 'level_25' THEN '💎 Müfessir'
+            WHEN 'streak_100' THEN '💎 Yüz Gün Vird'
+            WHEN 'master_of_masters' THEN '📖 Ustalar Ustası'
+            WHEN 'level_30' THEN '✨ Hafız'
+            WHEN 'perfect_lesson_100' THEN '🕋 Yüz Mükemmel'
+            WHEN 'five_thousand_correct' THEN '🕋 Beş Bin Doğru'
+            WHEN 'diamond_master_final' THEN '✨ Elmas Mertebe'
+            WHEN 'master_of_masters_final' THEN '📖 Ustalar Ustası'
+            WHEN 'hafiz' THEN '🕋 Kurra Hafız'
             ELSE achievement_id
         END, ', ' ORDER BY unlocked_at) 
      FROM achievements a WHERE a.user_id = au.id), '') AS "Başarım Listesi",

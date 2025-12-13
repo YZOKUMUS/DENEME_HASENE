@@ -1055,12 +1055,12 @@ function updateDailyGoalDisplay() {
     // Günlük hedef tamamlandı mı?
     if (dailyXP >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
         localStorage.setItem('dailyGoalCompleted', 'true');
-        const dailyGoalBonus = 1000;
+        const dailyGoalBonus = 100;
         // skipDetailedStats=true çünkü aşağıda manuel olarak saveDetailedStats çağrılıyor
         addToGlobalPoints(dailyGoalBonus, 0, true); // Bonus
         // Günlük vird bonusunu detaylı istatistiklere ekle
         saveDetailedStats(dailyGoalBonus, 0, 0, 0, 0);
-        showSuccessMessage('🎉 Günlük virdi tamamladınız! +1,000 Hasene');
+        showSuccessMessage('🎉 Günlük virdi tamamladınız! +100 Hasene');
     }
 }
 
