@@ -27,8 +27,8 @@ function addSessionPoints(points) {
 }
 
 /**
- * Günlük XP ekler
- * @param {number} points - Eklenecek puan
+ * Günlük XP ekler - GÜNLÜK VİRD SADECE HASENE PUAN VE KAZANILAN TÜM BONUS, COMBO, HEDİYE VS PUANLARA GÖRE ENDEKSLENMİŞTİR
+ * @param {number} points - Eklenecek puan (doğru cevap + combo bonusu + perfect lesson bonusu + günlük görev ödülü + hediye vs)
  */
 function addDailyXP(points) {
     const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
@@ -151,9 +151,12 @@ async function addToGlobalPoints(points, correctAnswers) {
         updateStreakDisplay(); // Streak (Seri) güncellenir
     }
     
-    // Kaydet
+    // Kaydet (arka planda, UI'ı bekletmeden)
     if (typeof saveStatsImmediate === 'function') {
-        await saveStatsImmediate();
+        // await kaldırıldı - arka planda çalışsın, UI güncellemesini bekletmesin
+        saveStatsImmediate().catch(err => {
+            console.error('Backend kayıt hatası (kritik değil):', err);
+        });
     }
     
     // Rozetleri kontrol et

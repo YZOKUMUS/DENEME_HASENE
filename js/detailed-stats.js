@@ -555,26 +555,54 @@ async function loadWordsStats() {
         const loadKelimeDataFunc = window.loadKelimeData || loadKelimeData;
         const allWords = await loadKelimeDataFunc();
         
-        // Önce Supabase'den yüklemeyi dene
+        // Önce global wordStats değişkenini kontrol et (resetAllStats sonrası boş olabilir)
+        // ÖNEMLİ: Eğer window.wordStats boş bir obje ise ({}), resetAllStats çalıştırılmış demektir
+        // Bu durumda fallback'e geçmemeli, direkt boş gösterilmeli
         let wordStatsData = {};
-        if (typeof window.loadWordStats === 'function') {
+        
+        // Eğer global wordStats tanımlı ise (undefined değilse), onu kullan
+        // Boş obje ({}) ise, resetAllStats çalıştırılmış demektir - fallback'e geçme
+        if (typeof window.wordStats !== 'undefined') {
+            // window.wordStats tanımlı - boş olsa bile onu kullan (resetAllStats sonrası durum)
+            wordStatsData = window.wordStats || {};
+            
+            // Eğer boşsa, direkt boş göster (fallback'e geçme)
+            if (!wordStatsData || Object.keys(wordStatsData).length === 0) {
+                content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
+                return;
+            }
+        } else if (typeof window.loadWordStats === 'function') {
+            // window.wordStats tanımlı değil - ilk yükleme veya global değişken henüz set edilmemiş
             try {
                 wordStatsData = await window.loadWordStats();
                 // Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+                // ÖNEMLİ: Eğer wordStatsData boşsa localStorage'ı da temizle
                 if (wordStatsData && Object.keys(wordStatsData).length > 0) {
                     localStorage.setItem('hasene_wordStats', JSON.stringify(wordStatsData));
+                    // Global değişkeni de güncelle
+                    if (typeof window.wordStats !== 'undefined') {
+                        window.wordStats = wordStatsData;
+                    }
+                } else {
+                    // Backend boş döndüyse localStorage'ı da temizle
+                    localStorage.removeItem('hasene_wordStats');
+                    if (typeof window.wordStats !== 'undefined') {
+                        window.wordStats = {};
+                    }
                 }
             } catch (error) {
                 console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);
-                // Fallback: localStorage
+                // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
                 wordStatsData = safeGetItem('hasene_wordStats', {});
             }
         } else {
-            // Fallback: localStorage
+            // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
             wordStatsData = safeGetItem('hasene_wordStats', {});
         }
-        const words = Object.keys(wordStatsData);
         
+        const words = Object.keys(wordStatsData || {});
+        
+        // Kelime yoksa boş mesaj göster
         if (words.length === 0) {
             content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
             return;
@@ -603,6 +631,12 @@ async function loadWordsStats() {
                 };
             })
             .filter(w => w.attempts > 0);
+        
+        // Eğer hiç attempts > 0 olan kelime yoksa, boş mesaj göster
+        if (wordsWithStats.length === 0) {
+            content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
+            return;
+        }
         
         // En zorlanılan kelimeler (başarı oranı düşük)
         // Koşul: En az 2 deneme olmalı

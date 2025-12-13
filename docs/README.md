@@ -78,11 +78,20 @@ deneme_hasene/
 - **Mükemmel ders** (0 yanlış): %50 ekstra bonus
 
 ### Bonuslar
-- **Günlük Görev Ödülleri**: Tüm görevler tamamlandığında sürpriz ödül (2,500 - 3,500 Hasene)
+- **Günlük Görev Ödülleri**: Tüm görevler tamamlandığında sürpriz ödül (100, 250 veya 500 Hasene)
 - **Günlük Ödül Kutusu**: Her gün kurdelalı kutu ile İslami öğreti ve sürpriz Hasene ödülü
 - **Günlük Vird Bonusu**: Günlük hedefi tamamlayınca bonus Hasene
 
 Tüm bonuslar detaylı istatistiklere kaydedilir.
+
+### ⭐ Yıldız Sistemi
+- **250 Hasene = 1 Yıldız** (yaklaşık 25 doğru cevap, 2-3 oyun)
+- **5 Yıldız = 1 Bronz** (1,250 Hasene)
+- **5 Bronz = 1 Gümüş** (6,250 Hasene)
+- **5 Gümüş = 1 Altın** (31,250 Hasene)
+- **5 Altın = 1 Elmas** (156,250 Hasene)
+
+Yıldızlar rozet sistemine dönüşür ve başarımlar için kullanılır.
 
 ## 🏆 Rozetler ve Başarımlar
 
@@ -124,7 +133,7 @@ Sadeleştirilmiş ve İslami içerik odaklı günlük görevler:
 ### Günlük Ödül Kutusu
 - Tüm görevler tamamlandığında kurdelalı kutu ile sürpriz ödül
 - Her gün farklı İslami öğreti (zikir, dua, hadis)
-- Rastgele ödül miktarı: 2,500 - 3,500 Hasene
+- Rastgele ödül miktarı: 100, 250 veya 500 Hasene
 - Arapça metin, Türkçe çeviri ve eğitici açıklama
 
 ## 🎨 UI/UX Tasarımı

@@ -325,12 +325,13 @@ if (wrong === 0 && correct >= 3) {
 ### Yıldız Sistemi
 
 **Dönüşüm**:
-- **100 Hasene = 1 Yıldız**
+- **250 Hasene = 1 Yıldız** (güncellendi - daha dengeli sistem)
+- 25 doğru cevap = 1 Yıldız (yaklaşık 2-3 oyun gerekir)
 - Yıldızlar rozet sistemine dönüşür
 
 **Hesaplama**:
 ```javascript
-const starPoints = Math.floor(totalPoints / 100);
+const starPoints = Math.floor(totalPoints / 250);
 ```
 
 ### Mertebe (Level) Sistemi
@@ -387,21 +388,24 @@ LEVELS = {
 - Rozetler panel içinde kronolojik sırayla gösterilir (kazanılanlar önce)
 
 **Rozet Türleri**:
-1. **🥉 Bronz**: 5 yıldız = 1 bronz (500 Hasene)
-2. **🥈 Gümüş**: 5 bronz = 1 gümüş (2,500 Hasene)
-3. **🥇 Altın**: 5 gümüş = 1 altın (12,500 Hasene)
-4. **💎 Elmas**: 5 altın = 1 elmas (62,500 Hasene)
+1. **⭐ Yıldız**: 250 Hasene = 1 yıldız (25 doğru cevap, yaklaşık 2-3 oyun)
+2. **🥉 Bronz**: 5 yıldız = 1 bronz (1,250 Hasene)
+3. **🥈 Gümüş**: 5 bronz = 1 gümüş (6,250 Hasene)
+4. **🥇 Altın**: 5 gümüş = 1 altın (31,250 Hasene)
+5. **💎 Elmas**: 5 altın = 1 elmas (156,250 Hasene)
 
 **Rozet Hesaplama**:
 ```javascript
 const badges = {
-    stars: Math.floor(totalPoints / 100),  // Yıldız sayısı
-    bronze: Math.floor(stars / 5),          // Bronz sayısı
-    silver: Math.floor(bronze / 5),         // Gümüş sayısı
-    gold: Math.floor(silver / 5),           // Altın sayısı
-    diamond: Math.floor(gold / 5)           // Elmas sayısı
+    stars: Math.floor(totalPoints / 250),  // Yıldız sayısı (250 Hasene = 1 Yıldız)
+    bronze: Math.floor(stars / 5),          // Bronz sayısı (5 Yıldız = 1 Bronz)
+    silver: Math.floor(bronze / 5),         // Gümüş sayısı (5 Bronz = 1 Gümüş)
+    gold: Math.floor(silver / 5),           // Altın sayısı (5 Gümüş = 1 Altın)
+    diamond: Math.floor(gold / 5)           // Elmas sayısı (5 Altın = 1 Elmas)
 };
 ```
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+read_file
 
 **Rozet Görselleştirme**:
 - PNG ikonlar: `assets/badges/rozet*.png`
@@ -497,8 +501,9 @@ dailyTasks = {
 ```
 
 **Görev Ödülü**:
-- Tüm görevler tamamlandığında: **+2,500 Hasene**
+- Tüm görevler tamamlandığında: Rastgele ödül (100, 250 veya 500 Hasene)
 - `claimDailyRewards()` fonksiyonu ile ödül alınır
+- Her gün farklı İslami öğreti (zikir, dua, hadis) ile birlikte gösterilir
 
 **Görev Kontrolü**:
 - `updateTaskProgress(gameType, amount)` fonksiyonu ile güncellenir

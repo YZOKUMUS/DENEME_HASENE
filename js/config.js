@@ -19,11 +19,11 @@ const CONFIG = {
     TIME_LIMIT_PER_QUESTION: 0, // Zaman limiti kaldırıldı
     LIVES_COUNT: 3, // for 3lives mode
     
-    // Points
-    POINTS_CORRECT: 10,
+    // Points - DOĞRU SAYISI VE DERS SAYISINA ENDEKSLİ
+    POINTS_CORRECT: 10, // Her doğru cevap için 10 Hasene
     POINTS_WRONG: 0, // Yanlış cevap için puan kaybı yok
-    COMBO_BONUS: 5, // every 3 correct answers
-    PERFECT_LESSON_BONUS_PERCENT: 0.5, // 50% of session score
+    COMBO_BONUS_PER_CORRECT: 2, // Her doğru cevap için 2 Hasene combo bonusu (doğru sayısına endeksli)
+    PERFECT_LESSON_BONUS_PER_GAME: 50, // Her mükemmel ders için 50 Hasene bonus (ders sayısına endeksli, minimum 3 soru)
     
     // Daily Goal Defaults
     DAILY_GOAL_DEFAULT: 2700,

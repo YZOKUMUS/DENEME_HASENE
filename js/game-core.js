@@ -480,6 +480,10 @@ async function loadStats() {
                 const backendWordStats = await window.loadWordStats();
                 if (backendWordStats && Object.keys(backendWordStats).length > 0) {
                     wordStats = backendWordStats;
+                    // Global wordStats'ı window'a ekle (detailed-stats.js'de kullanılabilir)
+                    if (typeof window !== 'undefined') {
+                        window.wordStats = wordStats;
+                    }
                     
                     // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
                     safeSetItem('hasene_wordStats', wordStats);
@@ -492,6 +496,11 @@ async function loadStats() {
         // Eğer backend'den yüklenmediyse, localStorage'dan yükle
         if (!wordStats || Object.keys(wordStats).length === 0) {
             wordStats = safeGetItem('hasene_wordStats', {});
+        }
+        
+        // Global wordStats'ı window'a ekle (detailed-stats.js'de kullanılabilir)
+        if (typeof window !== 'undefined') {
+            window.wordStats = wordStats;
         }
         
         // Eski wordStats formatını yeni spaced repetition formatına migrate et
@@ -716,80 +725,13 @@ async function loadStats() {
 async function saveStats() {
     try {
         console.log('🟣 saveStats çağrıldı');
-        // Backend API'ye kaydet (eğer mevcut ve kullanıcı giriş yapmışsa)
-        if (typeof window.saveUserStats === 'function') {
-            console.log('🟣 saveUserStats fonksiyonu mevcut, çağrılıyor...');
-            try {
-                await window.saveUserStats({
-                    total_points: totalPoints,
-                    badges: badges,
-                    streak_data: streakData,
-                    game_stats: gameStats,
-                    perfect_lessons_count: perfectLessonsCount
-                });
-                console.log('✅ Backend\'e istatistikler kaydedildi');
-                infoLog('İstatistikler backend\'e kaydedildi');
-            } catch (apiError) {
-                console.error('❌ Backend kaydetme hatası:', apiError);
-                console.warn('Backend kaydetme hatası, localStorage kullanılıyor:', apiError);
-            }
-        } else {
-            console.warn('⚠️ saveUserStats fonksiyonu bulunamadı');
-        }
         
-        // Günlük görevleri backend'e kaydet
-        if (typeof window.saveDailyTasks === 'function') {
-            try {
-                await window.saveDailyTasks(dailyTasks);
-            } catch (apiError) {
-                console.warn('Backend daily tasks kaydetme hatası:', apiError);
-            }
-        }
-        
-        // Haftalık görevler kaldırıldı - backend kaydetme devre dışı
-        // (Haftalık görevler UI'dan kaldırıldı, backend çağrıları gereksiz)
-        
-        // IndexedDB'ye kaydet (ana sistem - offline destek için)
-        try {
-            if (typeof saveToIndexedDB === 'function') {
-                await saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(err => {
-                    warnLog('IndexedDB kayıt hatası (totalPoints):', err);
-                });
-                await saveToIndexedDB('hasene_badges', badges).catch(err => {
-                    warnLog('IndexedDB kayıt hatası (badges):', err);
-                });
-                await saveToIndexedDB('hasene_streakData', streakData).catch(err => {
-                    warnLog('IndexedDB kayıt hatası (streakData):', err);
-                });
-                
-                // Set'leri array'e çevir
-                const dailyTasksToSave = {
-                    ...dailyTasks,
-                    todayStats: {
-                        ...dailyTasks.todayStats,
-                        allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
-                        farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
-                        reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
-                    }
-                };
-                await saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(err => {
-                    warnLog('IndexedDB kayıt hatası (dailyTasks):', err);
-                });
-                
-                // Haftalık görevler kaldırıldı - IndexedDB kaydı devre dışı
-                // const weeklyTasksToSave = { ...weeklyTasks, ... };
-                // await saveToIndexedDB('hasene_weeklyTasks', weeklyTasksToSave);
-            }
-        } catch (error) {
-            // IndexedDB hataları kritik değil, uygulama çalışmaya devam edebilir
-            warnLog('IndexedDB kayıt işlemi sırasında genel hata:', error);
-        }
-
-        // localStorage'a kaydet (yedek - offline destek için)
+        // localStorage'a hemen kaydet (en hızlı - senkron)
         localStorage.setItem('hasene_totalPoints', totalPoints.toString());
         safeSetItem('hasene_badges', badges);
         safeSetItem('hasene_streakData', streakData);
         
+        // Set'leri array'e çevir (hem backend hem IndexedDB için)
         const dailyTasksToSave = {
             ...dailyTasks,
             todayStats: {
@@ -799,6 +741,67 @@ async function saveStats() {
                 reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
             }
         };
+        
+        // Backend ve IndexedDB kayıtlarını paralel yap (performans için)
+        const savePromises = [];
+        
+        // Backend API kayıtları
+        if (typeof window.saveUserStats === 'function') {
+            savePromises.push(
+                window.saveUserStats({
+                    total_points: totalPoints,
+                    badges: badges,
+                    streak_data: streakData,
+                    game_stats: gameStats,
+                    perfect_lessons_count: perfectLessonsCount
+                }).then(() => {
+                    console.log('✅ Backend\'e istatistikler kaydedildi');
+                }).catch(apiError => {
+                    console.error('❌ Backend kaydetme hatası:', apiError);
+                    console.warn('Backend kaydetme hatası, localStorage kullanılıyor:', apiError);
+                })
+            );
+        }
+        
+        // Günlük görevleri backend'e kaydet
+        if (typeof window.saveDailyTasks === 'function') {
+            savePromises.push(
+                window.saveDailyTasks(dailyTasks).catch(apiError => {
+                    console.warn('Backend daily tasks kaydetme hatası:', apiError);
+                })
+            );
+        }
+        
+        // IndexedDB kayıtları (paralel)
+        if (typeof saveToIndexedDB === 'function') {
+            savePromises.push(
+                saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (totalPoints):', err);
+                })
+            );
+            savePromises.push(
+                saveToIndexedDB('hasene_badges', badges).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (badges):', err);
+                })
+            );
+            savePromises.push(
+                saveToIndexedDB('hasene_streakData', streakData).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (streakData):', err);
+                })
+            );
+            savePromises.push(
+                saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (dailyTasks):', err);
+                })
+            );
+        }
+        
+        // Tüm paralel kayıtları bekle (hızlı tamamlanır)
+        if (savePromises.length > 0) {
+            await Promise.allSettled(savePromises);
+        }
+
+        // localStorage'a diğer verileri kaydet (yedek - offline destek için)
         safeSetItem('hasene_dailyTasks', dailyTasksToSave);
         
             // Haftalık görevler kaldırıldı - localStorage kaydı devre dışı
@@ -901,7 +904,9 @@ function getLevelName(level) {
  * Rozetleri hesaplar
  */
 function calculateBadges(points) {
-    const stars = Math.floor(points / 100);
+    // Yıldız kazanma: 250 Hasene = 1 Yıldız (daha dengeli - 25 doğru cevap gerekir)
+    const stars = Math.floor(points / 250);
+    // Diğer rozetler aynı oranlarda (5 yıldız = 1 bronz, vb.)
     const bronze = Math.floor(stars / 5);
     const silver = Math.floor(bronze / 5);
     const gold = Math.floor(silver / 5);
@@ -1011,8 +1016,10 @@ function updateStatsBar() {
  * Günlük hedef görüntüsünü güncelle
  */
 function updateDailyGoalDisplay() {
+    // GÜNLÜK VİRD SADECE HASENE PUAN VE KAZANILAN TÜM BONUS, COMBO, HEDİYE VS PUANLARA GÖRE ENDEKSLENMİŞTİR
+    // Doğru cevap sayısına değil, sadece Hasene puanına göre
     const dailyGoalHasene = parseInt(localStorage.getItem('dailyGoalHasene') || CONFIG.DAILY_GOAL_DEFAULT.toString());
-    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0'); // dailyXP = kazanılan tüm Hasene (doğru cevap + combo + bonus + hediye + perfect lesson + günlük görev ödülü)
     const percent = Math.min(100, Math.floor((dailyXP / dailyGoalHasene) * 100));
     
     console.log('🔄 updateDailyGoalDisplay çağrıldı:', {
@@ -1327,25 +1334,26 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
         comboCount++;
         if (comboCount > maxCombo) maxCombo = comboCount;
         
-        // Puan ekle - Kelimenin difficulty değerine göre
+        // Puan ekle - Kelimenin difficulty değerine göre (temel puan)
         let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
-        if (comboCount % 3 === 0) {
-            points += CONFIG.COMBO_BONUS;
-        }
+        
+        // Combo bonusu - Her doğru cevap için (doğru sayısına endeksli)
+        const comboBonus = CONFIG.COMBO_BONUS_PER_CORRECT;
+        points += comboBonus;
+        
         addSessionPoints(points);
         
         // Kelime istatistiği
         updateWordStats(currentQuestionData.id, true);
         
-        // Combo göster
-        if (comboCount % 3 === 0) {
-            showComboBonus();
-        }
+        // Combo göster (her doğru cevapta)
+        showComboBonus();
         
         playSound('correct');
         
         // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
-        saveDetailedStats(points, 1, 0, comboCount % 3 === 0 ? comboCount : 0, 0);
+        // Combo bonusu her doğru cevapta olduğu için maxCombo değeri gönderiliyor
+        saveDetailedStats(points, 1, 0, comboCount, 0);
         if (typeof refreshDetailedStatsIfOpen === 'function') {
             refreshDetailedStatsIfOpen();
         }
@@ -1605,23 +1613,25 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         comboCount++;
         if (comboCount > maxCombo) maxCombo = comboCount;
         
-        // Puan ekle - Kelimenin difficulty değerine göre
+        // Puan ekle - Kelimenin difficulty değerine göre (temel puan)
         let points = currentQuestionData.difficulty ?? CONFIG.POINTS_CORRECT;
-        if (comboCount % 3 === 0) {
-            points += CONFIG.COMBO_BONUS;
-        }
+        
+        // Combo bonusu - Her doğru cevap için (doğru sayısına endeksli)
+        const comboBonus = CONFIG.COMBO_BONUS_PER_CORRECT;
+        points += comboBonus;
+        
         addSessionPoints(points);
         
         updateWordStats(currentQuestionData.id, true);
         
-        if (comboCount % 3 === 0) {
-            const comboDisplay = document.getElementById('dinle-combo-display');
-            if (comboDisplay) {
-                comboDisplay.style.display = 'block';
-                document.getElementById('dinle-combo-count').textContent = comboCount;
-                // 2 saniye sonra otomatik gizle
-                setTimeout(() => {
-                    comboDisplay.style.display = 'none';
+        // Combo göster (her doğru cevapta)
+        const comboDisplay = document.getElementById('dinle-combo-display');
+        if (comboDisplay) {
+            comboDisplay.style.display = 'block';
+            document.getElementById('dinle-combo-count').textContent = comboCount;
+            // 2 saniye sonra otomatik gizle
+            setTimeout(() => {
+                comboDisplay.style.display = 'none';
                 }, 2000);
             }
         }
@@ -1629,7 +1639,8 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         playSound('correct');
         
         // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
-        saveDetailedStats(points, 1, 0, comboCount % 3 === 0 ? comboCount : 0, 0);
+        // Combo bonusu her doğru cevapta olduğu için maxCombo değeri gönderiliyor
+        saveDetailedStats(points, 1, 0, comboCount, 0);
         if (typeof refreshDetailedStatsIfOpen === 'function') {
             refreshDetailedStatsIfOpen();
         }
@@ -1943,28 +1954,28 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
             }
         }
         
-        // Combo bonusu
-        if (comboCount % 3 === 0) {
-            points += CONFIG.COMBO_BONUS;
-        }
+        // Combo bonusu - Her doğru cevap için (doğru sayısına endeksli)
+        const comboBonus = CONFIG.COMBO_BONUS_PER_CORRECT;
+        points += comboBonus;
+        
         addSessionPoints(points);
         
-        if (comboCount % 3 === 0) {
-            const comboDisplay = document.getElementById('bosluk-combo-display');
-            if (comboDisplay) {
-                comboDisplay.style.display = 'block';
-                document.getElementById('bosluk-combo-count').textContent = comboCount;
-                // 2 saniye sonra otomatik gizle
-                setTimeout(() => {
-                    comboDisplay.style.display = 'none';
-                }, 2000);
-            }
+        // Combo göster (her doğru cevapta)
+        const comboDisplay = document.getElementById('bosluk-combo-display');
+        if (comboDisplay) {
+            comboDisplay.style.display = 'block';
+            document.getElementById('bosluk-combo-count').textContent = comboCount;
+            // 2 saniye sonra otomatik gizle
+            setTimeout(() => {
+                comboDisplay.style.display = 'none';
+            }, 2000);
         }
         
         playSound('correct');
         
         // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
-        saveDetailedStats(points, 1, 0, comboCount % 3 === 0 ? comboCount : 0, 0);
+        // Combo bonusu her doğru cevapta olduğu için maxCombo değeri gönderiliyor
+        saveDetailedStats(points, 1, 0, comboCount, 0);
         if (typeof refreshDetailedStatsIfOpen === 'function') {
             refreshDetailedStatsIfOpen();
         }
@@ -2241,18 +2252,36 @@ function displayAyet(ayet, allAyet) {
     // Ses çal butonu - Ortak fonksiyon kullan
     setupAudioButtonForContent('ayet-play-audio-btn', ayet.ayet_ses_dosyasi);
     
-    // Navigasyon butonları - Ortak fonksiyon kullan
-    setupNavigationButtons(
-        'ayet-prev-btn',
-        'ayet-next-btn',
-        currentAyetIndex,
-        allAyet,
-        displayAyet,
-        {
-            get: () => currentAyetIndex,
-            set: (val) => { currentAyetIndex = val; }
-        }
-    );
+    // Navigasyon butonları - Özel callback ile (sadece Sonraki butonunda görev güncellenir)
+    const prevBtn = document.getElementById('ayet-prev-btn');
+    const nextBtn = document.getElementById('ayet-next-btn');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentAyetIndex === 0;
+        prevBtn.onclick = () => {
+            if (currentAyetIndex > 0) {
+                currentAyetIndex--;
+                displayAyet(allAyet[currentAyetIndex], allAyet);
+            }
+        };
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.onclick = () => {
+            // Yeni rastgele bir ayet seç
+            const randomIndex = Math.floor(Math.random() * allAyet.length);
+            currentAyetIndex = randomIndex;
+            displayAyet(allAyet[currentAyetIndex], allAyet);
+            // Sonraki butonuna tıklandığında görev ilerlemesini güncelle
+            updateTaskProgress('ayet-oku', {
+                correct: 0,
+                wrong: 0,
+                points: 0,
+                combo: 0
+            });
+        };
+    }
 }
 
 /**
@@ -2314,18 +2343,36 @@ function displayDua(dua, allDua) {
     // Ses çal butonu - Ortak fonksiyon kullan (dua.start zamanı ile)
     setupAudioButtonForContent('dua-play-audio-btn', dua.ses_url, dua.start || null);
     
-    // Navigasyon butonları - Ortak fonksiyon kullan
-    setupNavigationButtons(
-        'dua-prev-btn',
-        'dua-next-btn',
-        currentDuaIndex,
-        allDua,
-        displayDua,
-        {
-            get: () => currentDuaIndex,
-            set: (val) => { currentDuaIndex = val; }
-        }
-    );
+    // Navigasyon butonları - Özel callback ile (sadece Sonraki butonunda görev güncellenir)
+    const prevBtn = document.getElementById('dua-prev-btn');
+    const nextBtn = document.getElementById('dua-next-btn');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentDuaIndex === 0;
+        prevBtn.onclick = () => {
+            if (currentDuaIndex > 0) {
+                currentDuaIndex--;
+                displayDua(allDua[currentDuaIndex], allDua);
+            }
+        };
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.onclick = () => {
+            // Yeni rastgele bir dua seç
+            const randomIndex = Math.floor(Math.random() * allDua.length);
+            currentDuaIndex = randomIndex;
+            displayDua(allDua[currentDuaIndex], allDua);
+            // Sonraki butonuna tıklandığında görev ilerlemesini güncelle
+            updateTaskProgress('dua-et', {
+                correct: 0,
+                wrong: 0,
+                points: 0,
+                combo: 0
+            });
+        };
+    }
 }
 
 /**
@@ -2377,18 +2424,36 @@ function displayHadis(hadis, allHadis) {
     if (textEl) textEl.textContent = hadis.text || '';
     if (refEl) refEl.textContent = hadis.refno || '';
     
-    // Navigasyon butonları - Ortak fonksiyon kullan
-    setupNavigationButtons(
-        'hadis-prev-btn',
-        'hadis-next-btn',
-        currentHadisIndex,
-        allHadis,
-        displayHadis,
-        {
-            get: () => currentHadisIndex,
-            set: (val) => { currentHadisIndex = val; }
-        }
-    );
+    // Navigasyon butonları - Özel callback ile (sadece Sonraki butonunda görev güncellenir)
+    const prevBtn = document.getElementById('hadis-prev-btn');
+    const nextBtn = document.getElementById('hadis-next-btn');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentHadisIndex === 0;
+        prevBtn.onclick = () => {
+            if (currentHadisIndex > 0) {
+                currentHadisIndex--;
+                displayHadis(allHadis[currentHadisIndex], allHadis);
+            }
+        };
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.onclick = () => {
+            // Yeni rastgele bir hadis seç
+            const randomIndex = Math.floor(Math.random() * allHadis.length);
+            currentHadisIndex = randomIndex;
+            displayHadis(allHadis[currentHadisIndex], allHadis);
+            // Sonraki butonuna tıklandığında görev ilerlemesini güncelle
+            updateTaskProgress('hadis-oku', {
+                correct: 0,
+                wrong: 0,
+                points: 0,
+                combo: 0
+            });
+        };
+    }
 }
 
 // ============================================
@@ -2552,23 +2617,27 @@ async function endGame() {
         totalQuestions: questions.length
     });
     
-    // Perfect Lesson bonusu kontrolü
+    // Perfect Lesson bonusu kontrolü - DERS SAYISINA ENDEKSLİ
     // Tüm sorular doğru cevaplanmış olmalı (hiç yanlış cevap yok ve tüm sorular cevaplanmış)
     let perfectBonus = 0;
     const totalQuestions = questions.length;
     if (sessionWrong === 0 && sessionCorrect === totalQuestions && sessionScore > 0 && totalQuestions >= 3) {
-        perfectBonus = Math.floor(sessionScore * CONFIG.PERFECT_LESSON_BONUS_PERCENT);
+        // Her mükemmel ders için sabit bonus (ders sayısına endeksli, session skoruna değil)
+        perfectBonus = CONFIG.PERFECT_LESSON_BONUS_PER_GAME;
         sessionScore += perfectBonus;
         // Mükemmel ders sayısını artır
         perfectLessonsCount++;
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
-        console.log('⭐ Perfect bonus eklendi:', perfectBonus);
+        console.log('⭐ Perfect bonus eklendi (ders bazlı):', perfectBonus);
     }
     
     // Global puanlara ekle
     // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
     // Bu şekilde çift sayma önlenir
-    await addToGlobalPoints(sessionScore, sessionCorrect, true);
+    // await kaldırıldı - sonuç paneli hemen açılsın (performans optimizasyonu)
+    addToGlobalPoints(sessionScore, sessionCorrect, true).catch(err => {
+        console.error('addToGlobalPoints hatası (kritik değil):', err);
+    });
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle
@@ -2634,8 +2703,13 @@ async function endGame() {
         updateStreakDisplay();
     }
     
-    // Backend'e kaydet
-    await saveStatsImmediate();
+    // Sonuç panelini HEMEN göster (kullanıcı deneyimi için kritik)
+    showCustomConfirm(sessionCorrect, sessionWrong, sessionScore, perfectBonus);
+    
+    // Backend kayıtlarını arka planda yap (sonuç panelini bekletme)
+    saveStatsImmediate().catch(err => {
+        console.error('Backend kayıt hatası (kritik değil):', err);
+    });
     
     // Haftalık ve aylık için de oyun sayısını güncelle
     const weekStartStr = getWeekStartDateString(new Date());
@@ -2702,8 +2776,7 @@ async function endGame() {
     // Eğer detaylı istatistikler modalı açıksa, panelleri yenile
     refreshDetailedStatsIfOpen();
     
-    // Sonuç modalını göster
-    showCustomConfirm(sessionCorrect, sessionWrong, sessionScore, perfectBonus);
+    // Not: Sonuç modalı yukarıda gösterildi (performans için backend kayıtlarından önce)
 }
 
 /**
@@ -3279,91 +3352,91 @@ const islamicTeachings = [
         arabic: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللهِ',
         turkish: 'Güç ve kuvvet ancak Allah iledir',
         explanation: 'Bu zikir, zorluklar karşısında Allah\'a sığınmayı ve O\'ndan yardım istemeyi hatırlatır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'أَشْهَدُ أَنْ لَا إِلَٰهَ إِلَّا اللَّهُ',
         turkish: 'Şehadet ederim ki Allah\'tan başka ilah yoktur',
         explanation: 'Kelime-i Şehadet, İslam\'ın temelidir ve imanın ilk şartıdır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'سُبْحَانَ اللَّهِ',
         turkish: 'Allah noksan sıfatlardan münezzehtir',
         explanation: 'Bu zikir, Allah\'ın her türlü eksiklikten uzak olduğunu hatırlatır ve günahların affına vesile olur.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'الْحَمْدُ لِلَّهِ',
         turkish: 'Hamd Allah\'a mahsustur',
         explanation: 'Her türlü övgü ve şükür Allah\'a aittir. Her durumda şükretmek mü\'minin özelliğidir.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'اللهُ أَكْبَرُ',
         turkish: 'Allah en büyüktür',
         explanation: 'Allah her şeyden daha büyüktür. Bu zikir, kalbi Allah\'a bağlar ve O\'na teslimiyeti artırır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'لَا إِلَٰهَ إِلَّا اللَّهُ',
         turkish: 'Allah\'tan başka ilah yoktur',
         explanation: 'Kelime-i Tevhid, tevhid inancının özüdür ve her Müslüman\'ın kalbindeki en önemli zikirdir.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ',
         turkish: 'Allah bize yeter, O ne güzel vekildir',
         explanation: 'Her şeyde Allah\'a güvenmeyi ve O\'nu vekil edinmeyi öğütleyen bir zikirdir.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ',
         turkish: 'Biz Allah\'a aidiz ve O\'na döneceğiz',
         explanation: 'İstirca duasıdır. Musibet anında sabır ve teslimiyet için okunur.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'مَا شَاءَ اللَّهُ',
         turkish: 'Allah dilediğini yapar',
         explanation: 'Güzel bir şey gördüğümüzde, Allah\'ın dilemesiyle olduğunu hatırlatmak için söylenir.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'بَارَكَ اللَّهُ',
         turkish: 'Allah bereket versin',
         explanation: 'Hayırlı işlerde bereket dileyerek, Allah\'tan bereket istemek için kullanılır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
         turkish: 'Allah noksan sıfatlardan münezzehtir, hamd O\'na mahsustur',
         explanation: 'Bu zikir hem tesbih hem hamd içerir. Günahların affına ve sevap kazanmaya vesile olur.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'لَا إِلَٰهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ',
         turkish: 'Senden başka ilah yoktur, sen münezzehsin, ben zalimlerden oldum',
         explanation: 'Yunus (a.s.)\'ın duasıdır. Zor durumda kalanların Allah\'a yönelmesini öğütler.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
         turkish: 'Rabbimiz, bize dünyada da iyilik ver, ahirette de iyilik ver ve bizi ateş azabından koru',
         explanation: 'Dünya ve ahiret hayrını isteyen mükemmel bir duadır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'اللَّهُمَّ بَارِكْ لِي فِيهَا',
         turkish: 'Allah\'ım, bunda benim için bereket ver',
         explanation: 'Yeni bir şeye başlarken veya bir nimete sahip olurken bereket için okunur.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     },
     {
         arabic: 'رَبِّ زِدْنِي عِلْمًا',
         turkish: 'Rabbim, benim ilmimi artır',
         explanation: 'İlim öğrenmek ve bilgiye değer vermek için okunan bir duadır.',
-        rewardAmounts: [2500, 3000, 3500]
+        rewardAmounts: [100, 250, 500]
     }
 ];
 
@@ -4172,13 +4245,18 @@ function showBadgeUnlock(badge) {
  * Başarımları kontrol eder
  */
 function checkAchievements() {
+    // Yıldız sayısını hesapla (250 Hasene = 1 Yıldız)
+    const calculatedBadges = calculateBadges(totalPoints);
     const stats = {
         totalPoints,
         totalCorrect: gameStats.totalCorrect,
         totalWrong: gameStats.totalWrong,
         level: calculateLevel(totalPoints),
         currentStreak: streakData.currentStreak,
-        maxCombo
+        maxCombo,
+        perfectLessons: perfectLessonsCount,
+        allModesPlayed: Object.keys(gameStats.gameModeCounts || {}).filter(mode => (gameStats.gameModeCounts[mode] || 0) > 0).length,
+        stars: calculatedBadges.stars // Yıldız sayısını stats'e ekle
     };
     
         ACHIEVEMENTS.forEach(achievement => {
@@ -5276,6 +5354,10 @@ async function resetAllStats() {
         rewardsClaimed: false
     };
     wordStats = {};
+    // Global wordStats'ı da window'a ekle (detailed-stats.js'de kullanılabilir)
+    if (typeof window !== 'undefined') {
+        window.wordStats = wordStats;
+    }
     unlockedAchievements = [];
     unlockedBadges = [];
     perfectLessonsCount = 0;
@@ -5295,7 +5377,7 @@ async function resetAllStats() {
                     'daily_stats',
                     'weekly_stats',
                     'monthly_stats',
-                    'word_stats',
+                    'word_stats', // Kelime istatistikleri - ÖNEMLİ: Tüm kelime verileri silinecek
                     'favorites',
                     'favorite_words',
                     'achievements',
@@ -5309,15 +5391,31 @@ async function resetAllStats() {
                 
                 for (const table of tablesToDelete) {
                     try {
-                        const { error } = await window.supabaseClient
-                            .from(table)
-                            .delete()
-                            .eq('user_id', user.id);
-                        
-                        if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
-                            console.warn(`⚠️ Backend ${table} silme hatası:`, error);
-                        } else if (!error) {
-                            console.log(`✅ Backend ${table} silindi`);
+                        // word_stats tablosu için özel kontrol
+                        if (table === 'word_stats') {
+                            console.log('🗑️ word_stats tablosu temizleniyor...');
+                            // Önce tüm word_stats kayıtlarını sil
+                            const { error: deleteError } = await window.supabaseClient
+                                .from(table)
+                                .delete()
+                                .eq('user_id', user.id);
+                            
+                            if (deleteError && deleteError.code !== '42501' && deleteError.code !== 'PGRST301' && deleteError.code !== 'PGRST116') {
+                                console.warn(`⚠️ Backend ${table} silme hatası:`, deleteError);
+                            } else if (!deleteError) {
+                                console.log(`✅ Backend ${table} tüm kelime istatistikleri silindi`);
+                            }
+                        } else {
+                            const { error } = await window.supabaseClient
+                                .from(table)
+                                .delete()
+                                .eq('user_id', user.id);
+                            
+                            if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
+                                console.warn(`⚠️ Backend ${table} silme hatası:`, error);
+                            } else if (!error) {
+                                console.log(`✅ Backend ${table} silindi`);
+                            }
                         }
                     } catch (tableError) {
                         console.warn(`⚠️ ${table} tablosu silinirken hata (normal olabilir):`, tableError);
@@ -5391,23 +5489,57 @@ async function resetAllStats() {
     updateDailyGoalDisplay();
     updateStreakDisplay();
     
+    // Vazifeler (Günlük Görevler) panelini yenile
+    if (typeof updateTasksDisplay === 'function') {
+        updateTasksDisplay();
+    }
+    
     // Rozet modalını yenile (eğer açıksa)
     if (document.getElementById('badges-modal') && document.getElementById('badges-modal').style.display !== 'none') {
         showBadgesModal();
     }
     
-    // Kelime istatistikleri panelini yenile (eğer açıksa)
-    if (typeof window.loadWordsStats === 'function') {
-        const wordsStatsContent = document.getElementById('words-stats-content');
-        const detailedStatsModal = document.getElementById('detailed-stats-modal');
-        if (wordsStatsContent && detailedStatsModal && 
-            detailedStatsModal.style.display !== 'none') {
-            // Panel açıksa yenile
+    // Detaylı istatistikler modalını yenile (eğer açıksa) - Kelimeler ve Favoriler panelleri
+    // ÖNEMLİ: Backend silme işlemi tamamlandıktan SONRA UI'ı güncelle
+    // Global wordStats = {} yapıldı, localStorage ve backend temizlendi
+    const detailedStatsModal = document.getElementById('detailed-stats-modal');
+    if (detailedStatsModal && detailedStatsModal.style.display !== 'none') {
+        // Kelime istatistikleri panelini yenile (wordStats boş, backend/localStorage temizlendi)
+        // loadWordsStats boş veri görecek ve "Henüz kelime istatistiği yok" mesajı gösterecek
+        if (typeof window.loadWordsStats === 'function') {
             try {
+                // Global wordStats'ı açıkça boş yap (resetAllStats zaten yaptı ama ekstra güvence)
+                if (typeof window !== 'undefined') {
+                    window.wordStats = {};
+                }
+                // Backend'den yükleme denemesi yapılmadan önce boş olduğunu garantile
                 await window.loadWordsStats();
+                // Tekrar kontrol et ve boş olduğundan emin ol
+                if (typeof window !== 'undefined' && window.wordStats && Object.keys(window.wordStats).length > 0) {
+                    console.warn('⚠️ resetAllStats sonrası wordStats hala dolu! Manuel temizleniyor...');
+                    window.wordStats = {};
+                }
             } catch (e) {
                 console.warn('Kelime istatistikleri paneli yenilenirken hata:', e);
+                // Hata olsa bile boş göster
+                const wordsStatsContent = document.getElementById('words-stats-content');
+                if (wordsStatsContent) {
+                    wordsStatsContent.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
+                }
             }
+        }
+        // Favoriler panelini de yenile
+        if (typeof loadFavoritesStats === 'function') {
+            try {
+                await loadFavoritesStats();
+            } catch (e) {
+                console.warn('Favoriler paneli yenilenirken hata:', e);
+            }
+        }
+    } else {
+        // Modal açık değilse refreshDetailedStatsIfOpen çağır (açıldığında yüklenecek)
+        if (typeof refreshDetailedStatsIfOpen === 'function') {
+            refreshDetailedStatsIfOpen();
         }
     }
     
