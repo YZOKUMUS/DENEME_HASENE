@@ -12,9 +12,21 @@ const STORE_NAME = 'gameData';
  * IndexedDB'yi başlatır (singleton pattern - sadece bir kez açılır)
  */
 async function initIndexedDB() {
-    // Eğer zaten açıksa, mevcut db'yi döndür
+    // Eğer zaten açıksa ve bağlantı aktifse, mevcut db'yi döndür
+    // Not: IndexedDB'de readyState property yok, ancak transaction açarak test edebiliriz
     if (db) {
-        return db;
+        // Bağlantının hala açık olduğunu kontrol et (basit bir kontrol)
+        try {
+            // Transaction açmayı deneyerek bağlantıyı test et
+            // Ancak bu işlem transaction açmaz, sadece objectStore kontrolü yapar
+            if (db.objectStoreNames && db.objectStoreNames.contains(STORE_NAME)) {
+                return db;
+            }
+        } catch (e) {
+            // Bağlantı kapalı, sıfırla ve yeniden aç
+            warnLog('IndexedDB bağlantısı kapalı, yeniden açılıyor...');
+            db = null;
+        }
     }
     
     // Eğer zaten açılıyorsa, mevcut Promise'i bekle
@@ -34,6 +46,18 @@ async function initIndexedDB() {
         
         request.onsuccess = () => {
             db = request.result;
+            
+            // Bağlantı kapanırsa db'yi null yap (yeniden açılabilmesi için)
+            db.onclose = () => {
+                warnLog('IndexedDB bağlantısı kapatıldı');
+                db = null;
+                initPromise = null;
+            };
+            
+            db.onerror = (event) => {
+                errorLog('IndexedDB bağlantı hatası:', event);
+            };
+            
             infoLog('IndexedDB başarıyla açıldı');
             initPromise = null; // Başarılı olduğunda Promise'i sıfırla
             resolve(db);
@@ -57,31 +81,73 @@ async function initIndexedDB() {
  * IndexedDB'ye veri kaydeder
  */
 async function saveToIndexedDB(key, value) {
+    // Bağlantı yoksa veya kapalıysa aç
     if (!db) {
         await initIndexedDB();
     }
     
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const objectStore = transaction.objectStore(STORE_NAME);
-        
-        const data = {
-            key: key,
-            value: typeof value === 'string' ? value : JSON.stringify(value),
-            timestamp: Date.now()
-        };
-        
-        const request = objectStore.put(data);
-        
-        request.onsuccess = () => {
-            debugLog('IndexedDB\'ye kaydedildi:', key);
-            resolve();
-        };
-        
-        request.onerror = () => {
-            errorLog('IndexedDB kayıt hatası:', request.error);
-            reject(request.error);
-        };
+        try {
+            // Bağlantı kontrolü - eğer hala kapalıysa yeniden aç
+            if (!db) {
+                initIndexedDB().then(() => {
+                    // Yeniden deneme
+                    saveToIndexedDB(key, value).then(resolve).catch(reject);
+                }).catch(reject);
+                return;
+            }
+            
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            
+            // Transaction hata kontrolü
+            transaction.onerror = (event) => {
+                errorLog('IndexedDB transaction hatası:', event.target.error);
+                // Bağlantı kapanmışsa db'yi null yap
+                if (event.target.error && event.target.error.name === 'InvalidStateError') {
+                    db = null;
+                    initPromise = null;
+                }
+                reject(event.target.error);
+            };
+            
+            transaction.onabort = () => {
+                warnLog('IndexedDB transaction iptal edildi');
+                reject(new Error('Transaction aborted'));
+            };
+            
+            const objectStore = transaction.objectStore(STORE_NAME);
+            
+            const data = {
+                key: key,
+                value: typeof value === 'string' ? value : JSON.stringify(value),
+                timestamp: Date.now()
+            };
+            
+            const request = objectStore.put(data);
+            
+            request.onsuccess = () => {
+                debugLog('IndexedDB\'ye kaydedildi:', key);
+                resolve();
+            };
+            
+            request.onerror = () => {
+                errorLog('IndexedDB kayıt hatası:', request.error);
+                reject(request.error);
+            };
+        } catch (error) {
+            // InvalidStateError veya diğer hatalar için bağlantıyı sıfırla
+            if (error.name === 'InvalidStateError' || error.message.includes('closing')) {
+                warnLog('IndexedDB bağlantısı kapanıyor, yeniden açılıyor...');
+                db = null;
+                initPromise = null;
+                // Yeniden deneme
+                initIndexedDB().then(() => {
+                    saveToIndexedDB(key, value).then(resolve).catch(reject);
+                }).catch(reject);
+            } else {
+                reject(error);
+            }
+        }
     });
 }
 
@@ -98,30 +164,57 @@ async function loadFromIndexedDB(key) {
     }
     
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const objectStore = transaction.objectStore(STORE_NAME);
-        const request = objectStore.get(key);
-        
-        request.onsuccess = () => {
-            if (request.result) {
-                const value = request.result.value;
-                try {
-                    // JSON ise parse et
-                    const parsed = JSON.parse(value);
-                    resolve(parsed);
-                } catch (e) {
-                    // String ise direkt döndür
-                    resolve(value);
-                }
-            } else {
-                resolve(null);
+        try {
+            // Bağlantı kontrolü
+            if (!db) {
+                initIndexedDB().then(() => {
+                    loadFromIndexedDB(key).then(resolve).catch(() => resolve(null));
+                }).catch(() => resolve(null));
+                return;
             }
-        };
-        
-        request.onerror = () => {
-            errorLog('IndexedDB yükleme hatası:', request.error);
-            reject(request.error);
-        };
+            
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            
+            transaction.onerror = (event) => {
+                if (event.target.error && event.target.error.name === 'InvalidStateError') {
+                    db = null;
+                    initPromise = null;
+                }
+                resolve(null); // Hata durumunda null döndür (kritik değil)
+            };
+            
+            const objectStore = transaction.objectStore(STORE_NAME);
+            const request = objectStore.get(key);
+            
+            request.onsuccess = () => {
+                if (request.result) {
+                    const value = request.result.value;
+                    try {
+                        // JSON ise parse et
+                        const parsed = JSON.parse(value);
+                        resolve(parsed);
+                    } catch (e) {
+                        // String ise direkt döndür
+                        resolve(value);
+                    }
+                } else {
+                    resolve(null);
+                }
+            };
+            
+            request.onerror = () => {
+                // Yükleme hatası kritik değil, null döndür
+                resolve(null);
+            };
+        } catch (error) {
+            if (error.name === 'InvalidStateError' || error.message.includes('closing')) {
+                db = null;
+                initPromise = null;
+                resolve(null); // Kritik değil, null döndür
+            } else {
+                resolve(null); // Diğer hatalarda da null döndür (kritik değil)
+            }
+        }
     });
 }
 
@@ -134,19 +227,47 @@ async function deleteFromIndexedDB(key) {
     }
     
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const objectStore = transaction.objectStore(STORE_NAME);
-        const request = objectStore.delete(key);
-        
-        request.onsuccess = () => {
-            debugLog('IndexedDB\'den silindi:', key);
-            resolve();
-        };
-        
-        request.onerror = () => {
-            errorLog('IndexedDB silme hatası:', request.error);
-            reject(request.error);
-        };
+        try {
+            if (!db) {
+                initIndexedDB().then(() => {
+                    deleteFromIndexedDB(key).then(resolve).catch(reject);
+                }).catch(reject);
+                return;
+            }
+            
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            
+            transaction.onerror = (event) => {
+                if (event.target.error && event.target.error.name === 'InvalidStateError') {
+                    db = null;
+                    initPromise = null;
+                }
+                reject(event.target.error);
+            };
+            
+            const objectStore = transaction.objectStore(STORE_NAME);
+            const request = objectStore.delete(key);
+            
+            request.onsuccess = () => {
+                debugLog('IndexedDB\'den silindi:', key);
+                resolve();
+            };
+            
+            request.onerror = () => {
+                errorLog('IndexedDB silme hatası:', request.error);
+                reject(request.error);
+            };
+        } catch (error) {
+            if (error.name === 'InvalidStateError' || error.message.includes('closing')) {
+                db = null;
+                initPromise = null;
+                initIndexedDB().then(() => {
+                    deleteFromIndexedDB(key).then(resolve).catch(reject);
+                }).catch(reject);
+            } else {
+                reject(error);
+            }
+        }
     });
 }
 

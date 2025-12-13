@@ -750,26 +750,39 @@ async function saveStats() {
         // (Haftalık görevler UI'dan kaldırıldı, backend çağrıları gereksiz)
         
         // IndexedDB'ye kaydet (ana sistem - offline destek için)
-        if (db) {
-            await saveToIndexedDB('hasene_totalPoints', totalPoints.toString());
-            await saveToIndexedDB('hasene_badges', badges);
-            await saveToIndexedDB('hasene_streakData', streakData);
-            
-            // Set'leri array'e çevir
-            const dailyTasksToSave = {
-                ...dailyTasks,
-                todayStats: {
-                    ...dailyTasks.todayStats,
-                    allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
-                    farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
-                    reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
-                }
-            };
-            await saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave);
-            
-            // Haftalık görevler kaldırıldı - IndexedDB kaydı devre dışı
-            // const weeklyTasksToSave = { ...weeklyTasks, ... };
-            // await saveToIndexedDB('hasene_weeklyTasks', weeklyTasksToSave);
+        try {
+            if (typeof saveToIndexedDB === 'function') {
+                await saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (totalPoints):', err);
+                });
+                await saveToIndexedDB('hasene_badges', badges).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (badges):', err);
+                });
+                await saveToIndexedDB('hasene_streakData', streakData).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (streakData):', err);
+                });
+                
+                // Set'leri array'e çevir
+                const dailyTasksToSave = {
+                    ...dailyTasks,
+                    todayStats: {
+                        ...dailyTasks.todayStats,
+                        allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
+                        farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
+                        reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
+                    }
+                };
+                await saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(err => {
+                    warnLog('IndexedDB kayıt hatası (dailyTasks):', err);
+                });
+                
+                // Haftalık görevler kaldırıldı - IndexedDB kaydı devre dışı
+                // const weeklyTasksToSave = { ...weeklyTasks, ... };
+                // await saveToIndexedDB('hasene_weeklyTasks', weeklyTasksToSave);
+            }
+        } catch (error) {
+            // IndexedDB hataları kritik değil, uygulama çalışmaya devam edebilir
+            warnLog('IndexedDB kayıt işlemi sırasında genel hata:', error);
         }
 
         // localStorage'a kaydet (yedek - offline destek için)

@@ -131,28 +131,44 @@ GROUP BY user_id
 ORDER BY COUNT(*) DESC
 LIMIT 10;
 
--- 1.6. DAILY_TASKS - Günlük görevler
+-- 1.6. DAILY_TASKS - Günlük görevler (Detaylı)
 SELECT 
     'DAILY_TASKS' as tablo,
     user_id,
     last_task_date as "Son Görev Tarihi",
     rewards_claimed as "Ödül Alındı mı?",
+    jsonb_array_length(tasks) as "Toplam Görev Sayısı",
+    jsonb_array_length(bonus_tasks) as "Bonus Görev Sayısı",
+    jsonb_array_length(completed_tasks) as "Tamamlanan Görev Sayısı",
+    today_stats->>'toplamDogru' as "Bugünkü Doğru",
+    today_stats->>'toplamPuan' as "Bugünkü Puan",
+    today_stats->>'comboCount' as "Bugünkü Combo",
+    today_stats->'ayetOku' as "Ayet Oku Sayısı",
+    today_stats->'duaEt' as "Dua Et Sayısı",
+    today_stats->'hadisOku' as "Hadis Oku Sayısı",
     updated_at
 FROM daily_tasks
 ORDER BY updated_at DESC
 LIMIT 5;
 
--- 1.7. WEEKLY_TASKS - Haftalık görevler
+-- 1.6.1. DAILY_TASKS - Görev Detayları (JSON olarak)
 SELECT 
-    'WEEKLY_TASKS' as tablo,
+    'DAILY_TASKS_DETAY' as tablo,
     user_id,
-    week_start as "Hafta Başlangıcı",
-    week_end as "Hafta Sonu",
-    rewards_claimed as "Ödül Alındı mı?",
-    updated_at
-FROM weekly_tasks
+    last_task_date as "Son Görev Tarihi",
+    tasks as "Görevler (JSON)",
+    bonus_tasks as "Bonus Görevler (JSON)",
+    completed_tasks as "Tamamlanan Görevler (JSON)",
+    today_stats as "Bugünkü İstatistikler (JSON)",
+    rewards_claimed as "Ödül Alındı mı?"
+FROM daily_tasks
 ORDER BY updated_at DESC
-LIMIT 5;
+LIMIT 3;
+
+-- NOT: Haftalık görevler kaldırıldı (UI'dan ve sistemden çıkarıldı)
+-- 1.7. WEEKLY_TASKS sorgusu artık kullanılmıyor
+-- Haftalık görevler tablosu hala mevcut olabilir (geriye dönük uyumluluk için)
+-- Ancak yeni özellikler haftalık görevler kullanmıyor
 
 -- 1.8. BAŞARIMLAR VE ROZETLER - Tek sorguda tüm başarımlar ve rozetler
 
@@ -525,12 +541,13 @@ UNION ALL
 SELECT 
     'daily_tasks',
     COUNT(*)
-FROM daily_tasks
-UNION ALL
-SELECT 
-    'weekly_tasks',
-    COUNT(*)
-FROM weekly_tasks;
+FROM daily_tasks;
+-- NOT: weekly_tasks sorgusu kaldırıldı (haftalık görevler sistemden çıkarıldı)
+-- UNION ALL
+-- SELECT 
+--     'weekly_tasks',
+--     COUNT(*)
+-- FROM weekly_tasks;
 
 -- ============================================
 -- 2. KULLANICILARIN KAZANÇ RAPORU

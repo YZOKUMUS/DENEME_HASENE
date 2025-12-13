@@ -453,36 +453,62 @@ async function loadDailyTasks() {
     if (!user) return null;
     
     if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('daily_tasks')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        
-        if (data) {
-            // Kolon isimlerini camelCase'e çevir
-            const result = {
-                lastTaskDate: data.last_task_date,
-                tasks: data.tasks || [],
-                bonusTasks: data.bonus_tasks || [],
-                completedTasks: data.completed_tasks || [],
-                todayStats: data.today_stats || {},
-                rewardsClaimed: data.rewards_claimed || false
-            };
+        try {
+            const { data, error } = await supabaseClient
+                .from('daily_tasks')
+                .select('*')
+                .eq('user_id', user.id)
+                .maybeSingle(); // maybeSingle kullan - kayıt yoksa null döner, hata fırlatmaz
             
-            // Set'leri geri yükle
-            if (result.todayStats) {
-                result.todayStats.allGameModes = new Set(result.todayStats.allGameModes || []);
-                result.todayStats.farklıZorluk = new Set(result.todayStats.farklıZorluk || []);
-                result.todayStats.reviewWords = new Set(result.todayStats.reviewWords || []);
+            // 406 hatası için özel kontrol
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    // PGRST116 = not found - bu normal, kullanıcının henüz verisi yok
+                    return null;
+                }
+                
+                // 406 hatası için özel mesaj
+                if (error.code === 'PGRST301' || error.message?.includes('406') || error.message?.includes('Not Acceptable')) {
+                    console.warn('⚠️ loadDailyTasks: 406 hatası - Supabase API yapılandırması kontrol edilmeli');
+                    console.warn('💡 İpucu: Supabase Dashboard > Settings > API > Accept header ayarlarını kontrol edin');
+                    // Kritik değil, null döndür ve localStorage kullan
+                    return null;
+                }
+                
+                throw error;
             }
             
-            return result;
+            if (data) {
+                // Kolon isimlerini camelCase'e çevir
+                const result = {
+                    lastTaskDate: data.last_task_date,
+                    tasks: data.tasks || [],
+                    bonusTasks: data.bonus_tasks || [],
+                    completedTasks: data.completed_tasks || [],
+                    todayStats: data.today_stats || {},
+                    rewardsClaimed: data.rewards_claimed || false
+                };
+                
+                // Set'leri geri yükle
+                if (result.todayStats) {
+                    result.todayStats.allGameModes = new Set(result.todayStats.allGameModes || []);
+                    result.todayStats.farklıZorluk = new Set(result.todayStats.farklıZorluk || []);
+                    result.todayStats.reviewWords = new Set(result.todayStats.reviewWords || []);
+                }
+                
+                return result;
+            }
+            
+            return null;
+        } catch (catchError) {
+            // Beklenmeyen hataları yakala
+            console.error('❌ loadDailyTasks hatası:', catchError);
+            if (catchError.message?.includes('406') || catchError.message?.includes('Not Acceptable')) {
+                console.warn('⚠️ 406 hatası yakalandı, localStorage kullanılacak');
+                return null;
+            }
+            throw catchError;
         }
-        
-        return null;
     }
     
     // Fallback: localStorage

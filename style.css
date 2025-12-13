@@ -1959,43 +1959,46 @@ body {
 .badges-grid,
 .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-sm);
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm);
 }
 
 .badge-item,
 .achievement-item {
     text-align: center;
-    padding: var(--spacing-xs);
-    background: #f9fafb;
-    border-radius: var(--radius-sm);
-    border: 1px solid #e5e7eb;
-    transition: all var(--transition-normal);
+    padding: var(--spacing-sm);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 90px;
-}
-
-/* Kazanılan rozetler için daha kompakt görünüm */
-.badge-item.unlocked,
-.achievement-item.unlocked {
     min-height: 100px;
-    padding: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    cursor: pointer;
 }
 
+/* Kazanılan rozetler - iPhone Style Glassmorphism */
 .badge-item.unlocked,
 .achievement-item.unlocked {
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    position: relative;
+    min-height: 110px;
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(118, 75, 162, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
     transform: scale(1);
-    transition: all var(--transition-normal);
-    animation: none;
-    padding: var(--spacing-sm);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes badgeGlow {
@@ -2032,30 +2035,33 @@ body {
     }
 }
 
+/* iPhone Style Tap Feedback */
+.badge-item.unlocked:active,
+.achievement-item.unlocked:active {
+    transform: scale(0.96);
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .badge-item.unlocked:hover,
 .achievement-item.unlocked:hover {
-    transform: scale(1.05);
-    background: rgba(251, 191, 36, 0.05);
-    border-radius: var(--radius-sm);
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: 0 12px 40px rgba(118, 75, 162, 0.25),
+                0 4px 12px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: rgba(118, 75, 162, 0.4);
 }
 
-.badge-item.unlocked {
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.badge-item.unlocked:hover {
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-    border-color: var(--accent-primary);
-}
-
-/* Kilitli rozetler için daha soluk görünüm */
+/* Kilitli rozetler - iPhone Style (Disabled State) */
 .badge-item:not(.unlocked),
 .achievement-item:not(.unlocked) {
-    border: 1px solid #d1d5db;
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-    opacity: 0.5;
-    filter: grayscale(0.3);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(248, 249, 250, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.6;
+    filter: grayscale(50%) brightness(0.95);
+    cursor: default;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .badge-item img,
@@ -2086,22 +2092,36 @@ body {
     filter: grayscale(70%) brightness(0.7) contrast(0.8);
 }
 
-/* Kazanılmış rozetler tam canlı ve parlak */
+/* Kazanılmış rozetler - iPhone Style (Vibrant) */
 .badge-item.unlocked .badge-image,
 .achievement-item.unlocked .achievement-image {
     opacity: 1;
-    filter: brightness(1.3) saturate(1.4) contrast(1.1) drop-shadow(0 4px 8px rgba(251, 191, 36, 0.5));
-    animation: imageGlow 2s ease-in-out infinite;
+    filter: brightness(1.15) saturate(1.3) contrast(1.05) 
+            drop-shadow(0 4px 12px rgba(118, 75, 162, 0.3))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    animation: imageGlow 3s ease-in-out infinite;
+    transform: scale(1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge-item.unlocked:hover .badge-image,
+.achievement-item.unlocked:hover .achievement-image {
+    filter: brightness(1.2) saturate(1.4) contrast(1.1) 
+            drop-shadow(0 6px 16px rgba(118, 75, 162, 0.4))
+            drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
     transform: scale(1.05);
-    transition: all var(--transition-normal);
 }
 
 @keyframes imageGlow {
     0%, 100% { 
-        filter: brightness(1.3) saturate(1.4) contrast(1.1) drop-shadow(0 4px 8px rgba(251, 191, 36, 0.5));
+        filter: brightness(1.15) saturate(1.3) contrast(1.05) 
+                drop-shadow(0 4px 12px rgba(118, 75, 162, 0.3))
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
     50% { 
-        filter: brightness(1.5) saturate(1.6) contrast(1.15) drop-shadow(0 6px 12px rgba(251, 191, 36, 0.8));
+        filter: brightness(1.25) saturate(1.4) contrast(1.1) 
+                drop-shadow(0 6px 16px rgba(118, 75, 162, 0.4))
+                drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
     }
 }
 
@@ -2114,20 +2134,20 @@ body {
 .badge-item .badge-name,
 .achievement-item .achievement-name {
     font-size: clamp(0.65rem, 2vw, 0.75rem);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.2;
-    margin-bottom: var(--spacing-xs);
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    line-height: 1.3;
+    margin-bottom: 2px;
+    margin-top: var(--spacing-xs);
 }
 
 .badge-item.unlocked .badge-name,
 .achievement-item.unlocked .achievement-name {
     color: var(--text-primary);
     font-weight: 700;
-    font-size: clamp(0.7rem, 2.2vw, 0.85rem);
-    text-shadow: none;
+    font-size: clamp(0.7rem, 2.2vw, 0.9rem);
     margin-top: var(--spacing-xs);
+    letter-spacing: -0.01em;
 }
 
 .badge-item .badge-count {
@@ -2136,21 +2156,26 @@ body {
     margin-top: 2px;
 }
 
-/* Badge Tabs */
+/* Badge Tabs - iPhone Style */
 .badge-tabs {
     display: flex;
-    gap: clamp(2px, 0.8vw, 6px);
-    margin-bottom: var(--spacing-sm);
-    border-bottom: 2px solid #e5e7eb;
+    gap: clamp(4px, 1vw, 8px);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: rgba(118, 75, 162, 0.3) transparent;
-    padding-bottom: 2px;
+    padding-bottom: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding: var(--spacing-xs) var(--spacing-sm) 0;
 }
 
 .badge-tabs::-webkit-scrollbar {
@@ -2171,32 +2196,40 @@ body {
 }
 
 .badge-tab-btn {
-    padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 14px);
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 18px);
     background: transparent;
     border: none;
-    border-bottom: 2px solid transparent;
-    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+    border-bottom: 3px solid transparent;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     flex-shrink: 0;
     min-width: fit-content;
     box-sizing: border-box;
     line-height: 1.3;
+    position: relative;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .badge-tab-btn:hover {
     color: var(--accent-primary);
-    background: rgba(118, 75, 162, 0.05);
+    background: rgba(118, 75, 162, 0.08);
+}
+
+.badge-tab-btn:active {
+    transform: scale(0.97);
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .badge-tab-btn.active {
     color: var(--accent-primary);
     border-bottom-color: var(--accent-primary);
-    background: rgba(118, 75, 162, 0.1);
-    border-bottom-width: 2px;
+    background: rgba(118, 75, 162, 0.12);
+    border-bottom-width: 3px;
+    font-weight: 700;
 }
 
 .badge-tab-content {
@@ -4028,8 +4061,9 @@ body {
     /* Badges ve Achievements */
     .badges-grid,
     .achievements-grid {
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: var(--spacing-xs);
+        grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+        gap: var(--spacing-sm);
+        padding: var(--spacing-xs);
     }
 
     .badge-item,
@@ -4495,8 +4529,9 @@ body {
 
     .badges-grid,
     .achievements-grid {
-        grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
-        gap: 4px;
+        grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs);
     }
     
     .badge-item img,
