@@ -18,11 +18,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Reem+Kufi:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ========== LOADING SCREEN ========== */
+        /* ========== LOADING SCREEN - iOS 16 Liquid Glass ========== */
         #loadingScreen {
             position: fixed;
             inset: 0;
-            background: #000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             color: #fff;
             z-index: 99999;
             display: flex;
@@ -32,6 +32,23 @@
             padding-bottom: 120px;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             text-align: center;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism overlay */
+        #loadingScreen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 0;
+        }
+
+        #loadingScreen > * {
+            position: relative;
+            z-index: 1;
         }
 
         /* ---- LOGO ---- */
@@ -40,17 +57,31 @@
             height: clamp(80px, 20vw, 120px);
             margin-bottom: 16px;
             object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+            animation: float 3s ease-in-out infinite;
         }
 
-        /* ---- BÜYÜK HASENE BAŞLIK ---- */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* ---- BÜYÜK HASENE BAŞLIK - Glassmorphism ---- */
         .loading-title {
             font-size: clamp(32px, 8vw, 46px);
             font-weight: 700;
             letter-spacing: clamp(4px, 1.5vw, 8px);
             text-transform: uppercase;
             margin-bottom: 8px;
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+            color: #fff;
+            text-shadow: 0 2px 20px rgba(255, 255, 255, 0.5), 
+                         0 4px 40px rgba(255, 255, 255, 0.3),
+                         0 0 10px rgba(255, 255, 255, 0.2);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
         }
 
         .loading-subtitle {
@@ -61,12 +92,20 @@
             padding: 0 20px;
         }
 
-        /* ---- HADİS METNİ ---- */
+        /* ---- HADİS METNİ - Glassmorphism Card ---- */
         .loading-quote {
             text-align: center;
             max-width: 420px;
             line-height: 1.5;
-            padding: 0 20px;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            margin: var(--spacing-md) 0 var(--spacing-2xl) 0;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
         }
 
         .loading-arabic {
@@ -81,66 +120,20 @@
             opacity: 0.92;
         }
 
-        /* ---- Küçük SPINNER ---- */
-        .spinner-wrapper {
-            width: 32px;
-            height: 32px;
-            position: absolute;
-            bottom: 65px;
-            left: 50%;
-            margin-left: -16px; /* transform yerine margin kullan */
-        }
-
-        .spinner-circle {
-            box-sizing: border-box;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.25);
-            border-top-color: #fff;
-            animation: spin 1s linear infinite !important;
-            will-change: transform;
-            transform-origin: center center;
-        }
-        
-        #loadingScreen .spinner-circle {
-            animation: spin 1s linear infinite !important;
-        }
-
-        @keyframes spin { 
-            0% { 
-                transform: rotate(0deg);
-            }
-            100% { 
-                transform: rotate(360deg);
-            }
-        }
-
-        .spinner-center-dot {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            border-radius: 50%;
-            background: #fff;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
+        /* ---- Küçük SPINNER - Hadis Metninin Altında, Footer'ın Üstünde ---- */
 
         /* ---- FOOTER ---- */
         .loading-footer {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             left: 0;
             width: 100%;
             text-align: center;
             font-size: clamp(9px, 2vw, 11px);
-            opacity: 0.45;
+            opacity: 0.65;
             letter-spacing: 1px;
             padding: 0 20px;
+            margin-top: var(--spacing-xl);
         }
 
         /* Responsive - Tablet */
@@ -148,8 +141,26 @@
             #loadingScreen {
                 padding-bottom: 100px;
             }
+            .loading-logo {
+                width: clamp(70px, 18vw, 100px);
+                height: clamp(70px, 18vw, 100px);
+            }
+            .loading-title {
+                font-size: clamp(30px, 7.5vw, 44px);
+            }
+            .loading-subtitle {
+                font-size: clamp(10.5px, 2.3vw, 13.5px);
+            }
             .loading-quote {
                 max-width: 90%;
+                padding: var(--spacing-md) var(--spacing-lg);
+                margin-bottom: var(--spacing-2xl);
+            }
+            .loading-arabic {
+                font-size: clamp(15px, 3.8vw, 21px);
+            }
+            .loading-turkish {
+                font-size: clamp(10.5px, 2.3vw, 12.5px);
             }
         }
 
@@ -175,7 +186,8 @@
             }
             .loading-quote {
                 max-width: 95%;
-                padding: 0 15px;
+                padding: var(--spacing-md) var(--spacing-md);
+                margin-bottom: var(--spacing-2xl);
             }
             .loading-arabic {
                 font-size: clamp(14px, 3.5vw, 20px);
@@ -185,12 +197,15 @@
                 font-size: clamp(10px, 2.2vw, 12px);
             }
             .spinner-wrapper {
-                bottom: 55px;
+                bottom: 50px;
+                left: 50%;
+                transform: translateX(-50%);
             }
             .loading-footer {
-                bottom: 15px;
+                bottom: 25px;
                 font-size: clamp(8px, 1.8vw, 10px);
                 padding: 0 15px;
+                opacity: 0.65;
             }
         }
 
@@ -216,7 +231,8 @@
             }
             .loading-quote {
                 max-width: 98%;
-                padding: 0 10px;
+                padding: var(--spacing-sm) var(--spacing-sm);
+                margin-bottom: var(--spacing-xl);
             }
             .loading-arabic {
                 font-size: clamp(12px, 3vw, 18px);
@@ -225,16 +241,11 @@
             .loading-turkish {
                 font-size: clamp(9px, 2vw, 11px);
             }
-            .spinner-wrapper {
-                bottom: 50px;
-                width: 28px;
-                height: 28px;
-                margin-left: -14px;
-            }
             .loading-footer {
-                bottom: 12px;
+                bottom: 18px;
                 font-size: clamp(7px, 1.6vw, 9px);
                 padding: 0 10px;
+                opacity: 0.65;
             }
         }
 
@@ -258,7 +269,8 @@
             }
             .loading-quote {
                 max-width: 85%;
-                padding: 0 15px;
+                padding: var(--spacing-sm) var(--spacing-md);
+                margin-bottom: var(--spacing-xl);
             }
             .loading-arabic {
                 font-size: clamp(12px, 3vh, 18px);
@@ -267,12 +279,10 @@
             .loading-turkish {
                 font-size: clamp(9px, 2vh, 11px);
             }
-            .spinner-wrapper {
-                bottom: 45px;
-            }
             .loading-footer {
-                bottom: 10px;
+                bottom: 18px;
                 font-size: clamp(7px, 1.5vh, 9px);
+                opacity: 0.65;
             }
         }
     </style>
@@ -302,12 +312,6 @@
                 lâm bir harftir, mîm de bir harftir."
                 <br>(Tirmizî, Fezâilü'l-Kur'ân 16)
             </div>
-        </div>
-
-        <!-- Küçük spinner -->
-        <div class="spinner-wrapper">
-            <div class="spinner-circle"></div>
-            <div class="spinner-center-dot"></div>
         </div>
 
         <!-- Footer -->
@@ -392,11 +396,22 @@
 
             <!-- Zorluk Seçici -->
             <div class="difficulty-selector">
-                <h3>Zorluk Seviyesi</h3>
                 <div class="difficulty-buttons">
-                    <button class="difficulty-btn" data-difficulty="easy">🌱 Kolay</button>
-                    <button class="difficulty-btn active" data-difficulty="medium">⚖️ Orta</button>
-                    <button class="difficulty-btn" data-difficulty="hard">🔥 Zor</button>
+                    <button class="difficulty-btn" data-difficulty="easy">
+                        <span class="difficulty-icon">🌱</span>
+                        <span class="difficulty-text">Kolay</span>
+                        <span class="difficulty-subtitle">5-8 Hasene</span>
+                    </button>
+                    <button class="difficulty-btn active" data-difficulty="medium">
+                        <span class="difficulty-icon">⚖️</span>
+                        <span class="difficulty-text">Orta</span>
+                        <span class="difficulty-subtitle">9-12 Hasene</span>
+                    </button>
+                    <button class="difficulty-btn" data-difficulty="hard">
+                        <span class="difficulty-icon">🔥</span>
+                        <span class="difficulty-text">Zor</span>
+                        <span class="difficulty-subtitle">13-21 Hasene</span>
+                    </button>
                 </div>
             </div>
 
