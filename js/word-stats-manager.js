@@ -90,6 +90,13 @@ function updateWordStats(wordId, isCorrect) {
         }
     }
     
+    // Yeni veri oluşturuldu - resetAllStats flag'ini temizle (artık backend'den normal yüklenecek)
+    const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
+    if (statsJustReset) {
+        localStorage.removeItem('hasene_statsJustReset');
+        console.log('ℹ️ Yeni wordStats verisi oluşturuldu - resetAllStats flag\'i temizlendi');
+    }
+    
     // Eski yöntem (fallback)
     debouncedSaveStats();
 }

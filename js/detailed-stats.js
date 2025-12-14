@@ -583,9 +583,10 @@ async function loadWordsStats() {
                 if (typeof window.wordStats !== 'undefined') {
                     window.wordStats = {};
                 }
-                // Flag'i temizle - artık backend'den normal yüklenecek
-                localStorage.removeItem('hasene_statsJustReset');
-                console.log('ℹ️ resetAllStats flag\'i temizlendi - bir sonraki yüklemede backend\'den normal yüklenecek');
+                // ÖNEMLİ: Flag'i temizleme - backend'den yükleme yapıldığında ve veri boşsa temizlenecek
+                // Şimdilik flag'i koru, böylece backend'den tekrar yükleme yapılmayacak
+                // Flag sadece backend'den başarılı yükleme yapıldığında ve veri varsa temizlenecek
+                console.log('ℹ️ resetAllStats flag\'i korunuyor - backend\'den yükleme yapılmayacak');
             } else {
                 try {
                     wordStatsData = await window.loadWordStats();
@@ -597,12 +598,20 @@ async function loadWordsStats() {
                         if (typeof window.wordStats !== 'undefined') {
                             window.wordStats = wordStatsData;
                         }
+                        // Backend'den başarılı yükleme yapıldı ve veri varsa flag'i temizle
+                        const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
+                        if (statsJustReset) {
+                            localStorage.removeItem('hasene_statsJustReset');
+                            console.log('ℹ️ Backend\'den wordStats yüklendi ve veri var - flag temizlendi');
+                        }
                     } else {
                         // Backend boş döndüyse localStorage'ı da temizle
                         localStorage.removeItem('hasene_wordStats');
                         if (typeof window.wordStats !== 'undefined') {
                             window.wordStats = {};
                         }
+                        // Backend boş döndüyse flag'i koru (resetAllStats sonrası normal durum)
+                        // Flag sadece yeni veri oluşturulduğunda temizlenecek
                     }
                 } catch (error) {
                     console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);

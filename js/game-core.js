@@ -655,6 +655,15 @@ async function loadStats() {
                         }
                         safeSetItem('hasene_wordStats', wordStats);
                         console.log('✅ WordStats backend\'den yüklendi');
+                        // Backend'den başarılı yükleme yapıldı ve veri varsa flag'i temizle
+                        const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
+                        if (statsJustReset) {
+                            localStorage.removeItem('hasene_statsJustReset');
+                            console.log('ℹ️ Backend\'den wordStats yüklendi ve veri var - flag temizlendi');
+                        }
+                    } else {
+                        // Backend boş döndüyse flag'i koru (resetAllStats sonrası normal durum)
+                        console.log('ℹ️ Backend\'den wordStats boş döndü - flag korunuyor');
                     }
                 }).catch(err => console.warn('WordStats yükleme hatası:', err))
             );
@@ -666,9 +675,9 @@ async function loadStats() {
                 window.wordStats = {};
             }
             localStorage.removeItem('hasene_wordStats');
-            // Flag'i temizle - artık backend'den normal yüklenecek (bir sonraki loadStats çağrısında)
-            localStorage.removeItem('hasene_statsJustReset');
-            console.log('ℹ️ resetAllStats flag\'i temizlendi - bir sonraki yüklemede backend\'den normal yüklenecek');
+            // ÖNEMLİ: Flag'i temizleme - backend'den yükleme yapıldığında ve veri varsa temizlenecek
+            // Şimdilik flag'i koru, böylece backend'den tekrar yükleme yapılmayacak
+            console.log('ℹ️ resetAllStats flag\'i korunuyor - backend\'den yükleme yapılmayacak');
         }
         
         // Eski wordStats formatını yeni spaced repetition formatına migrate et
@@ -5720,6 +5729,11 @@ async function resetAllStats(skipConfirm = false) {
     unlockedBadges = [];
     perfectLessonsCount = 0;
     
+    // Flag'i ÖNCE set et (backend silme işleminden önce)
+    // Böylece backend silme işlemi sırasında loadWordsStats çağrılırsa backend'den yükleme yapılmayacak
+    localStorage.setItem('hasene_statsJustReset', 'true');
+    console.log('ℹ️ hasene_statsJustReset flag\'i set edildi - backend silme işlemi başlıyor');
+    
     // Backend'den TÜM kullanıcı verilerini sil
     if (typeof window.getCurrentUser === 'function') {
         try {
@@ -5916,9 +5930,7 @@ async function resetAllStats(skipConfirm = false) {
         }
     }
     
-    // Flag set et
-    localStorage.setItem('hasene_statsJustReset', 'true');
-    
+    // Flag zaten yukarıda set edildi (backend silme işleminden önce)
     // Verileri kaydet
     await saveStatsImmediate();
     
