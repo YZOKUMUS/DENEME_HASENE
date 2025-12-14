@@ -1143,13 +1143,28 @@ function updateDailyGoalDisplay() {
     // GÜNLÜK VİRD SADECE HASENE PUAN VE KAZANILAN TÜM BONUS, COMBO, HEDİYE VS PUANLARA GÖRE ENDEKSLENMİŞTİR
     // Doğru cevap sayısına değil, sadece Hasene puanına göre
     const dailyGoalHasene = parseInt(localStorage.getItem('dailyGoalHasene') || CONFIG.DAILY_GOAL_DEFAULT.toString());
-    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0'); // dailyXP = kazanılan tüm Hasene (doğru cevap + combo + bonus + hediye + perfect lesson + günlük görev ödülü)
-    const percent = Math.min(100, Math.floor((dailyXP / dailyGoalHasene) * 100));
+    
+    // ÖNEMLİ: hasene_daily_${today}.points kullan (daha güvenilir - her soru için kaydedilir)
+    // dailyXP fallback olarak kullan (geriye dönük uyumluluk için)
+    const today = getLocalDateString();
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = safeGetItem(dailyKey, { points: 0 });
+    const dailyPointsFromDetailed = dailyData.points || 0;
+    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+    
+    // hasene_daily_${today}.points daha güvenilir (her soru için kaydedilir)
+    // Ama eğer dailyXP daha büyükse (backend senkronizasyonu nedeniyle), onu kullan
+    const dailyXPToUse = Math.max(dailyPointsFromDetailed, dailyXP);
+    
+    const percent = Math.min(100, Math.floor((dailyXPToUse / dailyGoalHasene) * 100));
     
     console.log('🔄 updateDailyGoalDisplay çağrıldı:', {
+        dailyXPToUse,
+        dailyPointsFromDetailed,
         dailyXP,
         dailyGoalHasene,
         percent,
+        kullanilan: dailyXPToUse === dailyPointsFromDetailed ? 'hasene_daily_points' : 'dailyXP',
         elements: {
             dailyGoalProgress: !!elements.dailyGoalProgress,
             dailyGoalCurrent: !!elements.dailyGoalCurrent,
@@ -1163,8 +1178,8 @@ function updateDailyGoalDisplay() {
     }
     
     if (elements.dailyGoalCurrent) {
-        elements.dailyGoalCurrent.textContent = formatNumber(dailyXP);
-        console.log('✅ dailyGoalCurrent güncellendi:', formatNumber(dailyXP));
+        elements.dailyGoalCurrent.textContent = formatNumber(dailyXPToUse);
+        console.log('✅ dailyGoalCurrent güncellendi:', formatNumber(dailyXPToUse));
     }
     
     if (elements.dailyGoalTarget) {
@@ -1177,7 +1192,7 @@ function updateDailyGoalDisplay() {
     }
     
     // Günlük hedef tamamlandı mı?
-    if (dailyXP >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
+    if (dailyXPToUse >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
         localStorage.setItem('dailyGoalCompleted', 'true');
         const dailyGoalBonus = 100;
         // skipDetailedStats=true çünkü aşağıda manuel olarak saveDetailedStats çağrılıyor
@@ -3830,12 +3845,26 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     }
     dailyData.perfectLessons = (dailyData.perfectLessons || 0) + perfectLessons;
     
+    // ÖNEMLİ: dailyXP'yi de senkronize et (günlük vird gösterimi için)
+    // hasene_daily_${today}.points ile dailyXP aynı değeri göstermeli
+    const currentDailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+    const newDailyXP = dailyData.points; // hasene_daily_${today}.points'i kullan (daha güvenilir)
+    if (newDailyXP !== currentDailyXP) {
+        localStorage.setItem('dailyXP', newDailyXP.toString());
+        console.log('🔄 dailyXP senkronize edildi:', {
+            eski: currentDailyXP,
+            yeni: newDailyXP,
+            kaynak: 'hasene_daily_points'
+        });
+    }
+    
     // LOG: Günlük veri güncellemesi
     console.log('🟢 Günlük veri güncellendi:', {
         key: dailyKey,
         eski: { correct: oldCorrect, wrong: oldWrong, points: oldPoints },
         yeni: { correct: dailyData.correct, wrong: dailyData.wrong, points: dailyData.points },
-        eklenen: { correct, wrong, points }
+        eklenen: { correct, wrong, points },
+        dailyXP_senkronize: { eski: currentDailyXP, yeni: newDailyXP }
     });
     if (maxCombo > (dailyData.maxCombo || 0)) {
         dailyData.maxCombo = maxCombo;
