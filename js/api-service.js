@@ -329,7 +329,37 @@ async function getCurrentUser() {
  * Kullanıcı istatistiklerini yükle
  */
 async function loadUserStats() {
-    const user = await getCurrentUser();
+    // Mobil cihaz tespiti
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const userWaitTime = isMobile ? 500 : 300;
+    
+    // Önce kullanıcıyı al, eğer yoksa session restore için bekle ve tekrar dene
+    let user = await getCurrentUser();
+    if (!user && BACKEND_TYPE === 'supabase' && supabaseClient && supabaseClient.auth) {
+        // Session restore için bekle ve tekrar dene
+        console.log('⏳ loadUserStats: Kullanıcı yok, session restore bekleniyor...');
+        let retryCount = 0;
+        const maxRetries = isMobile ? 3 : 2;
+        
+        while (retryCount < maxRetries && !user) {
+            await new Promise(resolve => setTimeout(resolve, userWaitTime));
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    // Session var, getCurrentUser'ı tekrar çağır
+                    user = await getCurrentUser();
+                    if (user) {
+                        console.log('✅ loadUserStats: Session restore sonrası kullanıcı bulundu');
+                        break;
+                    }
+                }
+            } catch (sessionError) {
+                console.warn('⚠️ loadUserStats: Session kontrolü hatası:', sessionError);
+            }
+            retryCount++;
+        }
+    }
+    
     if (!user) {
         console.log('⚠️ loadUserStats: Kullanıcı yok, null döndürülüyor');
         return null;

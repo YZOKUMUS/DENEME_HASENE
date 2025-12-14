@@ -145,19 +145,70 @@ const elements = {
 async function loadStats() {
     console.log('📥 loadStats() çağrıldı');
     try {
+        // Mobil cihaz tespiti (daha uzun timeout'lar için)
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const sessionWaitTime = isMobile ? 1000 : 500; // Mobil için daha uzun bekleme
+        const maxSessionRetries = isMobile ? 5 : 3; // Mobil için daha fazla retry
+        
         // ÖNEMLİ: Auth session'ın restore edilmesini bekle
-        // Supabase session restore için biraz daha bekle
+        // Supabase session restore için bekle (mobil cihazlarda daha uzun)
         if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-            try {
-                // Session'ı kontrol et ve restore edilmesini bekle
-                const { data: { session } } = await window.supabaseClient.auth.getSession();
-                if (session) {
-                    console.log('✅ Auth session restore edildi:', session.user.email);
-                    // Session restore edildi, biraz daha bekle (güvenli olmak için)
-                    await new Promise(resolve => setTimeout(resolve, 200));
+            let sessionRetryCount = 0;
+            let session = null;
+            
+            // Session restore edilene kadar retry yap
+            while (sessionRetryCount < maxSessionRetries && !session) {
+                try {
+                    const { data, error } = await window.supabaseClient.auth.getSession();
+                    if (data && data.session) {
+                        session = data.session;
+                        console.log('✅ Auth session restore edildi:', session.user.email);
+                        // Session restore edildi, biraz daha bekle (güvenli olmak için)
+                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                        break;
+                    } else if (error) {
+                        console.warn(`⚠️ Session kontrolü hatası (deneme ${sessionRetryCount + 1}):`, error);
+                    }
+                } catch (sessionError) {
+                    console.warn(`⚠️ Session kontrolü hatası (deneme ${sessionRetryCount + 1}):`, sessionError);
                 }
-            } catch (sessionError) {
-                console.warn('⚠️ Session kontrolü hatası (normal olabilir):', sessionError);
+                
+                // Session yoksa, tekrar dene
+                if (!session && sessionRetryCount < maxSessionRetries - 1) {
+                    console.log(`🔄 Session restore bekleniyor... (${sessionRetryCount + 1}/${maxSessionRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                    sessionRetryCount++;
+                } else {
+                    break;
+                }
+            }
+            
+            if (!session) {
+                console.log('⚠️ Session restore edilemedi, devam ediliyor...');
+            }
+        } else {
+            // Supabase client henüz hazır değil, bekle
+            console.log('⏳ Supabase client hazır değil, bekleniyor...');
+            let clientWaitCount = 0;
+            const maxClientWaits = 10;
+            
+            while (clientWaitCount < maxClientWaits && (typeof window.supabaseClient === 'undefined' || !window.supabaseClient || !window.supabaseClient.auth)) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                clientWaitCount++;
+            }
+            
+            if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
+                console.log('✅ Supabase client hazır');
+                // Client hazır, session'ı kontrol et
+                try {
+                    const { data: { session } } = await window.supabaseClient.auth.getSession();
+                    if (session) {
+                        console.log('✅ Auth session restore edildi:', session.user.email);
+                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                    }
+                } catch (sessionError) {
+                    console.warn('⚠️ Session kontrolü hatası:', sessionError);
+                }
             }
         }
         
@@ -168,28 +219,55 @@ async function loadStats() {
         console.log('🔍 window.loadUserStats mevcut mu?', typeof window.loadUserStats === 'function');
         
         if (typeof window.getCurrentUser === 'function') {
-            try {
-                user = await window.getCurrentUser();
-                console.log('📥 getCurrentUser() sonucu:', user ? `✅ Kullanıcı var (${user.id}, ${user.email || 'email yok'})` : '❌ Kullanıcı yok');
-                
-                // Eğer kullanıcı yoksa ama session varsa, tekrar dene (session restore gecikmesi olabilir)
-                if (!user && typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-                    try {
-                        const { data: { session } } = await window.supabaseClient.auth.getSession();
-                        console.log('🔍 Session kontrolü:', session ? `✅ Session var (${session.user.email})` : '❌ Session yok');
-                        if (session && session.user) {
-                            console.log('🔄 Session var ama getCurrentUser null döndü, tekrar deneniyor...');
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                            user = await window.getCurrentUser();
-                            console.log('📥 getCurrentUser() tekrar deneme sonucu:', user ? `✅ Kullanıcı var (${user.id})` : '❌ Kullanıcı yok');
+            let userRetryCount = 0;
+            const maxUserRetries = isMobile ? 5 : 3;
+            
+            // Kullanıcı bulunana kadar retry yap
+            while (userRetryCount < maxUserRetries && !user) {
+                try {
+                    user = await window.getCurrentUser();
+                    console.log(`📥 getCurrentUser() sonucu (deneme ${userRetryCount + 1}):`, user ? `✅ Kullanıcı var (${user.id}, ${user.email || 'email yok'})` : '❌ Kullanıcı yok');
+                    
+                    if (user) {
+                        break; // Kullanıcı bulundu, döngüden çık
+                    }
+                    
+                    // Eğer kullanıcı yoksa ama session varsa, tekrar dene (session restore gecikmesi olabilir)
+                    if (!user && typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
+                        try {
+                            const { data: { session } } = await window.supabaseClient.auth.getSession();
+                            console.log('🔍 Session kontrolü:', session ? `✅ Session var (${session.user.email})` : '❌ Session yok');
+                            if (session && session.user) {
+                                console.log('🔄 Session var ama getCurrentUser null döndü, tekrar deneniyor...');
+                                await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                                user = await window.getCurrentUser();
+                                if (user) {
+                                    console.log('✅ getCurrentUser() tekrar deneme başarılı:', user.id);
+                                    break;
+                                }
+                            }
+                        } catch (sessionError) {
+                            console.warn('⚠️ Session kontrolü hatası:', sessionError);
                         }
-                    } catch (sessionError) {
-                        console.warn('⚠️ Session kontrolü hatası:', sessionError);
+                    }
+                    
+                    // Kullanıcı hala yoksa, tekrar dene
+                    if (!user && userRetryCount < maxUserRetries - 1) {
+                        console.log(`🔄 Kullanıcı bulunamadı, tekrar deneniyor... (${userRetryCount + 1}/${maxUserRetries})`);
+                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                        userRetryCount++;
+                    } else {
+                        break;
+                    }
+                } catch (e) {
+                    console.warn(`📥 getCurrentUser() hatası (deneme ${userRetryCount + 1}):`, e);
+                    if (userRetryCount < maxUserRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
+                        userRetryCount++;
+                    } else {
+                        break;
                     }
                 }
-            } catch (e) {
-                console.warn('📥 getCurrentUser() hatası:', e);
-                // Kullanıcı kontrolü başarısız, devam et
             }
         } else {
             console.warn('⚠️ window.getCurrentUser fonksiyonu bulunamadı - Backend entegrasyonu eksik olabilir');
@@ -218,43 +296,90 @@ async function loadStats() {
             localStorage.removeItem('hasene_current_user_id');
         }
         
-        // Backend API'den yükle (eğer mevcut ve kullanıcı giriş yapmışsa)
+        // ============================================
+        // ÖNCELİKLENDİRİLMİŞ VERİ YÜKLEME STRATEJİSİ
+        // ============================================
+        // Öncelik 1: Kritik veriler (Hemen gösterilmeli)
+        // - total_points, badges, streak, level (Ana ekranda görünen)
+        // Öncelik 2: Önemli veriler (Hızlı yüklenmeli)
+        // - dailyTasks, dailyGoal progress
+        // Öncelik 3: Detaylı veriler (Paralel yüklenebilir)
+        // - wordStats, achievements, badges (detaylı)
+        // Öncelik 4: Arka plan verileri (Lazy loading)
+        // - daily_stats, weekly_stats, monthly_stats, favorites
+        
+        // ÖNCE: localStorage/IndexedDB'den kritik verileri yükle ve UI'ı göster (Optimistic UI)
+        console.log('⚡ Optimistic UI: localStorage/IndexedDB\'den kritik veriler yükleniyor...');
+        const cachedPoints = await loadFromIndexedDB('hasene_totalPoints');
+        if (cachedPoints !== null) {
+            totalPoints = parseInt(cachedPoints) || 0;
+            if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+        } else {
+            totalPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0') || 0;
+            if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
+        }
+        
+        const cachedBadges = await loadFromIndexedDB('hasene_badges');
+        if (cachedBadges) {
+            badges = cachedBadges;
+        } else {
+            badges = safeGetItem('hasene_badges', badges);
+        }
+        
+        const cachedStreak = await loadFromIndexedDB('hasene_streakData');
+        if (cachedStreak) {
+            streakData = cachedStreak;
+        } else {
+            streakData = safeGetItem('hasene_streakData', streakData);
+        }
+        
+        // UI'ı hemen güncelle (cache'den)
+        updateStatsBar();
+        updateStreakDisplay();
+        console.log('✅ Optimistic UI: Cache\'den veriler yüklendi ve UI güncellendi');
+        
+        // ============================================
+        // ÖNCELİK 1: KRİTİK VERİLER (Backend'den öncelikli yükleme)
+        // ============================================
         console.log('🔍 Backend yükleme kontrolü:', {
             user: user ? `✅ Var (${user.id})` : '❌ Yok',
             loadUserStats: typeof window.loadUserStats === 'function' ? '✅ Mevcut' : '❌ Yok'
         });
         
-        // Backend'den veri yüklendi mi? (0 değerleri de geçerli - kullanıcının henüz oyun oynamamış olması normal)
         let backendDataLoaded = false;
         
+        // Backend'den kritik verileri yükle (user_stats - total_points, badges, streak)
         if (user && typeof window.loadUserStats === 'function') {
-            console.log('✅ Backend\'den veri yükleme başlatılıyor...');
+            console.log('⚡ ÖNCELİK 1: Backend\'den kritik veriler yükleniyor...');
             let userStats = null;
             let retryCount = 0;
-            const maxRetries = 2;
+            const maxRetries = isMobile ? 5 : 3;
+            const retryDelay = isMobile ? 1000 : 500;
             
-            // Backend'den veri yüklemeyi dene (retry mekanizması ile)
             while (retryCount <= maxRetries && !userStats) {
                 try {
                     console.log(`📥 Backend'den user_stats yükleniyor... (deneme ${retryCount + 1}/${maxRetries + 1})`);
                     userStats = await window.loadUserStats();
                     console.log('📥 Backend\'den user_stats yüklendi:', userStats ? 'Veri var' : 'Veri yok');
                     
-                    if (!userStats && retryCount < maxRetries) {
-                        // Veri yüklenemedi, tekrar dene
-                        console.log(`⚠️ Backend'den veri yüklenemedi, ${500 * (retryCount + 1)}ms sonra tekrar deneniyor...`);
-                        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
-                        retryCount++;
+                    if (userStats === null || userStats === undefined) {
+                        if (retryCount < maxRetries) {
+                            console.log(`⚠️ Backend'den veri yüklenemedi (null/undefined), ${retryDelay * (retryCount + 1)}ms sonra tekrar deneniyor...`);
+                            await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
+                            retryCount++;
+                        } else {
+                            console.warn('⚠️ Backend\'den veri yüklenemedi (max retry aşıldı)');
+                            break;
+                        }
                     } else {
                         break;
                     }
                 } catch (apiError) {
                     console.warn(`⚠️ Backend yükleme hatası (deneme ${retryCount + 1}):`, apiError);
                     if (retryCount < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 500 * (retryCount + 1)));
+                        await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
                         retryCount++;
                     } else {
-                        // Son deneme de başarısız, localStorage'a düş
                         console.warn('⚠️ Backend yükleme başarısız, localStorage kullanılacak');
                         break;
                     }
@@ -262,7 +387,6 @@ async function loadStats() {
             }
             
             if (userStats) {
-                // Backend'den veri yüklendi (0 değerleri de geçerli!)
                 backendDataLoaded = true;
                 
                 totalPoints = parseInt(userStats.total_points) || 0;
@@ -273,8 +397,7 @@ async function loadStats() {
                 gameStats = userStats.game_stats || gameStats;
                 perfectLessonsCount = userStats.perfect_lessons_count || 0;
                 
-                // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                // Böylece her yerde aynı veriler görünür
+                // Backend'den yüklenen verileri cache'e yaz
                 localStorage.setItem('hasene_totalPoints', totalPoints.toString());
                 if (badges) {
                     safeSetItem('hasene_badges', badges);
@@ -283,31 +406,37 @@ async function loadStats() {
                     }
                 }
                 if (streakData) {
-                    // playDates array'ini güncelle: daily_stats tablosundan oynanan günleri çek
-                    // Böylece takvim hem streakData.playDates hem de daily_stats'tan güncellenir
-                    try {
-                        if (typeof window.loadAllDailyStatsDates === 'function') {
-                            const allDates = await window.loadAllDailyStatsDates();
-                            if (allDates && allDates.length > 0) {
-                                // daily_stats'tan gelen tarihleri playDates'e ekle (duplicate olmasın)
-                                const existingDates = new Set(streakData.playDates || []);
-                                allDates.forEach(date => {
-                                    if (!existingDates.has(date)) {
-                                        existingDates.add(date);
-                                    }
-                                });
-                                streakData.playDates = Array.from(existingDates).sort();
-                                streakData.totalPlayDays = streakData.playDates.length;
-                            }
-                        }
-                    } catch (error) {
-                        // daily_stats'tan yükleme hatası, mevcut playDates'i kullan
-                        console.warn('daily_stats tarihlerini yükleme hatası (normal olabilir):', error);
-                    }
-                    
                     safeSetItem('hasene_streakData', streakData);
                     if (db) {
                         saveToIndexedDB('hasene_streakData', streakData).catch(() => {});
+                    }
+                    
+                    // playDates güncellemesi arka planda yapılacak (Öncelik 4 - Lazy loading)
+                    // Bu işlem uzun sürebilir, kritik değil
+                    if (typeof window.loadAllDailyStatsDates === 'function') {
+                        Promise.resolve().then(async () => {
+                            try {
+                                console.log('📅 ÖNCELİK 4: Daily stats tarihleri yükleniyor (arka plan)...');
+                                const allDates = await window.loadAllDailyStatsDates();
+                                if (allDates && allDates.length > 0) {
+                                    const existingDates = new Set(streakData.playDates || []);
+                                    allDates.forEach(date => {
+                                        if (!existingDates.has(date)) {
+                                            existingDates.add(date);
+                                        }
+                                    });
+                                    streakData.playDates = Array.from(existingDates).sort();
+                                    streakData.totalPlayDays = streakData.playDates.length;
+                                    safeSetItem('hasene_streakData', streakData);
+                                    if (db) {
+                                        saveToIndexedDB('hasene_streakData', streakData).catch(() => {});
+                                    }
+                                    console.log('✅ Daily stats tarihleri yüklendi');
+                                }
+                            } catch (error) {
+                                console.warn('daily_stats tarihlerini yükleme hatası (normal olabilir):', error);
+                            }
+                        });
                     }
                 }
                 if (gameStats) {
@@ -317,18 +446,15 @@ async function loadStats() {
                     localStorage.setItem('perfectLessonsCount', perfectLessonsCount.toString());
                 }
                 
-                // IndexedDB'ye de kaydet
                 if (db) {
                     saveToIndexedDB('hasene_totalPoints', totalPoints.toString()).catch(() => {});
                 }
                 
-                // Backend'den başarıyla yüklendi
-                infoLog('İstatistikler backend\'den yüklendi ve localStorage\'a senkronize edildi');
-                console.log('✅ Backend\'den veriler başarıyla yüklendi:', {
-                    totalPoints,
-                    badges: badges.stars,
-                    currentStreak: streakData.currentStreak
-                });
+                // UI'ı hemen güncelle (backend'den gelen verilerle)
+                updateStatsBar();
+                updateStreakDisplay();
+                
+                console.log('✅ ÖNCELİK 1: Kritik veriler backend\'den yüklendi ve UI güncellendi');
             } else {
                 console.warn('⚠️ Backend\'den veri yüklenemedi (userStats null veya boş)');
             }
@@ -383,85 +509,87 @@ async function loadStats() {
             }
         }
 
-        // Günlük görevleri yükle (Backend API veya localStorage)
-        if (user && typeof window.loadDailyTasks === 'function') {
-            try {
-                console.log('📥 Backend\'den daily_tasks yükleniyor...');
-                const backendDailyTasks = await window.loadDailyTasks();
-                console.log('📥 Backend\'den daily_tasks yüklendi:', backendDailyTasks ? 'Veri var' : 'Veri yok');
-                if (backendDailyTasks) {
-                    dailyTasks = backendDailyTasks;
-                    // Set'leri yeniden oluştur (loadDailyTasks zaten camelCase döndürüyor)
-                    if (dailyTasks.todayStats) {
-                        dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
-                        dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
-                        dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
-                    }
-                    
-                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                    const dailyTasksToSave = {
-                        ...dailyTasks,
-                        todayStats: {
-                            ...dailyTasks.todayStats,
-                            allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
-                            farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
-                            reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
-                        }
-                    };
-                    safeSetItem('hasene_dailyTasks', dailyTasksToSave);
-                    if (db) {
-                        saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(() => {});
-                    }
-                    
-                    // ÖNEMLİ: Backend'den yüklenen todayStats verilerini dailyXP, dailyCorrect, dailyWrong'a yaz
-                    // Böylece günlük vird progress bar'ı doğru görünür
-                    if (dailyTasks.todayStats) {
-                        const todayPuan = dailyTasks.todayStats.toplamPuan || 0;
-                        const todayDogru = dailyTasks.todayStats.toplamDogru || 0;
-                        // todayStats.toplamYanlis yok, o yüzden sadece toplamPuan ve toplamDogru'yu yazıyoruz
-                        
-                        localStorage.setItem('dailyXP', todayPuan.toString());
-                        localStorage.setItem('dailyCorrect', todayDogru.toString());
-                        
-                        // Görev progress'lerini güncelle
-                        if (dailyTasks.tasks || dailyTasks.bonusTasks) {
-                            updateTaskProgressFromStats();
-                        }
-                    }
-                }
-            } catch (apiError) {
-                console.warn('Backend daily tasks yükleme hatası:', apiError);
+        // ============================================
+        // ÖNCELİK 2: ÖNEMLİ VERİLER (Paralel yükleme)
+        // ============================================
+        // DailyTasks ve DailyGoal progress - Cache'den önce yükle, sonra backend'den güncelle
+        console.log('⚡ ÖNCELİK 2: Önemli veriler yükleniyor (cache + backend paralel)...');
+        
+        // Önce cache'den dailyTasks yükle (hızlı gösterim için)
+        const cachedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
+        if (cachedDailyTasks) {
+            dailyTasks = cachedDailyTasks;
+            if (dailyTasks.todayStats) {
+                dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
             }
+            updateDailyGoalDisplay();
+            updateTasksDisplay();
+            console.log('✅ ÖNCELİK 2: DailyTasks cache\'den yüklendi ve UI güncellendi');
+        } else {
+            const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
+            dailyTasks = localDailyTasks;
+            if (dailyTasks.todayStats) {
+                dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+            }
+            updateDailyGoalDisplay();
+            updateTasksDisplay();
         }
         
-        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
-        if (!dailyTasks || !dailyTasks.lastTaskDate) {
-            const savedDailyTasks = await loadFromIndexedDB('hasene_dailyTasks');
-            if (savedDailyTasks) {
-                dailyTasks = savedDailyTasks;
-                // Set'leri yeniden oluştur
-                if (dailyTasks.todayStats) {
-                    dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
-                    dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
-                    dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
-                    // Yeni alanlar için varsayılan değerler
-                    if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
-                    if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
-                    if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
+        // Backend'den dailyTasks yükle (paralel, arka planda güncelle)
+        if (user && typeof window.loadDailyTasks === 'function') {
+            // Promise olarak başlat, await etme (paralel çalışsın)
+            Promise.resolve().then(async () => {
+                try {
+                    console.log('📥 Backend\'den daily_tasks yükleniyor (arka plan)...');
+                    const backendDailyTasks = await window.loadDailyTasks();
+                    if (backendDailyTasks) {
+                        dailyTasks = backendDailyTasks;
+                        if (dailyTasks.todayStats) {
+                            dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
+                            dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
+                            dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+                        }
+                        
+                        const dailyTasksToSave = {
+                            ...dailyTasks,
+                            todayStats: {
+                                ...dailyTasks.todayStats,
+                                allGameModes: Array.from(dailyTasks.todayStats.allGameModes || []),
+                                farklıZorluk: Array.from(dailyTasks.todayStats.farklıZorluk || []),
+                                reviewWords: Array.from(dailyTasks.todayStats.reviewWords || [])
+                            }
+                        };
+                        safeSetItem('hasene_dailyTasks', dailyTasksToSave);
+                        if (db) {
+                            saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(() => {});
+                        }
+                        
+                        if (dailyTasks.todayStats) {
+                            const todayPuan = dailyTasks.todayStats.toplamPuan || 0;
+                            const todayDogru = dailyTasks.todayStats.toplamDogru || 0;
+                            localStorage.setItem('dailyXP', todayPuan.toString());
+                            localStorage.setItem('dailyCorrect', todayDogru.toString());
+                            
+                            if (dailyTasks.tasks || dailyTasks.bonusTasks) {
+                                updateTaskProgressFromStats();
+                            }
+                        }
+                        
+                        // UI'ı güncelle
+                        updateDailyGoalDisplay();
+                        updateTasksDisplay();
+                        console.log('✅ ÖNCELİK 2: DailyTasks backend\'den yüklendi ve UI güncellendi');
+                    }
+                } catch (apiError) {
+                    console.warn('Backend daily tasks yükleme hatası:', apiError);
                 }
-            } else {
-                const localDailyTasks = safeGetItem('hasene_dailyTasks', dailyTasks);
-                dailyTasks = localDailyTasks;
-                if (dailyTasks.todayStats) {
-                    dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
-                    dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
-                    dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
-                    // Yeni alanlar için varsayılan değerler
-                    if (dailyTasks.todayStats.ayetOku === undefined) dailyTasks.todayStats.ayetOku = 0;
-                    if (dailyTasks.todayStats.duaEt === undefined) dailyTasks.todayStats.duaEt = 0;
-                    if (dailyTasks.todayStats.hadisOku === undefined) dailyTasks.todayStats.hadisOku = 0;
-                }
-            }
+            }).catch(err => {
+                console.warn('DailyTasks backend yükleme hatası:', err);
+            });
         }
 
         // Haftalık görevler kaldırıldı - backend yükleme devre dışı
@@ -474,33 +602,34 @@ async function loadStats() {
             // ...
         }
 
-        // Kelime istatistiklerini yükle (Backend API veya localStorage)
-        if (user && typeof window.loadWordStats === 'function') {
-            try {
-                const backendWordStats = await window.loadWordStats();
-                if (backendWordStats && Object.keys(backendWordStats).length > 0) {
-                    wordStats = backendWordStats;
-                    // Global wordStats'ı window'a ekle (detailed-stats.js'de kullanılabilir)
-                    if (typeof window !== 'undefined') {
-                        window.wordStats = wordStats;
-                    }
-                    
-                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                    safeSetItem('hasene_wordStats', wordStats);
-                }
-            } catch (apiError) {
-                console.warn('Backend word stats yükleme hatası:', apiError);
-            }
-        }
+        // ============================================
+        // ÖNCELİK 3: DETAYLI VERİLER (Paralel lazy loading)
+        // ============================================
+        console.log('⚡ ÖNCELİK 3: Detaylı veriler paralel yükleniyor (wordStats, achievements, badges)...');
         
-        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
-        if (!wordStats || Object.keys(wordStats).length === 0) {
-            wordStats = safeGetItem('hasene_wordStats', {});
-        }
-        
-        // Global wordStats'ı window'a ekle (detailed-stats.js'de kullanılabilir)
+        // Önce cache'den yükle
+        wordStats = safeGetItem('hasene_wordStats', {});
         if (typeof window !== 'undefined') {
             window.wordStats = wordStats;
+        }
+        
+        // Backend'den paralel yükle (await etme, arka planda çalışsın)
+        const loadDetailedDataPromises = [];
+        
+        // WordStats
+        if (user && typeof window.loadWordStats === 'function') {
+            loadDetailedDataPromises.push(
+                window.loadWordStats().then(backendWordStats => {
+                    if (backendWordStats && Object.keys(backendWordStats).length > 0) {
+                        wordStats = backendWordStats;
+                        if (typeof window !== 'undefined') {
+                            window.wordStats = wordStats;
+                        }
+                        safeSetItem('hasene_wordStats', wordStats);
+                        console.log('✅ WordStats backend\'den yüklendi');
+                    }
+                }).catch(err => console.warn('WordStats yükleme hatası:', err))
+            );
         }
         
         // Eski wordStats formatını yeni spaced repetition formatına migrate et
@@ -543,66 +672,61 @@ async function loadStats() {
                 stats.lastReview = stats.lastCorrect || stats.lastWrong || todayForMigration;
             }
         });
-        // Achievements yükle (Backend API veya localStorage)
-        if (user && typeof window.loadAchievements === 'function') {
-            try {
-                const backendAchievements = await window.loadAchievements();
-                if (backendAchievements && backendAchievements.length > 0) {
-                    unlockedAchievements = backendAchievements;
-                    
-                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                    safeSetItem('unlockedAchievements', unlockedAchievements);
-                }
-            } catch (apiError) {
-                console.warn('Backend achievements yükleme hatası:', apiError);
-            }
-        }
-        
-        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
-        if (unlockedAchievements.length === 0) {
-            const savedAchievements = safeGetItem('unlockedAchievements', []);
-        // Eski format kontrolü ve dönüştürme
+        // Achievements (cache'den önce yükle)
+        const savedAchievements = safeGetItem('unlockedAchievements', []);
         if (savedAchievements.length > 0 && typeof savedAchievements[0] === 'string') {
-            // Eski format: string array -> object array (timestamp şimdiki zaman)
             unlockedAchievements = savedAchievements.map((id, index) => ({
                 id: id,
-                unlockedAt: Date.now() - (savedAchievements.length - index) * 1000 // Sıraya göre timestamp
+                unlockedAt: Date.now() - (savedAchievements.length - index) * 1000
             }));
             safeSetItem('unlockedAchievements', unlockedAchievements);
         } else {
             unlockedAchievements = savedAchievements;
         }
+        
+        // Backend'den achievements yükle (paralel)
+        if (user && typeof window.loadAchievements === 'function') {
+            loadDetailedDataPromises.push(
+                window.loadAchievements().then(backendAchievements => {
+                    if (backendAchievements && backendAchievements.length > 0) {
+                        unlockedAchievements = backendAchievements;
+                        safeSetItem('unlockedAchievements', unlockedAchievements);
+                        console.log('✅ Achievements backend\'den yüklendi');
+                    }
+                }).catch(err => console.warn('Achievements yükleme hatası:', err))
+            );
         }
         
-        // Badges yükle (Backend API veya localStorage)
-        if (user && typeof window.loadBadges === 'function') {
-            try {
-                const backendBadges = await window.loadBadges();
-                if (backendBadges && backendBadges.length > 0) {
-                    unlockedBadges = backendBadges;
-                    
-                    // Backend'den yüklenen verileri localStorage'a da yaz (senkronizasyon için)
-                    safeSetItem('unlockedBadges', unlockedBadges);
-                }
-            } catch (apiError) {
-                console.warn('Backend badges yükleme hatası:', apiError);
-            }
-        }
-        
-        // Eğer backend'den yüklenmediyse, localStorage'dan yükle
-        if (unlockedBadges.length === 0) {
-            const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
-            // Eski format kontrolü ve dönüştürme
+        // Badges (cache'den önce yükle)
+        const savedUnlockedBadges = safeGetItem('unlockedBadges', []);
         if (savedUnlockedBadges.length > 0 && typeof savedUnlockedBadges[0] === 'string') {
-            // Eski format: string array -> object array (timestamp şimdiki zaman)
             unlockedBadges = savedUnlockedBadges.map((id, index) => ({
                 id: id,
-                unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000 // Sıraya göre timestamp
+                unlockedAt: Date.now() - (savedUnlockedBadges.length - index) * 1000
             }));
             safeSetItem('unlockedBadges', unlockedBadges);
         } else {
             unlockedBadges = savedUnlockedBadges;
-            }
+        }
+        
+        // Backend'den badges yükle (paralel)
+        if (user && typeof window.loadBadges === 'function') {
+            loadDetailedDataPromises.push(
+                window.loadBadges().then(backendBadges => {
+                    if (backendBadges && backendBadges.length > 0) {
+                        unlockedBadges = backendBadges;
+                        safeSetItem('unlockedBadges', unlockedBadges);
+                        console.log('✅ Badges backend\'den yüklendi');
+                    }
+                }).catch(err => console.warn('Badges yükleme hatası:', err))
+            );
+        }
+        
+        // Tüm detaylı veriler paralel yüklensin (await etme, arka planda)
+        if (loadDetailedDataPromises.length > 0) {
+            Promise.allSettled(loadDetailedDataPromises).then(() => {
+                console.log('✅ ÖNCELİK 3: Tüm detaylı veriler yüklendi');
+            });
         }
         perfectLessonsCount = parseInt(safeGetItem('perfectLessonsCount', 0)) || 0;
         
@@ -5583,15 +5707,29 @@ window.addEventListener('load', async () => {
         }, 500);
     }
     
+    // Mobil cihaz tespiti
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const clientWaitTime = isMobile ? 1000 : 500; // Mobil için daha uzun bekleme
+    
     // Supabase client'ın başlatılmasını bekle (eğer varsa)
     if (typeof window.supabase !== 'undefined') {
         await new Promise(resolve => {
+            let checkCount = 0;
+            const maxChecks = 20; // Maksimum kontrol sayısı
+            
             const checkSupabase = () => {
-                if (typeof window.getCurrentUser === 'function') {
-                    // Biraz daha bekle (session restore için)
-                    setTimeout(resolve, 300);
+                if (typeof window.getCurrentUser === 'function' && typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+                    // Client hazır, session restore için bekle
+                    console.log('✅ Supabase client hazır, session restore bekleniyor...');
+                    setTimeout(resolve, clientWaitTime);
+                } else if (checkCount < maxChecks) {
+                    // Henüz hazır değil, tekrar kontrol et
+                    checkCount++;
+                    setTimeout(checkSupabase, 200);
                 } else {
-                    setTimeout(checkSupabase, 100);
+                    // Maksimum kontrol sayısına ulaşıldı, devam et
+                    console.warn('⚠️ Supabase client hazır olmadı, devam ediliyor...');
+                    setTimeout(resolve, clientWaitTime);
                 }
             };
             checkSupabase();
