@@ -3,14 +3,14 @@
    ============================================ */
 :root {
     /* Primary Colors */
-    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-primary: linear-gradient(135deg, #a8b5ff 0%, #b8a5e8 100%);
     --bg-secondary: #fff;
     --text-primary: #1a1a2e;
     --text-secondary: #64748b;
 
     /* Accent Colors */
-    --accent-primary: #667eea;
-    --accent-secondary: #764ba2;
+    --accent-primary: #9d8aff;
+    --accent-secondary: #b8a5e8;
     --accent-success: #10b981;
     --accent-warning: #f59e0b;
     --accent-error: #ef4444;
@@ -82,7 +82,7 @@ html {
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background: var(--bg-primary);
-    color: var(--text-primary);
+    color: #fff;
     line-height: 1.6;
     min-height: 100vh;
     padding: 0;
@@ -167,12 +167,12 @@ body {
     max-width: 600px;
     margin: 0 auto 90px auto;
     padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
     border-radius: var(--radius-lg);
-    box-shadow: var(--glass-shadow);
+    box-shadow: none;
     min-height: calc(100vh - 165px);
     width: 100%;
     box-sizing: border-box;
@@ -204,12 +204,12 @@ body {
 
 /* Birleşik Stats ve Günlük Vird Kartı */
 .combined-stats-card {
-    background: var(--glass-bg-dark);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-sm);
     position: relative;
@@ -323,8 +323,9 @@ body {
 .daily-goal-label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #fff;
     white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .daily-goal-right {
@@ -346,7 +347,7 @@ body {
 .progress-bar-inline {
     flex: 1;
     height: 6px;
-    background: rgba(229, 231, 235, 0.5);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
     overflow: hidden;
     min-width: 60px;
@@ -354,7 +355,7 @@ body {
 
 .progress-bar-inline .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-success) 0%, var(--accent-primary) 100%);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
     transition: width var(--transition-normal);
     width: 0%;
@@ -362,9 +363,10 @@ body {
 
 .progress-text-inline {
     font-size: 0.65rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.95);
     white-space: nowrap;
     flex-shrink: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .settings-btn-inline {
@@ -397,15 +399,17 @@ body {
 
 .stat-label {
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
     white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .stat-value {
     font-size: 1rem;
     font-weight: 800;
-    color: var(--accent-secondary);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* Daily Goal Section */
@@ -460,7 +464,7 @@ body {
 .progress-bar {
     width: 100%;
     height: 8px;
-    background: rgba(229, 231, 235, 0.5);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
     overflow: hidden;
     margin-bottom: 4px;
@@ -468,7 +472,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-success) 0%, var(--accent-primary) 100%);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
     transition: width var(--transition-normal);
     width: 0%;
@@ -522,12 +526,12 @@ body {
 .difficulty-selector {
     margin-bottom: var(--spacing-sm);
     padding: var(--spacing-md);
-    background: var(--glass-bg-dark);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: none;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 .difficulty-buttons {
@@ -539,16 +543,16 @@ body {
 .difficulty-btn {
     flex: 1;
     padding: var(--spacing-sm) var(--spacing-xs);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-normal);
-    color: var(--text-primary);
+    color: #fff;
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
@@ -570,15 +574,16 @@ body {
 .difficulty-subtitle {
     font-size: 0.65rem;
     font-weight: 500;
-    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.9);
     line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .difficulty-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-strong);
-    background: var(--glass-bg-dark);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .difficulty-btn.active {
@@ -601,13 +606,13 @@ body {
 }
 
 .game-card {
-    background: var(--glass-bg-dark);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border-strong);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: none;
     cursor: pointer;
     transition: all var(--transition-normal);
     text-align: center;
@@ -632,6 +637,7 @@ body {
     transform: translateY(-4px) scale(1.02);
     box-shadow: var(--shadow-lg);
     border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .game-card:hover::before {
@@ -660,19 +666,21 @@ body {
 .game-card h3 {
     font-size: 1rem;
     margin-bottom: var(--spacing-xs);
-    color: var(--text-primary);
+    color: #fff;
     font-weight: 600;
     position: relative;
     z-index: 1;
     letter-spacing: -0.01em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .game-card p {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.95);
     line-height: 1.4;
     position: relative;
     z-index: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ============================================
@@ -688,7 +696,7 @@ body {
     align-items: center;
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     position: relative;
 }
 
@@ -698,6 +706,8 @@ body {
     transform: translateX(-50%);
     margin: 0;
     text-align: center;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .back-btn {
@@ -724,8 +734,9 @@ body {
     display: flex;
     gap: var(--spacing-md);
     font-weight: 600;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.95);
     font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .game-info-btn {
@@ -759,8 +770,9 @@ body {
 
 .submode-selection h3 {
     margin-bottom: var(--spacing-md);
-    color: var(--text-primary);
+    color: #fff;
     font-size: 1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .submode-buttons {
@@ -771,10 +783,10 @@ body {
 
 .submode-btn {
     padding: var(--spacing-md);
-    background: var(--glass-bg-dark);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 600;
@@ -785,13 +797,15 @@ body {
     text-align: center;
     line-height: 1.4;
     box-shadow: var(--shadow-sm);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .submode-btn:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-strong);
-    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Game Content */
@@ -803,9 +817,9 @@ body {
     text-align: center;
     margin-bottom: var(--spacing-sm);
     padding: var(--spacing-md);
-    background: var(--glass-bg-dark);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
@@ -824,7 +838,7 @@ body {
     position: relative;
     padding: var(--spacing-md);
     min-height: 120px;
-    background: var(--glass-bg);
+    background: transparent;
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
@@ -1228,7 +1242,7 @@ body {
     position: relative;
     margin-bottom: var(--spacing-md);
     padding: var(--spacing-sm);
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: transparent;
     border-radius: var(--radius-md);
     min-height: 50px;
 }
@@ -1888,6 +1902,15 @@ body {
 
 .daily-reward-box.claimed {
     background: linear-gradient(145deg, #7f8c8d 0%, #6c7a7b 50%, #5d6d7e 100%);
+}
+
+.daily-reward-box.claimed .reward-box-mystery {
+    font-size: 0.75rem !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1.2;
+    text-align: center;
+    word-wrap: break-word;
+    max-width: 100%;
 }
 
 .btn-primary {

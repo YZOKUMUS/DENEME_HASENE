@@ -3536,6 +3536,8 @@ function updateTasksDisplay() {
     const allDailyCompleted = dailyTasks.tasks.every(t => t.completed) && 
                               dailyTasks.bonusTasks.every(t => t.completed);
     const claimDailyBtn = document.getElementById('claim-daily-reward');
+    const rewardBoxMystery = document.querySelector('#claim-daily-reward .reward-box-mystery');
+    
     if (claimDailyBtn) {
         const isDisabled = !allDailyCompleted || dailyTasks.rewardsClaimed;
         claimDailyBtn.disabled = isDisabled;
@@ -3543,8 +3545,20 @@ function updateTasksDisplay() {
         // Kutu görsel durumunu güncelle
         if (dailyTasks.rewardsClaimed) {
             claimDailyBtn.classList.add('claimed');
+            // Ödül alındıktan sonra mesaj göster
+            if (rewardBoxMystery) {
+                rewardBoxMystery.textContent = 'Ödül Alındı';
+                rewardBoxMystery.style.fontSize = '0.75rem';
+                rewardBoxMystery.style.letterSpacing = '0.5px';
+            }
         } else {
             claimDailyBtn.classList.remove('claimed');
+            // Görevler yenilendiğinde tekrar soru işareti göster
+            if (rewardBoxMystery) {
+                rewardBoxMystery.textContent = '???';
+                rewardBoxMystery.style.fontSize = '1.1rem';
+                rewardBoxMystery.style.letterSpacing = '2px';
+            }
         }
     }
     
