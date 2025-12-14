@@ -1476,8 +1476,8 @@ function checkKelimeAnswer(selectedIndex, isCorrect) {
         // Kelime istatistiği
         updateWordStats(currentQuestionData.id, true);
         
-        // Combo göster (her doğru cevapta)
-        showComboBonus();
+        // Combo gösterimi kaldırıldı - performans ve kullanıcı odaklanması için
+        // showComboBonus();
         
         playSound('correct');
         
@@ -1572,8 +1572,12 @@ function handleHint() {
 
 /**
  * Combo bonusu gösterir
+ * NOT: Kullanıcı isteği üzerine devre dışı bırakıldı - performans ve odaklanma için
  */
 function showComboBonus() {
+    // Combo gösterimi kaldırıldı - performans ve kullanıcı odaklanması için
+    return;
+    /*
     const comboDisplay = document.getElementById('combo-display');
     if (comboDisplay) {
         comboDisplay.style.display = 'block';
@@ -1586,6 +1590,7 @@ function showComboBonus() {
             comboDisplay.style.display = 'none';
         }, 2000);
     }
+    */
 }
 
 // ============================================
@@ -1760,16 +1765,15 @@ function checkDinleAnswer(selectedIndex, isCorrect) {
         
         updateWordStats(currentQuestionData.id, true);
         
-        // Combo göster (her doğru cevapta)
-        const comboDisplay = document.getElementById('dinle-combo-display');
-        if (comboDisplay) {
-            comboDisplay.style.display = 'block';
-            document.getElementById('dinle-combo-count').textContent = comboCount;
-            // 2 saniye sonra otomatik gizle
-            setTimeout(() => {
-                comboDisplay.style.display = 'none';
-            }, 2000);
-        }
+        // Combo gösterimi kaldırıldı - performans ve kullanıcı odaklanması için
+        // const comboDisplay = document.getElementById('dinle-combo-display');
+        // if (comboDisplay) {
+        //     comboDisplay.style.display = 'block';
+        //     document.getElementById('dinle-combo-count').textContent = comboCount;
+        //     setTimeout(() => {
+        //         comboDisplay.style.display = 'none';
+        //     }, 2000);
+        // }
         
         playSound('correct');
         
@@ -2113,16 +2117,15 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         
         addSessionPoints(points);
         
-        // Combo göster (her doğru cevapta)
-        const comboDisplay = document.getElementById('bosluk-combo-display');
-        if (comboDisplay) {
-            comboDisplay.style.display = 'block';
-            document.getElementById('bosluk-combo-count').textContent = comboCount;
-            // 2 saniye sonra otomatik gizle
-            setTimeout(() => {
-                comboDisplay.style.display = 'none';
-            }, 2000);
-        }
+        // Combo gösterimi kaldırıldı - performans ve kullanıcı odaklanması için
+        // const comboDisplay = document.getElementById('bosluk-combo-display');
+        // if (comboDisplay) {
+        //     comboDisplay.style.display = 'block';
+        //     document.getElementById('bosluk-combo-count').textContent = comboCount;
+        //     setTimeout(() => {
+        //         comboDisplay.style.display = 'none';
+        //     }, 2000);
+        // }
         
         playSound('correct');
         
