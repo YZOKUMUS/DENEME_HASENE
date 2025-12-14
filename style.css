@@ -608,18 +608,96 @@ body {
 }
 
 .game-card {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
     padding: var(--spacing-md);
-    box-shadow: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     transition: all var(--transition-normal);
     text-align: center;
     position: relative;
     overflow: hidden;
+}
+
+/* Kelime Çevir - Mavi tonları */
+.game-card[data-game="kelime-cevir"] {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+.game-card[data-game="kelime-cevir"]:hover {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(37, 99, 235, 0.45) 100%);
+    border-color: rgba(59, 130, 246, 0.7);
+    box-shadow: 0 6px 24px rgba(59, 130, 246, 0.3);
+}
+
+/* Dinle Bul - Yeşil tonları */
+.game-card[data-game="dinle-bul"] {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 163, 74, 0.35) 100%);
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+}
+
+.game-card[data-game="dinle-bul"]:hover {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.35) 0%, rgba(22, 163, 74, 0.45) 100%);
+    border-color: rgba(34, 197, 94, 0.7);
+    box-shadow: 0 6px 24px rgba(34, 197, 94, 0.3);
+}
+
+/* Boşluk Doldur - Turuncu tonları */
+.game-card[data-game="bosluk-doldur"] {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.35) 100%);
+    border-color: rgba(249, 115, 22, 0.5);
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+}
+
+.game-card[data-game="bosluk-doldur"]:hover {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 0%, rgba(234, 88, 12, 0.45) 100%);
+    border-color: rgba(249, 115, 22, 0.7);
+    box-shadow: 0 6px 24px rgba(249, 115, 22, 0.3);
+}
+
+/* Ayet Oku - Mor tonları */
+.game-card[data-game="ayet-oku"] {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(147, 51, 234, 0.35) 100%);
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
+}
+
+.game-card[data-game="ayet-oku"]:hover {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(147, 51, 234, 0.45) 100%);
+    border-color: rgba(168, 85, 247, 0.7);
+    box-shadow: 0 6px 24px rgba(168, 85, 247, 0.3);
+}
+
+/* Dua Et - Altın/Sarı tonları */
+.game-card[data-game="dua-et"] {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.35) 100%);
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2);
+}
+
+.game-card[data-game="dua-et"]:hover {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.35) 0%, rgba(245, 158, 11, 0.45) 100%);
+    border-color: rgba(251, 191, 36, 0.7);
+    box-shadow: 0 6px 24px rgba(251, 191, 36, 0.3);
+}
+
+/* Hadis Oku - Pembe/Kırmızı tonları */
+.game-card[data-game="hadis-oku"] {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, rgba(219, 39, 119, 0.35) 100%);
+    border-color: rgba(236, 72, 153, 0.5);
+    box-shadow: 0 4px 16px rgba(236, 72, 153, 0.2);
+}
+
+.game-card[data-game="hadis-oku"]:hover {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.35) 0%, rgba(219, 39, 119, 0.45) 100%);
+    border-color: rgba(236, 72, 153, 0.7);
+    box-shadow: 0 6px 24px rgba(236, 72, 153, 0.3);
 }
 
 .game-card::before {
@@ -629,17 +707,16 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
     opacity: 0;
     transition: opacity var(--transition-normal);
     pointer-events: none;
+    border-radius: inherit;
 }
 
 .game-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: var(--shadow-xl);
 }
 
 .game-card:hover::before {
@@ -647,7 +724,7 @@ body {
 }
 
 .game-card:active {
-    transform: translateY(-2px) scale(1.01);
+    transform: translateY(-2px) scale(0.98);
     transition: all var(--transition-fast);
 }
 
@@ -662,27 +739,33 @@ body {
     width: 56px;
     height: 56px;
     object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
+    transition: transform var(--transition-normal);
+}
+
+.game-card:hover .game-icon img {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .game-card h3 {
     font-size: 1rem;
     margin-bottom: var(--spacing-xs);
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
     position: relative;
     z-index: 1;
     letter-spacing: -0.01em;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .game-card p {
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.95);
+    color: rgba(255, 255, 255, 1);
     line-height: 1.4;
     position: relative;
     z-index: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 500;
 }
 
 /* ============================================
