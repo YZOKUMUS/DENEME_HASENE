@@ -14,6 +14,256 @@ const API_BASE_URL = window.VITE_API_URL || 'https://your-api.vercel.app';
 
 let supabaseClient = null;
 
+// ============================================
+// BATCH QUEUE SİSTEMİ - Performans İyileştirmesi
+// ============================================
+
+// Pending kayıtları topla (optimistic updates için)
+const pendingSaves = {
+    wordStats: {},
+    dailyStats: {},
+    weeklyStats: {},
+    monthlyStats: {}
+};
+
+// Batch kayıt fonksiyonları
+async function batchSaveWordStats(wordStatsMap) {
+    const user = await getCurrentUser();
+    if (!user || !supabaseClient || Object.keys(wordStatsMap).length === 0) {
+        return;
+    }
+    
+    try {
+        // Tüm kelime istatistiklerini array'e çevir
+        const records = Object.entries(wordStatsMap).map(([wordId, stats]) => ({
+            user_id: user.id,
+            word_id: wordId,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        }));
+        
+        // Toplu kayıt (upsert)
+        const { error } = await supabaseClient
+            .from('word_stats')
+            .upsert(records, {
+                onConflict: 'user_id,word_id'
+            });
+        
+        if (error) {
+            const isRLSError = error.code === '42501' || 
+                              error.code === 'PGRST301' ||
+                              error.message?.includes('row-level security') ||
+                              error.message?.includes('RLS');
+            
+            if (!isRLSError) {
+                throw error;
+            }
+        }
+        
+        console.log(`✅ Batch kayıt: ${records.length} kelime istatistiği Supabase'e kaydedildi`);
+    } catch (err) {
+        console.warn('Batch word stats kayıt hatası:', err);
+        // Hata durumunda localStorage'a fallback (zaten yapılmış)
+    }
+}
+
+async function batchSaveDailyStats(dailyStatsMap) {
+    const user = await getCurrentUser();
+    if (!user || !supabaseClient || Object.keys(dailyStatsMap).length === 0) {
+        return;
+    }
+    
+    try {
+        const records = Object.entries(dailyStatsMap).map(([date, stats]) => ({
+            user_id: user.id,
+            date: date,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        }));
+        
+        const { error } = await supabaseClient
+            .from('daily_stats')
+            .upsert(records, {
+                onConflict: 'user_id,date'
+            });
+        
+        if (error) {
+            const is406Error = error.status === 406 || 
+                              error.code === '406' ||
+                              error.message?.includes('406') ||
+                              error.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                throw error;
+            }
+        }
+        
+        console.log(`✅ Batch kayıt: ${records.length} günlük istatistik Supabase'e kaydedildi`);
+    } catch (err) {
+        console.warn('Batch daily stats kayıt hatası:', err);
+    }
+}
+
+async function batchSaveWeeklyStats(weeklyStatsMap) {
+    const user = await getCurrentUser();
+    if (!user || !supabaseClient || Object.keys(weeklyStatsMap).length === 0) {
+        return;
+    }
+    
+    try {
+        const records = Object.entries(weeklyStatsMap).map(([weekStart, stats]) => ({
+            user_id: user.id,
+            week_start: weekStart,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        }));
+        
+        const { error } = await supabaseClient
+            .from('weekly_stats')
+            .upsert(records, {
+                onConflict: 'user_id,week_start'
+            });
+        
+        if (error) {
+            const is406Error = error.status === 406 || 
+                              error.code === '406' ||
+                              error.message?.includes('406') ||
+                              error.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                throw error;
+            }
+        }
+        
+        console.log(`✅ Batch kayıt: ${records.length} haftalık istatistik Supabase'e kaydedildi`);
+    } catch (err) {
+        console.warn('Batch weekly stats kayıt hatası:', err);
+    }
+}
+
+async function batchSaveMonthlyStats(monthlyStatsMap) {
+    const user = await getCurrentUser();
+    if (!user || !supabaseClient || Object.keys(monthlyStatsMap).length === 0) {
+        return;
+    }
+    
+    try {
+        const records = Object.entries(monthlyStatsMap).map(([month, stats]) => ({
+            user_id: user.id,
+            month: month,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        }));
+        
+        const { error } = await supabaseClient
+            .from('monthly_stats')
+            .upsert(records, {
+                onConflict: 'user_id,month'
+            });
+        
+        if (error) {
+            const is406Error = error.status === 406 || 
+                              error.code === '406' ||
+                              error.message?.includes('406') ||
+                              error.message?.includes('Not Acceptable');
+            
+            if (!is406Error) {
+                throw error;
+            }
+        }
+        
+        console.log(`✅ Batch kayıt: ${records.length} aylık istatistik Supabase'e kaydedildi`);
+    } catch (err) {
+        console.warn('Batch monthly stats kayıt hatası:', err);
+    }
+}
+
+// Debounced batch sync fonksiyonu
+async function syncBatchQueue() {
+    // Queue boş mu kontrol et
+    const hasData = Object.keys(pendingSaves.wordStats).length > 0 ||
+                    Object.keys(pendingSaves.dailyStats).length > 0 ||
+                    Object.keys(pendingSaves.weeklyStats).length > 0 ||
+                    Object.keys(pendingSaves.monthlyStats).length > 0;
+    
+    if (!hasData) {
+        return; // Queue boş, sync'e gerek yok
+    }
+    
+    // Pending kayıtları kopyala ve temizle
+    const toSave = {
+        wordStats: { ...pendingSaves.wordStats },
+        dailyStats: { ...pendingSaves.dailyStats },
+        weeklyStats: { ...pendingSaves.weeklyStats },
+        monthlyStats: { ...pendingSaves.monthlyStats }
+    };
+    
+    // Queue'yu temizle (atomic operation)
+    pendingSaves.wordStats = {};
+    pendingSaves.dailyStats = {};
+    pendingSaves.weeklyStats = {};
+    pendingSaves.monthlyStats = {};
+    
+    // Tüm batch kayıtları paralel yap
+    const results = await Promise.allSettled([
+        batchSaveWordStats(toSave.wordStats),
+        batchSaveDailyStats(toSave.dailyStats),
+        batchSaveWeeklyStats(toSave.weeklyStats),
+        batchSaveMonthlyStats(toSave.monthlyStats)
+    ]);
+    
+    // Başarısız kayıtları tekrar queue'ya ekle (retry için)
+    results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+            const types = ['wordStats', 'dailyStats', 'weeklyStats', 'monthlyStats'];
+            const type = types[index];
+            // Başarısız kayıtları geri ekle
+            Object.assign(pendingSaves[type], toSave[type]);
+            console.warn(`⚠️ ${type} batch kayıt başarısız, queue'ya geri eklendi`);
+        }
+    });
+}
+
+// Debounce fonksiyonunu utils.js'den al (eğer yoksa basit bir tane oluştur)
+let batchSyncTimeoutId = null;
+const BATCH_SYNC_DELAY = 500; // CONFIG.DEBOUNCE_DELAY ile aynı
+
+function debouncedBatchSync() {
+    clearTimeout(batchSyncTimeoutId);
+    batchSyncTimeoutId = setTimeout(() => {
+        syncBatchQueue().catch(err => {
+            console.warn('Batch sync hatası:', err);
+        });
+    }, BATCH_SYNC_DELAY);
+}
+
+// Batch queue'ya ekleme fonksiyonları (window'a expose et)
+function addToBatchQueue(type, key, data) {
+    if (type === 'dailyStats') {
+        pendingSaves.dailyStats[key] = data;
+    } else if (type === 'weeklyStats') {
+        pendingSaves.weeklyStats[key] = data;
+    } else if (type === 'monthlyStats') {
+        pendingSaves.monthlyStats[key] = data;
+    }
+}
+
+function addWordStatsToBatch(wordId, stats) {
+    pendingSaves.wordStats[wordId] = stats;
+}
+
+function triggerBatchSync() {
+    debouncedBatchSync();
+}
+
+// Window'a expose et
+if (typeof window !== 'undefined') {
+    window.addToBatchQueue = addToBatchQueue;
+    window.addWordStatsToBatch = addWordStatsToBatch;
+    window.triggerBatchSync = triggerBatchSync;
+    window.syncBatchQueue = syncBatchQueue; // Manuel sync için
+}
+
 // Supabase client'ı başlat
 function initSupabase() {
     if (BACKEND_TYPE === 'supabase') {

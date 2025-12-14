@@ -964,28 +964,35 @@ async function saveStats() {
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
         safeSetItem('gameStats', gameStats);
         
-        // Kelime istatistiklerini Supabase'e kaydet (async, hata olsa bile devam et)
-        if (typeof window.saveWordStat === 'function' && wordStats && Object.keys(wordStats).length > 0) {
-            // Tüm kelime istatistiklerini kaydet (paralel olarak)
-            const savePromises = Object.keys(wordStats).map(wordId => {
-                return window.saveWordStat(wordId, wordStats[wordId]).catch(error => {
-                    // RLS hatası (42501) sessizce yakalanıyor, diğer hatalar için uyarı
-                    const isRLSError = error?.code === '42501' || 
-                                      error?.code === 'PGRST301' ||
-                                      error?.message?.includes('row-level security') ||
-                                      error?.message?.includes('RLS');
-                    
-                    if (!isRLSError) {
-                        // RLS dışındaki hatalar için uyarı göster
-                    console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
-                    }
-                    // RLS hatası için sessiz fallback (saveWordStat içinde zaten localStorage'a kaydediliyor)
+        // Kelime istatistiklerini Supabase'e kaydet - BATCH QUEUE kullan (performans iyileştirmesi)
+        if (wordStats && Object.keys(wordStats).length > 0) {
+            if (typeof window.addWordStatsToBatch === 'function') {
+                // Batch queue'ya ekle (hemen, senkron - optimistic update)
+                Object.keys(wordStats).forEach(wordId => {
+                    window.addWordStatsToBatch(wordId, wordStats[wordId]);
                 });
-            });
-            // Tüm kayıtların tamamlanmasını bekle (ama hata olsa bile devam et)
-            Promise.all(savePromises).catch(() => {
-                // Hatalar zaten yukarıda yakalandı, burada sadece log
-            });
+                // Debounced batch sync tetikle (500ms sonra toplu gönder)
+                if (typeof window.triggerBatchSync === 'function') {
+                    window.triggerBatchSync();
+                }
+            } else if (typeof window.saveWordStat === 'function') {
+                // Fallback: Eski yöntem (her kelime için ayrı request - yavaş)
+                const savePromises = Object.keys(wordStats).map(wordId => {
+                    return window.saveWordStat(wordId, wordStats[wordId]).catch(error => {
+                        const isRLSError = error?.code === '42501' || 
+                                          error?.code === 'PGRST301' ||
+                                          error?.message?.includes('row-level security') ||
+                                          error?.message?.includes('RLS');
+                        
+                        if (!isRLSError) {
+                            console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
+                        }
+                    });
+                });
+                Promise.all(savePromises).catch(() => {
+                    // Hatalar zaten yukarıda yakalandı
+                });
+            }
         }
 
         debugLog('İstatistikler kaydedildi');
@@ -1005,6 +1012,13 @@ const debouncedSaveStats = debounce(saveStats, CONFIG.DEBOUNCE_DELAY);
 async function saveStatsImmediate() {
     console.log('🟡 saveStatsImmediate çağrıldı');
     try {
+        // Önce batch queue'yu hemen sync et (oyun bitişinde tüm veriler kaydedilmeli)
+        if (typeof window.syncBatchQueue === 'function') {
+            await window.syncBatchQueue();
+            console.log('✅ Batch queue sync tamamlandı');
+        }
+        
+        // Sonra normal saveStats (user_stats, badges, vb.)
         await saveStats();
         console.log('🟢 saveStatsImmediate tamamlandı');
     } catch (error) {
@@ -4036,23 +4050,36 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     
     safeSetItem(monthlyKey, monthlyData);
     
-    // Supabase'e kaydet (async, hata olsa bile devam et)
-    if (typeof window.saveDailyStat === 'function') {
-        window.saveDailyStat(today, dailyData).catch(error => {
-            console.warn('Supabase\'e daily_stat kaydedilemedi:', error);
-        });
-    }
-    
-    if (typeof window.saveWeeklyStat === 'function') {
-        window.saveWeeklyStat(weekStartStr, weeklyData).catch(error => {
-            console.warn('Supabase\'e weekly_stat kaydedilemedi:', error);
-        });
-    }
-    
-    if (typeof window.saveMonthlyStat === 'function') {
-        window.saveMonthlyStat(monthStr, monthlyData).catch(error => {
-            console.warn('Supabase\'e monthly_stat kaydedilemedi:', error);
-        });
+    // Supabase'e kaydet - BATCH QUEUE kullan (performans iyileştirmesi)
+    // Direkt Supabase'e yazmak yerine batch queue'ya ekle, debounced sync ile toplu gönder
+    if (typeof window.addToBatchQueue === 'function') {
+        // Batch queue'ya ekle (hemen, senkron - optimistic update)
+        window.addToBatchQueue('dailyStats', today, dailyData);
+        window.addToBatchQueue('weeklyStats', weekStartStr, weeklyData);
+        window.addToBatchQueue('monthlyStats', monthStr, monthlyData);
+        // Debounced batch sync tetikle (500ms sonra toplu gönder)
+        if (typeof window.triggerBatchSync === 'function') {
+            window.triggerBatchSync();
+        }
+    } else {
+        // Fallback: Eski yöntem (direkt kayıt)
+        if (typeof window.saveDailyStat === 'function') {
+            window.saveDailyStat(today, dailyData).catch(error => {
+                console.warn('Supabase\'e daily_stat kaydedilemedi:', error);
+            });
+        }
+        
+        if (typeof window.saveWeeklyStat === 'function') {
+            window.saveWeeklyStat(weekStartStr, weeklyData).catch(error => {
+                console.warn('Supabase\'e weekly_stat kaydedilemedi:', error);
+            });
+        }
+        
+        if (typeof window.saveMonthlyStat === 'function') {
+            window.saveMonthlyStat(monthStr, monthlyData).catch(error => {
+                console.warn('Supabase\'e monthly_stat kaydedilemedi:', error);
+            });
+        }
     }
 }
 
