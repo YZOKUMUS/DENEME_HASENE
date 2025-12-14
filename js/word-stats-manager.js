@@ -81,6 +81,16 @@ function updateWordStats(wordId, isCorrect) {
     stats.successRate = (stats.correct / stats.attempts) * 100;
     stats.masteryLevel = Math.min(10, Math.floor(stats.successRate / 10));
     
+    // Güncellenen kelimeyi batch queue'ya ekle (sadece değişen kelimeler kaydedilir)
+    if (typeof window.addWordStatsToBatch === 'function') {
+        window.addWordStatsToBatch(wordId, stats);
+        // Debounced batch sync tetikle (500ms sonra toplu gönder)
+        if (typeof window.triggerBatchSync === 'function') {
+            window.triggerBatchSync();
+        }
+    }
+    
+    // Eski yöntem (fallback)
     debouncedSaveStats();
 }
 

@@ -28,8 +28,14 @@ const pendingSaves = {
 
 // Batch kayıt fonksiyonları
 async function batchSaveWordStats(wordStatsMap) {
+    if (Object.keys(wordStatsMap).length === 0) {
+        return;
+    }
+    
     const user = await getCurrentUser();
-    if (!user || !supabaseClient || Object.keys(wordStatsMap).length === 0) {
+    if (!user || !supabaseClient) {
+        // Kullanıcı giriş yapmamış - localStorage'a zaten kaydedilmiş, batch queue'yu temizle
+        console.log('ℹ️ Kullanıcı giriş yapmamış, batch wordStats atlandı (localStorage\'a zaten kaydedildi)');
         return;
     }
     
@@ -68,8 +74,13 @@ async function batchSaveWordStats(wordStatsMap) {
 }
 
 async function batchSaveDailyStats(dailyStatsMap) {
+    if (Object.keys(dailyStatsMap).length === 0) {
+        return;
+    }
+    
     const user = await getCurrentUser();
-    if (!user || !supabaseClient || Object.keys(dailyStatsMap).length === 0) {
+    if (!user || !supabaseClient) {
+        console.log('ℹ️ Kullanıcı giriş yapmamış, batch dailyStats atlandı (localStorage\'a zaten kaydedildi)');
         return;
     }
     
@@ -105,8 +116,13 @@ async function batchSaveDailyStats(dailyStatsMap) {
 }
 
 async function batchSaveWeeklyStats(weeklyStatsMap) {
+    if (Object.keys(weeklyStatsMap).length === 0) {
+        return;
+    }
+    
     const user = await getCurrentUser();
-    if (!user || !supabaseClient || Object.keys(weeklyStatsMap).length === 0) {
+    if (!user || !supabaseClient) {
+        console.log('ℹ️ Kullanıcı giriş yapmamış, batch weeklyStats atlandı (localStorage\'a zaten kaydedildi)');
         return;
     }
     
@@ -142,8 +158,13 @@ async function batchSaveWeeklyStats(weeklyStatsMap) {
 }
 
 async function batchSaveMonthlyStats(monthlyStatsMap) {
+    if (Object.keys(monthlyStatsMap).length === 0) {
+        return;
+    }
+    
     const user = await getCurrentUser();
-    if (!user || !supabaseClient || Object.keys(monthlyStatsMap).length === 0) {
+    if (!user || !supabaseClient) {
+        console.log('ℹ️ Kullanıcı giriş yapmamış, batch monthlyStats atlandı (localStorage\'a zaten kaydedildi)');
         return;
     }
     
@@ -179,54 +200,82 @@ async function batchSaveMonthlyStats(monthlyStatsMap) {
 }
 
 // Debounced batch sync fonksiyonu
+let isSyncing = false; // Sync'in aynı anda iki kez çalışmasını önle
+
 async function syncBatchQueue() {
+    // Eğer zaten sync çalışıyorsa, bekle
+    if (isSyncing) {
+        console.log('⏳ Batch sync zaten çalışıyor, bekleniyor...');
+        return;
+    }
+    
     // Queue boş mu kontrol et
-    const hasData = Object.keys(pendingSaves.wordStats).length > 0 ||
-                    Object.keys(pendingSaves.dailyStats).length > 0 ||
-                    Object.keys(pendingSaves.weeklyStats).length > 0 ||
-                    Object.keys(pendingSaves.monthlyStats).length > 0;
+    // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+    const wordStatsCount = Object.keys(pendingSaves.wordStats).length;
+    
+    const hasData = wordStatsCount > 0;
+    
+    console.log(`📊 Batch queue durumu: wordStats=${wordStatsCount}`);
     
     if (!hasData) {
+        console.log('ℹ️ Batch queue boş, sync atlandı');
         return; // Queue boş, sync'e gerek yok
     }
     
-    // Pending kayıtları kopyala ve temizle
-    const toSave = {
-        wordStats: { ...pendingSaves.wordStats },
-        dailyStats: { ...pendingSaves.dailyStats },
-        weeklyStats: { ...pendingSaves.weeklyStats },
-        monthlyStats: { ...pendingSaves.monthlyStats }
-    };
+    // Sync başlat
+    isSyncing = true;
     
-    // Queue'yu temizle (atomic operation)
-    pendingSaves.wordStats = {};
-    pendingSaves.dailyStats = {};
-    pendingSaves.weeklyStats = {};
-    pendingSaves.monthlyStats = {};
+    try {
+        // Pending kayıtları kopyala ve temizle
+        // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+        const toSave = {
+            wordStats: { ...pendingSaves.wordStats }
+        };
+        
+        // Queue'yu temizle (atomic operation) - sync başlamadan önce temizle
+        pendingSaves.wordStats = {};
+        
+        // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+        console.log(`🚀 Batch sync başlatılıyor: ${wordStatsCount} kelime`);
     
     // Tüm batch kayıtları paralel yap
+    // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+    // Artık sadece word_stats kaydediliyor
     const results = await Promise.allSettled([
-        batchSaveWordStats(toSave.wordStats),
-        batchSaveDailyStats(toSave.dailyStats),
-        batchSaveWeeklyStats(toSave.weeklyStats),
-        batchSaveMonthlyStats(toSave.monthlyStats)
+        batchSaveWordStats(toSave.wordStats)
+        // batchSaveDailyStats(toSave.dailyStats), // Tablo kaldırıldı
+        // batchSaveWeeklyStats(toSave.weeklyStats), // Tablo kaldırıldı
+        // batchSaveMonthlyStats(toSave.monthlyStats) // Tablo kaldırıldı
     ]);
     
-    // Başarısız kayıtları tekrar queue'ya ekle (retry için)
-    results.forEach((result, index) => {
-        if (result.status === 'rejected') {
-            const types = ['wordStats', 'dailyStats', 'weeklyStats', 'monthlyStats'];
-            const type = types[index];
-            // Başarısız kayıtları geri ekle
-            Object.assign(pendingSaves[type], toSave[type]);
-            console.warn(`⚠️ ${type} batch kayıt başarısız, queue'ya geri eklendi`);
-        }
-    });
+    // Sonuçları logla
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    const failCount = results.filter(r => r.status === 'rejected').length;
+    console.log(`✅ Batch sync tamamlandı: ${successCount} başarılı, ${failCount} başarısız`);
+    
+        // Başarısız kayıtları tekrar queue'ya ekle (retry için)
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                const types = ['wordStats']; // dailyStats, weeklyStats, monthlyStats kaldırıldı
+                const type = types[index];
+                if (type) {
+                    // Başarısız kayıtları geri ekle
+                    Object.assign(pendingSaves[type], toSave[type]);
+                    console.warn(`⚠️ ${type} batch kayıt başarısız, queue'ya geri eklendi:`, result.reason);
+                }
+            }
+        });
+    } finally {
+        // Sync tamamlandı, flag'i temizle
+        isSyncing = false;
+    }
 }
 
 // Debounce fonksiyonunu utils.js'den al (eğer yoksa basit bir tane oluştur)
 let batchSyncTimeoutId = null;
-const BATCH_SYNC_DELAY = 500; // CONFIG.DEBOUNCE_DELAY ile aynı
+// Performans optimizasyonu: Oyun sırasında daha uzun debounce (2 saniye)
+// Oyun bitişinde hemen sync yapılacak (saveStatsImmediate ile)
+const BATCH_SYNC_DELAY = 2000; // 2 saniye - oyun sırasında toplu gönderim için
 
 function debouncedBatchSync() {
     clearTimeout(batchSyncTimeoutId);
@@ -241,18 +290,34 @@ function debouncedBatchSync() {
 function addToBatchQueue(type, key, data) {
     if (type === 'dailyStats') {
         pendingSaves.dailyStats[key] = data;
+        if (window.CONFIG && window.CONFIG.DEBUG) {
+            console.log(`📦 Batch queue'ya eklendi: dailyStats[${key}]`);
+        }
     } else if (type === 'weeklyStats') {
         pendingSaves.weeklyStats[key] = data;
+        if (window.CONFIG && window.CONFIG.DEBUG) {
+            console.log(`📦 Batch queue'ya eklendi: weeklyStats[${key}]`);
+        }
     } else if (type === 'monthlyStats') {
         pendingSaves.monthlyStats[key] = data;
+        if (window.CONFIG && window.CONFIG.DEBUG) {
+            console.log(`📦 Batch queue'ya eklendi: monthlyStats[${key}]`);
+        }
     }
 }
 
 function addWordStatsToBatch(wordId, stats) {
     pendingSaves.wordStats[wordId] = stats;
+    // Log'u sadece debug modunda göster (çok fazla log olmasın)
+    if (window.CONFIG && window.CONFIG.DEBUG) {
+        console.log(`📦 Batch queue'ya eklendi: wordStats[${wordId}]`);
+    }
 }
 
 function triggerBatchSync() {
+    if (window.CONFIG && window.CONFIG.DEBUG) {
+        console.log('🔄 Batch sync tetiklendi (debounced)');
+    }
     debouncedBatchSync();
 }
 
@@ -638,7 +703,20 @@ async function loadUserStats() {
                         game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
                         perfect_lessons_count: 0
                     };
-                } else {
+                } 
+                // 406 = "Not Acceptable" - RLS politikası sorunu
+                else if (error.status === 406 || error.code === '406' || error.message?.includes('406') || error.message?.includes('Not Acceptable')) {
+                    console.warn('⚠️ loadUserStats: RLS politikası hatası (406) - localStorage\'dan yüklenecek:', error);
+                    // RLS hatası durumunda localStorage'dan yükle (fallback)
+                    return {
+                        total_points: parseInt(localStorage.getItem('hasene_totalPoints') || '0'),
+                        badges: JSON.parse(localStorage.getItem('hasene_badges') || '{"stars":0,"bronze":0,"silver":0,"gold":0,"diamond":0}'),
+                        streak_data: JSON.parse(localStorage.getItem('hasene_streakData') || '{"currentStreak":0,"bestStreak":0,"totalPlayDays":0}'),
+                        game_stats: JSON.parse(localStorage.getItem('hasene_gameStats') || '{"totalCorrect":0,"totalWrong":0,"gameModeCounts":{}}'),
+                        perfect_lessons_count: parseInt(localStorage.getItem('perfectLessonsCount') || '0')
+                    };
+                } 
+                else {
                     console.error('❌ loadUserStats: Backend hatası:', error);
                     throw error;
                 }
@@ -1743,19 +1821,12 @@ async function saveBadge(badgeId) {
 
 /**
  * Liderlik tablosunu yükle (eski - genel)
+ * NOT: 'leaderboard' tablosu yok, weekly_leaderboard kullanılıyor
+ * Bu fonksiyon deprecated, loadWeeklyLeaderboard kullanın
  */
 async function loadLeaderboard(limit = 100) {
-    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from('leaderboard')
-            .select('*')
-            .limit(limit);
-        
-        if (error) throw error;
-        return data;
-    }
-    
-    // Fallback: Boş array
+    console.warn('⚠️ loadLeaderboard() deprecated - loadWeeklyLeaderboard() kullanın');
+    // Fallback: Boş array (leaderboard tablosu yok)
     return [];
 }
 

@@ -6088,3 +6088,51 @@ select:focus {
     }
 }
 
+/* ============================================
+   TEST BUTONU: Tüm Verileri Sıfırla
+   ============================================ */
+.test-reset-all-btn {
+    position: fixed;
+    bottom: 110px; /* Bottom nav'ın üstünde (bottom nav ~90px yüksekliğinde + 20px boşluk) */
+    left: 20px; /* Sol alt köşe */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(238, 90, 111, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.test-reset-all-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(238, 90, 111, 0.6),
+                0 4px 12px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #ff5252 0%, #e53935 100%);
+}
+
+.test-reset-all-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobil için daha küçük */
+@media (max-width: 768px) {
+    .test-reset-all-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+        bottom: 110px; /* Bottom nav'ın üstünde (bottom nav ~90px yüksekliğinde + 20px boşluk) */
+        left: 15px; /* Sol alt köşe */
+    }
+}
+

@@ -643,7 +643,9 @@ async function loadStats() {
         const loadDetailedDataPromises = [];
         
         // WordStats
-        if (user && typeof window.loadWordStats === 'function') {
+        // ÖNEMLİ: Eğer resetAllStats çalıştırıldıysa (hasene_statsJustReset flag'i varsa), backend'den yükleme
+        const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
+        if (user && typeof window.loadWordStats === 'function' && !statsJustReset) {
             loadDetailedDataPromises.push(
                 window.loadWordStats().then(backendWordStats => {
                     if (backendWordStats && Object.keys(backendWordStats).length > 0) {
@@ -656,6 +658,17 @@ async function loadStats() {
                     }
                 }).catch(err => console.warn('WordStats yükleme hatası:', err))
             );
+        } else if (statsJustReset) {
+            // resetAllStats çalıştırıldı - wordStats'ı boş yap
+            console.log('ℹ️ resetAllStats sonrası - backend\'den wordStats yüklenmesi atlandı');
+            wordStats = {};
+            if (typeof window !== 'undefined') {
+                window.wordStats = {};
+            }
+            localStorage.removeItem('hasene_wordStats');
+            // Flag'i temizle - artık backend'den normal yüklenecek (bir sonraki loadStats çağrısında)
+            localStorage.removeItem('hasene_statsJustReset');
+            console.log('ℹ️ resetAllStats flag\'i temizlendi - bir sonraki yüklemede backend\'den normal yüklenecek');
         }
         
         // Eski wordStats formatını yeni spaced repetition formatına migrate et
@@ -905,7 +918,11 @@ async function saveStats() {
                     game_stats: gameStats,
                     perfect_lessons_count: perfectLessonsCount
                 }).then(() => {
-                    console.log('✅ Backend\'e istatistikler kaydedildi');
+                    console.log('✅ Backend\'e istatistikler kaydedildi:', {
+                        total_points: totalPoints,
+                        badges: badges,
+                        streak: streakData.currentStreak
+                    });
                 }).catch(apiError => {
                     console.error('❌ Backend kaydetme hatası:', apiError);
                     console.warn('Backend kaydetme hatası, localStorage kullanılıyor:', apiError);
@@ -964,36 +981,9 @@ async function saveStats() {
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
         safeSetItem('gameStats', gameStats);
         
-        // Kelime istatistiklerini Supabase'e kaydet - BATCH QUEUE kullan (performans iyileştirmesi)
-        if (wordStats && Object.keys(wordStats).length > 0) {
-            if (typeof window.addWordStatsToBatch === 'function') {
-                // Batch queue'ya ekle (hemen, senkron - optimistic update)
-                Object.keys(wordStats).forEach(wordId => {
-                    window.addWordStatsToBatch(wordId, wordStats[wordId]);
-                });
-                // Debounced batch sync tetikle (500ms sonra toplu gönder)
-                if (typeof window.triggerBatchSync === 'function') {
-                    window.triggerBatchSync();
-                }
-            } else if (typeof window.saveWordStat === 'function') {
-                // Fallback: Eski yöntem (her kelime için ayrı request - yavaş)
-                const savePromises = Object.keys(wordStats).map(wordId => {
-                    return window.saveWordStat(wordId, wordStats[wordId]).catch(error => {
-                        const isRLSError = error?.code === '42501' || 
-                                          error?.code === 'PGRST301' ||
-                                          error?.message?.includes('row-level security') ||
-                                          error?.message?.includes('RLS');
-                        
-                        if (!isRLSError) {
-                            console.warn(`Supabase'e kelime ${wordId} kaydedilemedi:`, error);
-                        }
-                    });
-                });
-                Promise.all(savePromises).catch(() => {
-                    // Hatalar zaten yukarıda yakalandı
-                });
-            }
-        }
+        // NOT: Kelime istatistikleri artık updateWordStats() içinde batch queue'ya ekleniyor
+        // Burada tüm wordStats'ı kaydetmek gereksiz ve performans sorununa yol açıyor
+        // (sayfa yüklendiğinde backend'den yüklenen tüm kelimeler tekrar queue'ya ekleniyordu)
 
         debugLog('İstatistikler kaydedildi');
     } catch (error) {
@@ -1010,7 +1000,10 @@ const debouncedSaveStats = debounce(saveStats, CONFIG.DEBOUNCE_DELAY);
  * Anında kaydetme (oyun bitişinde)
  */
 async function saveStatsImmediate() {
-    console.log('🟡 saveStatsImmediate çağrıldı');
+    console.log('🟡 saveStatsImmediate çağrıldı:', {
+        totalPoints: totalPoints,
+        stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
+    });
     try {
         // Önce batch queue'yu hemen sync et (oyun bitişinde tüm veriler kaydedilmeli)
         if (typeof window.syncBatchQueue === 'function') {
@@ -1020,7 +1013,10 @@ async function saveStatsImmediate() {
         
         // Sonra normal saveStats (user_stats, badges, vb.)
         await saveStats();
-        console.log('🟢 saveStatsImmediate tamamlandı');
+        console.log('🟢 saveStatsImmediate tamamlandı:', {
+            totalPoints: totalPoints,
+            backendKaydedildi: true
+        });
     } catch (error) {
         console.error('❌ saveStatsImmediate hatası:', error);
     }
@@ -1113,14 +1109,26 @@ function addDailyXP(points) {
  */
 async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = false) {
     const oldLevel = calculateLevel(totalPoints);
+    const oldTotalPoints = totalPoints;
     totalPoints += points;
     const newLevel = calculateLevel(totalPoints);
+    
+    // LOG: Puan ekleme
+    console.log('💰 addToGlobalPoints:', {
+        eklenecek: points,
+        eskiTotal: oldTotalPoints,
+        yeniTotal: totalPoints,
+        fark: totalPoints - oldTotalPoints
+    });
     
     // Rozetleri güncelle
     badges = calculateBadges(totalPoints);
     
-    // Günlük XP ekle
-    addDailyXP(points);
+    // NOT: addDailyXP() kaldırıldı - çift sayma önleme
+    // Her soru zaten saveDetailedStats() ile kaydediliyor ve dailyXP'ye ekleniyor
+    // Oyun bitişinde addToGlobalPoints() çağrıldığında skipDetailedStats=true olduğu için
+    // saveDetailedStats() çağrılmıyor ama addDailyXP() de çağrılmamalı
+    // Çünkü her soru için zaten saveDetailedStats() dailyXP'ye eklemiş
     
     // Seviye atlama kontrolü
     if (newLevel > oldLevel) {
@@ -1172,7 +1180,20 @@ function getDailyHasene() {
     const dailyData = safeGetItem(dailyKey, { points: 0 });
     const dailyPointsFromDetailed = dailyData.points || 0;
     const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
-    return Math.max(dailyPointsFromDetailed, dailyXP);
+    
+    // LOG: Çift sayma kontrolü
+    if (dailyPointsFromDetailed !== dailyXP) {
+        console.warn('⚠️ getDailyHasene - Tutarsızlık tespit edildi:', {
+            dailyPointsFromDetailed,
+            dailyXP,
+            fark: Math.abs(dailyPointsFromDetailed - dailyXP),
+            not: 'dailyXP ve dailyData.points senkronize değil!'
+        });
+    }
+    
+    // Her zaman dailyData.points'i kullan (daha güvenilir, saveDetailedStats tarafından güncelleniyor)
+    // dailyXP sadece fallback olarak kullanılmalı
+    return dailyPointsFromDetailed || dailyXP;
 }
 
 /**
@@ -2738,10 +2759,30 @@ async function saveCurrentGameProgress() {
         maxCombo
     });
     
-    // Global puanlara ekle
-    // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
-    // Bu şekilde çift sayma önlenir
-    await addToGlobalPoints(sessionScore, sessionCorrect, true);
+    // Global puanlara ekle (sadece totalPoints, dailyXP zaten her soru için kaydedildi)
+    // NOT: addToGlobalPoints() kullanmıyoruz çünkü addDailyXP() çift saymaya neden oluyor
+    // Her soru zaten saveDetailedStats() ile kaydedildi ve dailyXP'ye eklendi
+    // Sadece totalPoints'i güncelle (dailyXP'ye dokunma)
+    const oldTotalPoints = totalPoints;
+    totalPoints += sessionScore;
+    
+    // Rozetleri güncelle
+    badges = calculateBadges(totalPoints);
+    
+    // UI'ı güncelle
+    updateStatsBar();
+    
+    // LOG: Puan ekleme
+    console.log('💰 saveCurrentGameProgress - totalPoints güncellendi:', {
+        eklenecek: sessionScore,
+        eskiTotal: oldTotalPoints,
+        yeniTotal: totalPoints,
+        fark: totalPoints - oldTotalPoints,
+        not: 'dailyXP zaten her soru için saveDetailedStats() ile kaydedildi'
+    });
+    
+    // Kaydet (totalPoints güncellendi)
+    await saveStatsImmediate();
     
     // NOT: saveDetailedStats() çağrılmıyor çünkü her soru cevaplandığında zaten çağrılıyor!
     // Burada duplicate kayıt yapmamak için sadece localStorage senkronizasyonu yapıyoruz.
@@ -2801,8 +2842,9 @@ async function saveCurrentGameProgress() {
         perfect: 0 // Oyun bitmeden çıkıldığı için perfect bonus yok
     });
     
-    // İstatistikleri kaydet
-    debouncedSaveStats();
+    // NOT: saveStatsImmediate() zaten yukarıda çağrıldı (satır 2772)
+    // debouncedSaveStats() ve saveStats() çağrıları kaldırıldı - çift kayıt önleme
+    // saveStatsImmediate() hem localStorage hem backend'e kaydediyor
     
     infoLog('Oyun ilerlemesi kaydedildi');
     
@@ -2811,9 +2853,6 @@ async function saveCurrentGameProgress() {
     
     // Eğer detaylı istatistikler modalı açıksa, panelleri yenile
     refreshDetailedStatsIfOpen();
-    
-    // İstatistikleri kaydet
-    saveStats();
     
     // Session değişkenlerini sıfırla
     sessionScore = 0;
@@ -2862,10 +2901,8 @@ async function endGame() {
     // Global puanlara ekle
     // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
     // Bu şekilde çift sayma önlenir
-    // await kaldırıldı - sonuç paneli hemen açılsın (performans optimizasyonu)
-    addToGlobalPoints(sessionScore, sessionCorrect, true).catch(err => {
-        console.error('addToGlobalPoints hatası (kritik değil):', err);
-    });
+    // ÖNEMLİ: await edilmeli - totalPoints güncellenmeden saveStatsImmediate çağrılmamalı
+    await addToGlobalPoints(sessionScore, sessionCorrect, true);
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle
@@ -2955,10 +2992,9 @@ async function endGame() {
         }
     }
     
-    // Backend kayıtlarını arka planda yap (sonuç panelini bekletme)
-    saveStatsImmediate().catch(err => {
-        console.error('Backend kayıt hatası (kritik değil):', err);
-    });
+    // NOT: saveStatsImmediate() çağrısı kaldırıldı
+    // Çünkü addToGlobalPoints() zaten saveStatsImmediate() çağırıyor
+    // Tekrar çağırmak race condition'a neden olabilir ve eski totalPoints değerini kaydedebilir
     
     // Haftalık ve aylık için de oyun sayısını güncelle
     const weekStartStr = getWeekStartDateString(new Date());
@@ -3898,9 +3934,21 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     const oldWrong = dailyData.wrong || 0;
     const oldPoints = dailyData.points || 0;
     
+    const oldDailyPoints = dailyData.points || 0;
     dailyData.correct = (dailyData.correct || 0) + correct;
     dailyData.wrong = (dailyData.wrong || 0) + wrong;
     dailyData.points = (dailyData.points || 0) + points;
+    
+    // LOG: Çift sayma kontrolü
+    if (points > 0) {
+        console.log('🔵 saveDetailedStats - dailyData.points güncellendi:', {
+            eklenecek: points,
+            eskiDailyPoints: oldDailyPoints,
+            yeniDailyPoints: dailyData.points,
+            fark: dailyData.points - oldDailyPoints,
+            stackTrace: new Error().stack.split('\n').slice(1, 3).join('\n')
+        });
+    }
     // gamesPlayed sadece oyun tamamlandığında artırılmalı, her soru için değil
     if (incrementGamesPlayed) {
         dailyData.gamesPlayed = (dailyData.gamesPlayed || 0) + 1;
@@ -4050,37 +4098,9 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     
     safeSetItem(monthlyKey, monthlyData);
     
-    // Supabase'e kaydet - BATCH QUEUE kullan (performans iyileştirmesi)
-    // Direkt Supabase'e yazmak yerine batch queue'ya ekle, debounced sync ile toplu gönder
-    if (typeof window.addToBatchQueue === 'function') {
-        // Batch queue'ya ekle (hemen, senkron - optimistic update)
-        window.addToBatchQueue('dailyStats', today, dailyData);
-        window.addToBatchQueue('weeklyStats', weekStartStr, weeklyData);
-        window.addToBatchQueue('monthlyStats', monthStr, monthlyData);
-        // Debounced batch sync tetikle (500ms sonra toplu gönder)
-        if (typeof window.triggerBatchSync === 'function') {
-            window.triggerBatchSync();
-        }
-    } else {
-        // Fallback: Eski yöntem (direkt kayıt)
-        if (typeof window.saveDailyStat === 'function') {
-            window.saveDailyStat(today, dailyData).catch(error => {
-                console.warn('Supabase\'e daily_stat kaydedilemedi:', error);
-            });
-        }
-        
-        if (typeof window.saveWeeklyStat === 'function') {
-            window.saveWeeklyStat(weekStartStr, weeklyData).catch(error => {
-                console.warn('Supabase\'e weekly_stat kaydedilemedi:', error);
-            });
-        }
-        
-        if (typeof window.saveMonthlyStat === 'function') {
-            window.saveMonthlyStat(monthStr, monthlyData).catch(error => {
-                console.warn('Supabase\'e monthly_stat kaydedilemedi:', error);
-            });
-        }
-    }
+    // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+    // Artık sadece localStorage'a kayıt yapılıyor (backend'e kayıt yok)
+    // Veriler localStorage'da hasene_daily_*, hasene_weekly_*, hasene_monthly_* key'leri ile saklanıyor
 }
 
 // getStrugglingWords ve selectIntelligentWords artık word-stats-manager.js modülünde
@@ -5516,12 +5536,39 @@ function clearUserLocalStorage() {
 }
 
 /**
- * Tüm verileri sıfırlar
+ * TÜM VERİLERİ SIFIRLA - Hem Local Hem Backend
+ * Konsoldan: resetAllData() veya resetAllData(true) (onay olmadan)
+ * Buton: Test butonu olarak eklenebilir
  */
-async function resetAllStats() {
-    if (!confirm('Tüm verileri sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz!')) {
+async function resetAllData(skipConfirm = false) {
+    if (!skipConfirm && !confirm('⚠️ TÜM VERİLER SIFIRLANACAK!\n\nBu işlem:\n- Tüm localStorage verilerini siler\n- Tüm IndexedDB verilerini siler\n- Tüm backend (Supabase) verilerini siler\n- Tüm global değişkenleri sıfırlar\n\nBu işlem GERİ ALINAMAZ!\n\nDevam etmek istiyor musunuz?')) {
         return;
     }
+    
+    console.log('🗑️ TÜM VERİLER SIFIRLANIYOR...');
+    console.log('📋 İşlem listesi:');
+    console.log('  1. LocalStorage temizleniyor...');
+    console.log('  2. IndexedDB temizleniyor...');
+    console.log('  3. Backend (Supabase) verileri siliniyor...');
+    console.log('  4. Global değişkenler sıfırlanıyor...');
+    
+    // resetAllStats() fonksiyonunu çağır (zaten tüm işlemleri yapıyor)
+    await resetAllStats(true);
+    
+    console.log('✅ TÜM VERİLER SIFIRLANDI!');
+    console.log('🔄 Sayfa yenileniyor...');
+    
+    // Sayfayı yenile
+    setTimeout(() => {
+        location.reload();
+    }, 1500);
+}
+
+/**
+ * Tüm verileri sıfırlar (eski fonksiyon - resetAllData tarafından çağrılıyor)
+ */
+async function resetAllStats(skipConfirm = false) {
+    // skipConfirm kontrolü kaldırıldı - resetAllData zaten kontrol ediyor
     
     // LocalStorage temizle - Tüm hasene ile ilgili key'leri temizle
     const keysToRemove = [];
@@ -5685,20 +5732,20 @@ async function resetAllStats() {
                     'user_stats',
                     'daily_tasks',
                     'weekly_tasks',
-                    'daily_stats',
-                    'weekly_stats',
-                    'monthly_stats',
+                    // NOT: 'daily_stats', 'weekly_stats', 'monthly_stats' tabloları kaldırıldı
                     'word_stats', // Kelime istatistikleri - ÖNEMLİ: Tüm kelime verileri silinecek
-                    'favorites',
-                    'favorite_words',
+                    'favorite_words', // NOT: 'favorites' tablosu yok, doğru tablo adı 'favorite_words'
                     'achievements',
                     'badges',
-                    'leaderboard',
                     'weekly_leaderboard',
-                    'league_rankings'
+                    'user_leagues'
+                    // NOT: 'leaderboard' tablosu yok (sadece weekly_leaderboard var)
+                    // NOT: 'league_rankings' bir VIEW, view'lardan silme yapılamaz
+                    //      Underlying tablolardan (weekly_leaderboard, user_leagues) silme yapılıyor
                 ];
                 // Not: 'profiles' tablosu username için kullanılıyor, silinmemeli
                 // Not: 'league_config' sistem tablosu, silinmemeli
+                // Not: 'league_rankings' bir VIEW, view'lardan silme yapılamaz
                 
                 for (const table of tablesToDelete) {
                     try {
@@ -5717,15 +5764,30 @@ async function resetAllStats() {
                                 console.log(`✅ Backend ${table} tüm kelime istatistikleri silindi`);
                             }
                         } else {
-                            const { error } = await window.supabaseClient
-                                .from(table)
-                                .delete()
-                                .eq('user_id', user.id);
-                            
-                            if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
-                                console.warn(`⚠️ Backend ${table} silme hatası:`, error);
-                            } else if (!error) {
-                                console.log(`✅ Backend ${table} silindi`);
+                            // user_leagues tablosu için özel kontrol (user_id PRIMARY KEY)
+                            if (table === 'user_leagues') {
+                                const { error } = await window.supabaseClient
+                                    .from(table)
+                                    .delete()
+                                    .eq('user_id', user.id);
+                                
+                                if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
+                                    console.warn(`⚠️ Backend ${table} silme hatası:`, error);
+                                } else if (!error) {
+                                    console.log(`✅ Backend ${table} silindi`);
+                                }
+                            } else {
+                                // Diğer tablolar için normal silme
+                                const { error } = await window.supabaseClient
+                                    .from(table)
+                                    .delete()
+                                    .eq('user_id', user.id);
+                                
+                                if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
+                                    console.warn(`⚠️ Backend ${table} silme hatası:`, error);
+                                } else if (!error) {
+                                    console.log(`✅ Backend ${table} silindi`);
+                                }
                             }
                         }
                     } catch (tableError) {
@@ -6076,6 +6138,7 @@ if (typeof window !== 'undefined') {
     window.claimWeeklyRewards = claimWeeklyRewards;
     window.setCustomGoal = setCustomGoal;
     window.resetAllStats = resetAllStats;
+    window.resetAllData = resetAllData; // TEST: Tüm verileri sıfırla (hem local hem backend)
     window.clearUserLocalStorage = clearUserLocalStorage;
     window.loadStats = loadStats; // Auth.js'den çağrılabilmesi için
     window.showDetailedStats = () => {

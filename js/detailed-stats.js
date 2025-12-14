@@ -573,27 +573,42 @@ async function loadWordsStats() {
             }
         } else if (typeof window.loadWordStats === 'function') {
             // window.wordStats tanımlı değil - ilk yükleme veya global değişken henüz set edilmemiş
-            try {
-                wordStatsData = await window.loadWordStats();
-                // Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
-                // ÖNEMLİ: Eğer wordStatsData boşsa localStorage'ı da temizle
-                if (wordStatsData && Object.keys(wordStatsData).length > 0) {
-                    localStorage.setItem('hasene_wordStats', JSON.stringify(wordStatsData));
-                    // Global değişkeni de güncelle
-                    if (typeof window.wordStats !== 'undefined') {
-                        window.wordStats = wordStatsData;
-                    }
-                } else {
-                    // Backend boş döndüyse localStorage'ı da temizle
-                    localStorage.removeItem('hasene_wordStats');
-                    if (typeof window.wordStats !== 'undefined') {
-                        window.wordStats = {};
-                    }
-                }
-            } catch (error) {
-                console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);
-                // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
+            // ÖNEMLİ: Eğer resetAllStats çalıştırıldıysa (hasene_statsJustReset flag'i varsa), backend'den yükleme
+            const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
+            if (statsJustReset) {
+                // resetAllStats çalıştırıldı - backend'den yükleme, sadece localStorage'dan yükle
+                console.log('ℹ️ resetAllStats sonrası - backend\'den wordStats yüklenmesi atlandı');
                 wordStatsData = safeGetItem('hasene_wordStats', {});
+                // Global değişkeni de boş yap
+                if (typeof window.wordStats !== 'undefined') {
+                    window.wordStats = {};
+                }
+                // Flag'i temizle - artık backend'den normal yüklenecek
+                localStorage.removeItem('hasene_statsJustReset');
+                console.log('ℹ️ resetAllStats flag\'i temizlendi - bir sonraki yüklemede backend\'den normal yüklenecek');
+            } else {
+                try {
+                    wordStatsData = await window.loadWordStats();
+                    // Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
+                    // ÖNEMLİ: Eğer wordStatsData boşsa localStorage'ı da temizle
+                    if (wordStatsData && Object.keys(wordStatsData).length > 0) {
+                        localStorage.setItem('hasene_wordStats', JSON.stringify(wordStatsData));
+                        // Global değişkeni de güncelle
+                        if (typeof window.wordStats !== 'undefined') {
+                            window.wordStats = wordStatsData;
+                        }
+                    } else {
+                        // Backend boş döndüyse localStorage'ı da temizle
+                        localStorage.removeItem('hasene_wordStats');
+                        if (typeof window.wordStats !== 'undefined') {
+                            window.wordStats = {};
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);
+                    // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
+                    wordStatsData = safeGetItem('hasene_wordStats', {});
+                }
             }
         } else {
             // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
