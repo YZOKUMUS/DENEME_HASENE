@@ -1190,20 +1190,6 @@ function updateDailyGoalDisplay() {
     
     const percent = Math.min(100, Math.floor((dailyXPToUse / dailyGoalHasene) * 100));
     
-    console.log('🔄 updateDailyGoalDisplay çağrıldı:', {
-        dailyXPToUse,
-        dailyPointsFromDetailed,
-        dailyXP,
-        dailyGoalHasene,
-        percent,
-        kullanilan: dailyXPToUse === dailyPointsFromDetailed ? 'hasene_daily_points' : 'dailyXP',
-        elements: {
-            dailyGoalProgress: !!elements.dailyGoalProgress,
-            dailyGoalCurrent: !!elements.dailyGoalCurrent,
-            dailyGoalTarget: !!elements.dailyGoalTarget
-        }
-    });
-    
     if (elements.dailyGoalProgress) {
         elements.dailyGoalProgress.style.width = percent + '%';
         console.log('✅ dailyGoalProgress güncellendi:', percent + '%');
