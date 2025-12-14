@@ -156,7 +156,7 @@ body {
 .header-title {
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--accent-secondary);
+    color: #5b4a8a; /* Daha koyu mor - beyaz background üzerinde okunabilir */
     text-align: center;
 }
 
@@ -347,7 +347,7 @@ body {
 .progress-bar-inline {
     flex: 1;
     height: 6px;
-    background: var(--bg-primary);
+    background: rgba(255, 255, 255, 0.2); /* Açık beyaz - mor background üzerinde görünür */
     border-radius: var(--radius-xl);
     overflow: hidden;
     min-width: 60px;
@@ -355,7 +355,7 @@ body {
 
 .progress-bar-inline .progress-fill {
     height: 100%;
-    background: var(--bg-primary);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%); /* Beyaz gradient - mor background üzerinde görünür */
     border-radius: var(--radius-xl);
     transition: width var(--transition-normal);
     width: 0%;
@@ -376,7 +376,8 @@ body {
     cursor: pointer;
     padding: 4px;
     transition: transform var(--transition-fast);
-    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.95); /* Beyaz - açık background üzerinde okunabilir */
+    opacity: 0.9;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -453,7 +454,8 @@ body {
     cursor: pointer;
     padding: 2px;
     transition: transform var(--transition-fast);
-    opacity: 0.7;
+    color: #475569; /* Koyu gri - glassmorphism background üzerinde okunabilir */
+    opacity: 0.8;
 }
 
 .settings-btn:hover {
@@ -464,7 +466,7 @@ body {
 .progress-bar {
     width: 100%;
     height: 8px;
-    background: var(--bg-primary);
+    background: rgba(255, 255, 255, 0.2); /* Açık beyaz - glassmorphism background üzerinde görünür */
     border-radius: var(--radius-xl);
     overflow: hidden;
     margin-bottom: 4px;
@@ -472,7 +474,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: var(--bg-primary);
+    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%); /* Mor gradient - glassmorphism background üzerinde görünür */
     border-radius: var(--radius-xl);
     transition: width var(--transition-normal);
     width: 0%;
@@ -484,7 +486,7 @@ body {
     align-items: center;
     gap: 4px;
     font-size: 0.65rem;
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - glassmorphism background üzerinde okunabilir */
     flex-wrap: wrap;
     line-height: 1.2;
 }
@@ -513,7 +515,7 @@ body {
 
 .streak-label {
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - glassmorphism background üzerinde okunabilir */
 }
 
 .streak-value {
@@ -573,10 +575,10 @@ body {
 
 .difficulty-subtitle {
     font-size: 0.65rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 1); /* Tam opak beyaz - daha okunabilir */
     line-height: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3); /* Daha güçlü gölge */
 }
 
 .difficulty-btn:hover {
@@ -1628,7 +1630,7 @@ body {
     background: none;
     border: none;
     font-size: 2rem;
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - beyaz background üzerinde okunabilir */
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -1648,7 +1650,7 @@ body {
     background: none;
     border: none;
     font-size: 2rem;
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - beyaz background üzerinde okunabilir */
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -1697,6 +1699,11 @@ body {
     padding: var(--spacing-xs) 0;
     border-bottom: 1px solid #e5e7eb;
     font-size: 0.9rem;
+    color: var(--text-primary); /* Koyu renk - beyaz background üzerinde okunabilir */
+}
+
+.stat-row span {
+    color: var(--text-primary); /* Koyu renk - beyaz background üzerinde okunabilir */
 }
 
 .stat-row:last-child {
@@ -2686,7 +2693,7 @@ body {
 
 .stat-accuracy {
     font-size: clamp(0.6rem, 1.4vw, 0.7rem);
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - beyaz background üzerinde okunabilir */
     font-weight: 500;
 }
 
@@ -2714,7 +2721,7 @@ body {
 
 .stat-label {
     font-size: clamp(0.55rem, 1.2vw, 0.65rem);
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - beyaz background üzerinde okunabilir */
     margin-bottom: 1px;
     line-height: 1.2;
 }
@@ -2759,6 +2766,8 @@ body {
 .streak-info h3 {
     font-size: 1rem;
     margin-bottom: var(--spacing-sm);
+    color: var(--text-primary); /* Koyu renk - beyaz background üzerinde okunabilir */
+    font-weight: 600;
 }
 
 .badge-progress-bar {
@@ -2779,7 +2788,7 @@ body {
 
 .badge-progress-text {
     font-size: 0.65rem;
-    color: var(--text-secondary);
+    color: #475569; /* Daha koyu gri - beyaz background üzerinde okunabilir */
     margin-top: 2px;
     text-align: center;
 }
@@ -2804,6 +2813,8 @@ body {
     font-size: 0.75rem;
     padding: var(--spacing-xs);
     transition: all var(--transition-fast);
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
+    font-weight: 600;
 }
 
 .calendar-day.played {
@@ -2819,8 +2830,9 @@ body {
 }
 
 .calendar-day.future {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
+    color: var(--text-secondary); /* Gelecek günler için daha soluk ama okunabilir */
 }
 
 .calendar-day.empty {
@@ -2850,7 +2862,7 @@ body {
     text-align: center;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
     padding: var(--spacing-xs);
 }
 
@@ -3083,7 +3095,7 @@ body {
 .onboarding-slide p {
     font-size: 1rem;
     line-height: 1.6;
-    color: var(--text-secondary);
+    color: var(--text-primary); /* Koyu renk - beyaz background üzerinde okunabilir */
     margin-bottom: var(--spacing-md);
     text-align: left;
 }
@@ -3106,6 +3118,8 @@ body {
     border-left: 3px solid var(--accent-primary);
     font-size: 0.95rem;
     line-height: 1.5;
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
+    font-weight: 500;
 }
 
 .onboarding-game-modes {
@@ -3120,6 +3134,7 @@ body {
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     line-height: 1.5;
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
 }
 
 .game-mode-item strong {
@@ -3141,6 +3156,15 @@ body {
     background: #f9fafb;
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
+}
+
+.reward-item div {
+    color: var(--text-primary); /* Koyu renk - açık background üzerinde okunabilir */
+}
+
+.reward-item strong {
+    color: var(--accent-primary); /* Vurgu için accent rengi */
 }
 
 .reward-icon {
