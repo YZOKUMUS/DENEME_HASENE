@@ -574,6 +574,32 @@ async function loadStats() {
                             localStorage.setItem('dailyXP', todayPuan.toString());
                             localStorage.setItem('dailyCorrect', todayDogru.toString());
                             
+                            // ÖNEMLİ: Backend'den gelen toplamPuan'ı hasene_daily_${today}.points'e de yaz
+                            // Bu şekilde updateDailyGoalDisplay() doğru değeri gösterir
+                            const today = getLocalDateString();
+                            const dailyKey = `hasene_daily_${today}`;
+                            const dailyData = safeGetItem(dailyKey, {
+                                correct: 0,
+                                wrong: 0,
+                                points: 0,
+                                gamesPlayed: 0,
+                                perfectLessons: 0,
+                                maxCombo: 0,
+                                gameModes: {}
+                            });
+                            
+                            // Backend'den gelen değer daha büyükse (senkronizasyon için)
+                            if (todayPuan > (dailyData.points || 0)) {
+                                dailyData.points = todayPuan;
+                                dailyData.correct = todayDogru || dailyData.correct;
+                                safeSetItem(dailyKey, dailyData);
+                                console.log('🔄 Backend\'den gelen toplamPuan hasene_daily_points\'e yazıldı:', {
+                                    backendToplamPuan: todayPuan,
+                                    hasene_daily_points: dailyData.points,
+                                    dailyKey
+                                });
+                            }
+                            
                             if (dailyTasks.tasks || dailyTasks.bonusTasks) {
                                 updateTaskProgressFromStats();
                             }
