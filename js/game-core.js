@@ -4884,6 +4884,18 @@ function showBadgesModal() {
                 difficultyScore += 0.1; // Çok kolay ama İlk Kelime'den sonra
             }
             
+            // Yıldız sayısına göre zorluk skorunu hesapla (EN ÖNEMLİ KRİTER)
+            // Format: "600 Yıldız kazan" veya "1,500 Yıldız kazan"
+            if (desc.includes('yıldız')) {
+                const starMatch = desc.match(/([\d,]+)\s*yıldız/i);
+                if (starMatch) {
+                    const stars = parseInt(starMatch[1].replace(/,/g, ''));
+                    // Yıldız sayısına göre logaritmik skorlama (1 yıldız = 0, 10 yıldız = 1, 100 yıldız = 2, vb.)
+                    // Bu en önemli kriter olduğu için yüksek ağırlık veriyoruz
+                    difficultyScore += Math.log10(stars / 1) * 10;
+                }
+            }
+            
             // Hasene gereksinimleri (logaritmik skorlama)
             if (desc.includes('hasene')) {
                 const match = desc.match(/([\d,]+)\s*hasene/i);
