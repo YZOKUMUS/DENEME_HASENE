@@ -1344,6 +1344,12 @@ async function startKelimeCevirGame(subMode) {
  * Kelime Çevir sorusu yükler
  */
 function loadKelimeQuestion() {
+    // Oyun bitti mi kontrol et
+    if (!questions || questions.length === 0) {
+        console.warn('⚠️ Kelime Çevir: Soru listesi boş, oyun bitiriliyor');
+        endGame();
+        return;
+    }
     if (currentQuestion >= questions.length) {
         endGame();
         return;
@@ -1630,6 +1636,12 @@ async function startDinleBulGame() {
  * Dinle Bul sorusu yükler
  */
 function loadDinleQuestion() {
+    // Oyun bitti mi kontrol et
+    if (!questions || questions.length === 0) {
+        console.warn('⚠️ Dinle Bul: Soru listesi boş, oyun bitiriliyor');
+        endGame();
+        return;
+    }
     if (currentQuestion >= questions.length) {
         endGame();
         return;
@@ -1912,6 +1924,12 @@ async function startBoslukDoldurGame() {
  * Boşluk Doldur sorusu yükler
  */
 async function loadBoslukQuestion() {
+    // Oyun bitti mi kontrol et
+    if (!questions || questions.length === 0) {
+        console.warn('⚠️ Boşluk Doldur: Soru listesi boş, oyun bitiriliyor');
+        endGame();
+        return;
+    }
     if (currentQuestion >= questions.length) {
         endGame();
         return;
@@ -1923,13 +1941,25 @@ async function loadBoslukQuestion() {
     const ayetText = currentQuestionData.ayet_metni;
     if (!ayetText || typeof ayetText !== 'string') {
         errorLog('Ayet metni bulunamadı veya geçersiz!');
-        endGame();
+        // Geçersiz soru varsa bir sonraki soruya geç, eğer soru kalmadıysa oyunu bitir
+        currentQuestion++;
+        if (currentQuestion >= questions.length) {
+            endGame();
+        } else {
+            loadBoslukQuestion();
+        }
         return;
     }
     const words = ayetText.split(' ').filter(w => w.trim().length > 0);
     if (words.length === 0) {
         errorLog('Ayet metninde kelime bulunamadı!');
-        endGame();
+        // Geçersiz soru varsa bir sonraki soruya geç, eğer soru kalmadıysa oyunu bitir
+        currentQuestion++;
+        if (currentQuestion >= questions.length) {
+            endGame();
+        } else {
+            loadBoslukQuestion();
+        }
         return;
     }
     const randomIndex = Math.floor(Math.random() * words.length);
@@ -2737,13 +2767,22 @@ async function endGame() {
         sessionCorrect,
         sessionWrong,
         maxCombo,
-        totalQuestions: questions.length
+        totalQuestions: questions ? questions.length : 0,
+        currentGame,
+        currentGameMode,
+        currentSubMode
     });
+    
+    // Güvenlik kontrolü: Eğer oyun modu belirlenmemişse, endgame tablosu gösterilmeden çık
+    if (!currentGame && !currentGameMode) {
+        console.warn('⚠️ endGame: Oyun modu belirlenmemiş, endgame tablosu gösterilmiyor');
+        return;
+    }
     
     // Perfect Lesson bonusu kontrolü - DERS SAYISINA ENDEKSLİ
     // Tüm sorular doğru cevaplanmış olmalı (hiç yanlış cevap yok ve tüm sorular cevaplanmış)
     let perfectBonus = 0;
-    const totalQuestions = questions.length;
+    const totalQuestions = questions ? questions.length : 0;
     if (sessionWrong === 0 && sessionCorrect === totalQuestions && sessionScore > 0 && totalQuestions >= 3) {
         // Her mükemmel ders için sabit bonus (ders sayısına endeksli, session skoruna değil)
         perfectBonus = CONFIG.PERFECT_LESSON_BONUS_PER_GAME;
@@ -2827,7 +2866,28 @@ async function endGame() {
     }
     
     // Sonuç panelini HEMEN göster (kullanıcı deneyimi için kritik)
-    showCustomConfirm(sessionCorrect, sessionWrong, sessionScore, perfectBonus);
+    // Güvenlik kontrolü: showCustomConfirm her zaman çağrılmalı
+    try {
+        showCustomConfirm(sessionCorrect || 0, sessionWrong || 0, sessionScore || 0, perfectBonus || 0);
+        console.log('✅ endGame: showCustomConfirm başarıyla çağrıldı');
+    } catch (error) {
+        console.error('❌ endGame: showCustomConfirm hatası:', error);
+        // Hata olsa bile modal'ı açmaya çalış
+        const modal = document.getElementById('game-result-modal');
+        if (modal) {
+            document.getElementById('result-correct').textContent = sessionCorrect || 0;
+            document.getElementById('result-wrong').textContent = sessionWrong || 0;
+            document.getElementById('result-xp').textContent = formatNumber(sessionScore || 0);
+            const perfectBonusEl = document.getElementById('perfect-lesson-bonus');
+            if (perfectBonus > 0 && perfectBonusEl) {
+                perfectBonusEl.style.display = 'block';
+                document.getElementById('perfect-bonus').textContent = formatNumber(perfectBonus);
+            } else if (perfectBonusEl) {
+                perfectBonusEl.style.display = 'none';
+            }
+            openModal('game-result-modal');
+        }
+    }
     
     // Backend kayıtlarını arka planda yap (sonuç panelini bekletme)
     saveStatsImmediate().catch(err => {
