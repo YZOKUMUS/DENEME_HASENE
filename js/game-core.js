@@ -1075,11 +1075,22 @@ function addSessionPoints(points) {
 
 /**
  * Günlük XP ekler
+ * ÖNEMLİ: Hem dailyXP hem de hasene_daily_${today}.points'i günceller (tutarlılık için)
  */
 function addDailyXP(points) {
+    const today = getLocalDateString();
+    const dailyKey = `hasene_daily_${today}`;
+    
+    // dailyXP'yi güncelle
     const currentXP = parseInt(localStorage.getItem('dailyXP') || '0');
     const newXP = currentXP + points;
     localStorage.setItem('dailyXP', newXP.toString());
+    
+    // hasene_daily_${today}.points'i de güncelle (tutarlılık için)
+    const dailyData = safeGetItem(dailyKey, { points: 0 });
+    dailyData.points = (dailyData.points || 0) + points;
+    safeSetItem(dailyKey, dailyData);
+    
     updateDailyGoalDisplay();
 }
 
