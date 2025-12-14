@@ -4735,10 +4735,17 @@ function showBadgesModal() {
     });
     
     // Sırala: Önce kazanılanlar (kronolojik sıraya göre), sonra kazanılmayanlar (kronolojik sıraya göre)
+    // Kronolojik sıra (badgeNum) 1. öncelik, Hasene miktarı (difficultyScore) 2. öncelik
     badgesWithUnlockInfo.sort((a, b) => {
         if (a.isUnlocked && b.isUnlocked) {
-            // Her ikisi de kazanılmış: kronolojik sıraya göre (asr_1, asr_2, ...)
-            return a.badgeNum - b.badgeNum;
+            // Her ikisi de kazanılmış: 
+            // 1. Öncelik: Kronolojik sıra (badgeNum - asr_1, asr_2, ...)
+            // 2. Öncelik: Hasene miktarı (difficultyScore - kolaydan zora)
+            if (a.badgeNum !== b.badgeNum) {
+                return a.badgeNum - b.badgeNum;
+            }
+            // Eğer kronolojik sıra aynıysa, Hasene miktarına göre sırala
+            return a.difficultyScore - b.difficultyScore;
         } else if (a.isUnlocked && !b.isUnlocked) {
             // A kazanılmış, B kazanılmamış: A önce
             return -1;
@@ -4746,8 +4753,14 @@ function showBadgesModal() {
             // A kazanılmamış, B kazanılmış: B önce
             return 1;
         } else {
-            // Her ikisi de kazanılmamış: kronolojik sıraya göre (asr_1, asr_2, ...)
-            return a.badgeNum - b.badgeNum;
+            // Her ikisi de kazanılmamış:
+            // 1. Öncelik: Kronolojik sıra (badgeNum - asr_1, asr_2, ...)
+            // 2. Öncelik: Hasene miktarı (difficultyScore - kolaydan zora)
+            if (a.badgeNum !== b.badgeNum) {
+                return a.badgeNum - b.badgeNum;
+            }
+            // Eğer kronolojik sıra aynıysa, Hasene miktarına göre sırala
+            return a.difficultyScore - b.difficultyScore;
         }
     });
     
@@ -5003,7 +5016,8 @@ function showBadgesModal() {
             };
         });
         
-        // Sırala: Önce kazanılanlar (zorluk skoruna göre kolaydan zora), sonra kazanılmayanlar (zorluk skoruna göre kolaydan zora)
+        // Sırala: Önce kazanılanlar (kronolojik sıraya göre), sonra kazanılmayanlar (kronolojik sıraya göre)
+        // Kronolojik sıra (originalIndex) 1. öncelik, yıldız sayısı (difficultyScore) 2. öncelik
         achievementsWithUnlockInfo.sort((a, b) => {
             // Önce kazanılanlar, sonra kazanılmayanlar
             if (a.isUnlocked && !b.isUnlocked) {
@@ -5011,11 +5025,13 @@ function showBadgesModal() {
             } else if (!a.isUnlocked && b.isUnlocked) {
                 return 1; // A kazanılmamış, B kazanılmış: B önce
             } else {
-                // Aynı durumdaysa (ikisi de kazanılmış veya ikisi de kazanılmamış): zorluk skoruna göre (kolaydan zora)
-                // Eğer zorluk skorları eşitse, originalIndex'e göre (constants.js'teki sıraya göre)
-                if (a.difficultyScore === b.difficultyScore) {
+                // Aynı durumdaysa (ikisi de kazanılmış veya ikisi de kazanılmamış): 
+                // 1. Öncelik: Kronolojik sıra (originalIndex - constants.js'teki sıraya göre)
+                // 2. Öncelik: Yıldız sayısı (difficultyScore - kolaydan zora)
+                if (a.originalIndex !== b.originalIndex) {
                     return a.originalIndex - b.originalIndex;
                 }
+                // Eğer kronolojik sıra aynıysa, yıldız sayısına göre sırala
                 return a.difficultyScore - b.difficultyScore;
             }
         });
