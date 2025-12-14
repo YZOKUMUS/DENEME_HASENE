@@ -1138,6 +1138,19 @@ async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = fal
 }
 
 /**
+ * Bugünkü hasene değerini hesaplar (tüm yerlerde aynı kaynağı kullan)
+ * @returns {number} Bugünkü toplam hasene
+ */
+function getDailyHasene() {
+    const today = getLocalDateString();
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = safeGetItem(dailyKey, { points: 0 });
+    const dailyPointsFromDetailed = dailyData.points || 0;
+    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+    return Math.max(dailyPointsFromDetailed, dailyXP);
+}
+
+/**
  * Üst barı güncelle
  */
 function updateStatsBar() {
@@ -1149,15 +1162,8 @@ function updateStatsBar() {
     }
     
     if (elements.totalPointsEl) {
-        // Oyun üst tarafında bugünkü hasene'yi göster (günlük vird ile senkronize)
-        const today = getLocalDateString();
-        const dailyKey = `hasene_daily_${today}`;
-        const dailyData = safeGetItem(dailyKey, { points: 0 });
-        const dailyPointsFromDetailed = dailyData.points || 0;
-        const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
-        const dailyXPToUse = Math.max(dailyPointsFromDetailed, dailyXP);
-        
-        // Bugünkü hasene'yi göster
+        // Oyun üst tarafında bugünkü hasene'yi göster (tüm yerlerde aynı kaynak)
+        const dailyXPToUse = getDailyHasene();
         elements.totalPointsEl.textContent = formatNumber(dailyXPToUse);
     }
     
@@ -1179,17 +1185,8 @@ function updateDailyGoalDisplay() {
     // Doğru cevap sayısına değil, sadece Hasene puanına göre
     const dailyGoalHasene = parseInt(localStorage.getItem('dailyGoalHasene') || CONFIG.DAILY_GOAL_DEFAULT.toString());
     
-    // ÖNEMLİ: hasene_daily_${today}.points kullan (daha güvenilir - her soru için kaydedilir)
-    // dailyXP fallback olarak kullan (geriye dönük uyumluluk için)
-    const today = getLocalDateString();
-    const dailyKey = `hasene_daily_${today}`;
-    const dailyData = safeGetItem(dailyKey, { points: 0 });
-    const dailyPointsFromDetailed = dailyData.points || 0;
-    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
-    
-    // hasene_daily_${today}.points daha güvenilir (her soru için kaydedilir)
-    // Ama eğer dailyXP daha büyükse (backend senkronizasyonu nedeniyle), onu kullan
-    const dailyXPToUse = Math.max(dailyPointsFromDetailed, dailyXP);
+    // Tüm yerlerde aynı kaynağı kullan (getDailyHasene fonksiyonu)
+    const dailyXPToUse = getDailyHasene();
     
     const percent = Math.min(100, Math.floor((dailyXPToUse / dailyGoalHasene) * 100));
     
@@ -4639,9 +4636,6 @@ function showStatsModal() {
         }
     });
     
-    // Bugünkü toplam Hasene'yi hasene_daily_ verilerinden al (totalPoints değil, bugünkü toplam)
-    const dailyTotalPoints = dailyData.points || 0;
-    
     const safeTotalPoints = totalPoints || 0;
     const safeTotalCorrect = (gameStats && gameStats.totalCorrect) || 0;
     const safeTotalWrong = (gameStats && gameStats.totalWrong) || 0;
@@ -4649,15 +4643,11 @@ function showStatsModal() {
     
     document.getElementById('stats-daily-correct').textContent = dailyCorrect;
     document.getElementById('stats-daily-wrong').textContent = dailyWrong;
-    // NOT: HTML'de "Toplam Hasene" yazıyor ama kullanıcı bugünkü toplamı görmek istiyor
-    // Bu yüzden bugünkü toplamı gösteriyoruz (hasene_daily_${today}.points)
-    document.getElementById('stats-total-points').textContent = formatNumber(dailyTotalPoints);
     
     // LOG: Puan karşılaştırması
     console.log('🟡 showStatsModal - Puan karşılaştırması:', {
-        bugunkuToplam: dailyTotalPoints,
+        bugunkuToplam: getDailyHasene(),
         tumZamanlarToplami: safeTotalPoints,
-        kullanilan: 'dailyTotalPoints (bugünkü toplam)',
         hasene_daily_points: dailyData.points
     });
     
