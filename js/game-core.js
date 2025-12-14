@@ -1149,7 +1149,16 @@ function updateStatsBar() {
     }
     
     if (elements.totalPointsEl) {
-        elements.totalPointsEl.textContent = formatNumber(totalPoints);
+        // Oyun üst tarafında bugünkü hasene'yi göster (günlük vird ile senkronize)
+        const today = getLocalDateString();
+        const dailyKey = `hasene_daily_${today}`;
+        const dailyData = safeGetItem(dailyKey, { points: 0 });
+        const dailyPointsFromDetailed = dailyData.points || 0;
+        const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+        const dailyXPToUse = Math.max(dailyPointsFromDetailed, dailyXP);
+        
+        // Bugünkü hasene'yi göster
+        elements.totalPointsEl.textContent = formatNumber(dailyXPToUse);
     }
     
     if (elements.starPointsEl) {
@@ -1215,6 +1224,11 @@ function updateDailyGoalDisplay() {
     
     if (elements.dailyGoalPercent) {
         elements.dailyGoalPercent.textContent = `(${percent}%)`;
+    }
+    
+    // Oyun üst tarafındaki hasene değerini de güncelle (bugünkü hasene ile senkronize)
+    if (elements.totalPointsEl) {
+        elements.totalPointsEl.textContent = formatNumber(dailyXPToUse);
     }
     
     // Günlük hedef tamamlandı mı?
