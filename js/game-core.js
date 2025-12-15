@@ -2896,10 +2896,10 @@ async function startElifBaGame(mode) {
         // Harfler modu - şıklı oyun (normal görünüm)
         if (harflerGrid) harflerGrid.style.display = 'none';
         if (normalGame) normalGame.style.display = 'block';
-        
-        // elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.harfler]);
-        elifBaQuestions = [...elifBaData.harfler]; // Sıralı göster (test için)
-        
+
+        // Soruları karıştır
+        elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.harfler]);
+
         elifBaCurrentQuestion = 0;
         loadElifBaQuestion();
     } else if (mode === 'kelimeler') {
