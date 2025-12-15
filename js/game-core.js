@@ -2863,27 +2863,16 @@ async function loadHarfData() {
 }
 
 /**
- * Harf verilerini JSON'dan günceller
+ * Harf verilerini JSON'dan yükler ve günceller
  */
 async function updateHarfDataFromJSON() {
     const jsonData = await loadHarfData();
     if (jsonData && jsonData.length > 0) {
-        // JSON'dan gelen verileri elifBaData.harfler ile birleştir
-        jsonData.forEach((jsonHarf, index) => {
-            if (elifBaData.harfler[index]) {
-                // JSON'dan gelen tüm verileri güncelle (audioUrl, okunus, isim)
-                if (jsonHarf.audioUrl) {
-                    elifBaData.harfler[index].audioUrl = jsonHarf.audioUrl;
-                }
-                if (jsonHarf.okunus) {
-                    elifBaData.harfler[index].okunus = jsonHarf.okunus;
-                }
-                if (jsonHarf.isim) {
-                    elifBaData.harfler[index].isim = jsonHarf.isim;
-                }
-            }
-        });
-        console.log('✅ Harf verileri JSON\'dan güncellendi (audioUrl, okunus, isim)');
+        // JSON'dan gelen verileri direkt kullan (tamamen JSON'dan okunuyor)
+        elifBaData.harfler = jsonData;
+        console.log('✅ Harf verileri JSON\'dan yüklendi:', jsonData.length, 'harf');
+    } else {
+        console.warn('⚠️ JSON\'dan veri yüklenemedi, varsayılan veriler kullanılıyor');
     }
 }
 
