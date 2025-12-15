@@ -2742,6 +2742,8 @@ let elifBaQuestions = [];
 let elifBaCurrentQuestion = 0;
 let elifBaCurrentQuestionData = null;
 let harfDataFromJSON = null; // JSON'dan yüklenen harf verileri
+let elifBaCurrentAudio = null; // Şu anda çalan ses dosyası
+let elifBaIsPlaying = false; // Ses çalıyor mu kontrolü
 
 // Harekeler verileri
 const harekeler = {
@@ -2837,8 +2839,16 @@ async function loadHarfData() {
 async function updateHarfDataFromJSON() {
     const jsonData = await loadHarfData();
     if (jsonData && jsonData.length > 0) {
-        // JSON'dan gelen verileri direkt kullan (tamamen JSON'dan okunuyor)
-        elifBaData.harfler = jsonData;
+        // JSON'dan gelen verileri işle ve renk kodlarını otomatik ata
+        elifBaData.harfler = jsonData.map(harf => {
+            // sesTipi'ne göre renk kodu otomatik ata
+            if (harf.sesTipi === 'ince_sesli_harf' || harf.sesTipi === 'ince sesli harf') {
+                harf.renkKodu = '#D4AF37'; // Altın rengi (daha zengin altın)
+            } else if (harf.sesTipi === 'kalın_sesli_harf' || harf.sesTipi === 'kalın sesli harf') {
+                harf.renkKodu = '#0F0F0F'; // Kömür karası (daha koyu)
+            }
+            return harf;
+        });
         console.log('✅ Harf verileri JSON\'dan yüklendi:', jsonData.length, 'harf');
         return true;
     } else {
@@ -2867,17 +2877,41 @@ async function startElifBaGame(mode) {
     // Mod seçimini gizle, oyun içeriğini göster
     const modeSelection = document.getElementById('elif-ba-mode-selection');
     const gameContent = document.getElementById('elif-ba-game-content');
+    const harflerGrid = document.getElementById('elif-ba-harfler-grid');
+    const normalGame = document.getElementById('elif-ba-normal-game');
     
     if (modeSelection) modeSelection.style.display = 'none';
     if (gameContent) gameContent.style.display = 'block';
     
     // Soruları hazırla (TEST MODU: sıralı göster, karıştırma)
-    if (mode === 'harfler') {
+    if (mode === 'harfler-grid') {
+        // Harf tablosu modu için grid görünümünü göster
+        if (harflerGrid) harflerGrid.style.display = 'grid';
+        if (normalGame) normalGame.style.display = 'none';
+        
+        // Grid'i oluştur
+        createHarfGrid();
+        // Harf tablosu modu için loadElifBaQuestion çağrılmıyor, grid görünümü kullanılıyor
+    } else if (mode === 'harfler') {
+        // Harfler modu - şıklı oyun (normal görünüm)
+        if (harflerGrid) harflerGrid.style.display = 'none';
+        if (normalGame) normalGame.style.display = 'block';
+        
         // elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.harfler]);
         elifBaQuestions = [...elifBaData.harfler]; // Sıralı göster (test için)
+        
+        elifBaCurrentQuestion = 0;
+        loadElifBaQuestion();
     } else if (mode === 'kelimeler') {
         // elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.kelimeler]);
         elifBaQuestions = [...elifBaData.kelimeler]; // Sıralı göster (test için)
+        
+        // Normal oyun görünümünü göster
+        if (harflerGrid) harflerGrid.style.display = 'none';
+        if (normalGame) normalGame.style.display = 'block';
+        
+        elifBaCurrentQuestion = 0;
+        loadElifBaQuestion();
     } else if (mode === 'harekeler') {
         // Harekeler modu için harfleri harekelerle birleştir
         const harekelerQuestions = generateHarekelerQuestions();
@@ -2910,10 +2944,64 @@ async function startElifBaGame(mode) {
                 isim: harf.isim + ' ' + harekeler.otre.isim
             });
         });
+        
+        // Normal oyun görünümünü göster
+        if (harflerGrid) harflerGrid.style.display = 'none';
+        if (normalGame) normalGame.style.display = 'block';
+        
+        elifBaCurrentQuestion = 0;
+        loadElifBaQuestion();
+    }
+}
+
+/**
+ * Harf grid'ini oluşturur (resimdeki gibi)
+ */
+function createHarfGrid() {
+    const gridContainer = document.getElementById('elif-ba-harfler-grid');
+    if (!gridContainer || !elifBaData.harfler || elifBaData.harfler.length === 0) {
+        console.error('Grid container veya harf verileri bulunamadı');
+        return;
     }
     
-    elifBaCurrentQuestion = 0;
-    loadElifBaQuestion();
+    // Grid'i temizle
+    gridContainer.innerHTML = '';
+    
+    // Harfleri normal sırayla ekle (direction: rtl ile sağdan sola otomatik sıralanacak)
+    // Elif sağ en başta, Ye en sonda (solda) olacak
+    elifBaData.harfler.forEach((harf, index) => {
+        const harfCard = document.createElement('div');
+        harfCard.className = 'elif-ba-harf-card';
+        harfCard.dataset.harf = harf.harf;
+        harfCard.dataset.index = index;
+        
+        // Harfi göster (renk kodunu uygula)
+        harfCard.textContent = harf.harf;
+        if (harf.renkKodu) {
+            harfCard.style.color = harf.renkKodu;
+        }
+        
+        // Tıklama olayı
+        harfCard.onclick = () => {
+            // Eğer bir ses çalıyorsa, yeni sesi başlatma (önceki sesi durdurup yeni sesi başlatır)
+            // Tüm kartları seçili durumundan çıkar
+            document.querySelectorAll('.elif-ba-harf-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Tıklanan kartı seçili yap
+            harfCard.classList.add('selected');
+            
+            // Harfi okut (playElifBaAudio içinde önceki ses durdurulacak)
+            if (harf.audioUrl) {
+                playElifBaAudio(harf.harf, harf.isim, harfCard, null, harf.audioUrl);
+            } else {
+                playElifBaAudio(harf.harf, harf.isim, harfCard, null);
+            }
+        };
+        
+        gridContainer.appendChild(harfCard);
+    });
 }
 
 /**
@@ -3152,12 +3240,26 @@ function loadElifBaQuestion() {
  * Elif ba ses çalar (Önce ses dosyası, yoksa Web Speech API)
  */
 function playElifBaAudio(arabicText, pronunciation, buttonElement, audioFile = null, audioUrlParam = null) {
-    // Önceki sesi durdur
-    if (typeof stopCurrentAudio === 'function') {
-        stopCurrentAudio();
+    // Eğer bir ses çalıyorsa, yeni sesi başlatma (önceki ses bitene kadar bekle)
+    if (elifBaIsPlaying) {
+        console.log('Bir ses zaten çalıyor, yeni ses başlatılmıyor');
+        return;
+    }
+    
+    // Şimdi yeni sesi çal
+    elifBaIsPlaying = true;
+    
+    // Önceki sesleri temizle (güvenlik için)
+    if (elifBaCurrentAudio) {
+        elifBaCurrentAudio.pause();
+        elifBaCurrentAudio.currentTime = 0;
+        elifBaCurrentAudio = null;
     }
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+    }
+    if (typeof stopCurrentAudio === 'function') {
+        stopCurrentAudio();
     }
     
     // Buton durumunu güncelle
@@ -3179,11 +3281,13 @@ function playElifBaAudio(arabicText, pronunciation, buttonElement, audioFile = n
     
     // Önce ses dosyasını dene
     const audio = new Audio(audioUrl);
+    elifBaCurrentAudio = audio; // Global referansı sakla
     
     // Timeout ekle - eğer 2 saniye içinde yüklenmezse TTS'e geç
     const timeout = setTimeout(() => {
         if (audio.readyState < 2) { // HAVE_CURRENT_DATA
             console.log('Ses dosyası yükleme zaman aşımı, Web Speech API kullanılıyor');
+            elifBaCurrentAudio = null;
             playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement);
         }
     }, 2000);
@@ -3194,6 +3298,7 @@ function playElifBaAudio(arabicText, pronunciation, buttonElement, audioFile = n
         // Ses dosyası yüklendi, çal
         audio.play().catch(err => {
             console.warn('Ses dosyası çalınamadı, Web Speech API kullanılıyor:', err);
+            elifBaCurrentAudio = null;
             playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement);
         });
     };
@@ -3201,15 +3306,24 @@ function playElifBaAudio(arabicText, pronunciation, buttonElement, audioFile = n
     // Ses bittiğinde
     audio.onended = () => {
         clearTimeout(timeout);
+        elifBaIsPlaying = false;
+        elifBaCurrentAudio = null;
         if (buttonElement) {
             buttonElement.disabled = false;
             buttonElement.style.opacity = '1';
         }
+        // Tüm kartları aktif hale getir
+        document.querySelectorAll('.elif-ba-harf-card').forEach(card => {
+            card.disabled = false;
+            card.style.opacity = '1';
+        });
     };
     
     // Ses dosyası yüklenemediğinde veya hata olduğunda
     audio.onerror = (e) => {
         clearTimeout(timeout);
+        elifBaIsPlaying = false;
+        elifBaCurrentAudio = null;
         // Ses dosyası yoksa veya hata varsa, Web Speech API kullan
         console.log('Ses dosyası bulunamadı veya yüklenemedi, Web Speech API kullanılıyor:', audioUrl);
         playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement);
@@ -3234,7 +3348,21 @@ function playElifBaHarekelerAudio(hareketliHarf, okunus, harf, hareket, buttonEl
         return;
     }
     
-    // Önceki sesi durdur
+    // Eğer bir ses çalıyorsa, yeni sesi başlatma (önceki ses bitene kadar bekle)
+    if (elifBaIsPlaying) {
+        console.log('Bir ses zaten çalıyor, yeni ses başlatılmıyor');
+        return;
+    }
+    
+    // Şimdi yeni sesi çal
+    elifBaIsPlaying = true;
+    
+    // Önceki sesleri temizle (güvenlik için)
+    if (elifBaCurrentAudio) {
+        elifBaCurrentAudio.pause();
+        elifBaCurrentAudio.currentTime = 0;
+        elifBaCurrentAudio = null;
+    }
     if (typeof stopCurrentAudio === 'function') {
         stopCurrentAudio();
     }
@@ -3263,6 +3391,7 @@ function playElifBaHarekelerAudio(hareketliHarf, okunus, harf, hareket, buttonEl
     // Arapça bittiğinde Türkçe'yi başlat
     arabicUtterance.onend = () => {
         pronunciationUtterance.onend = () => {
+            elifBaIsPlaying = false;
             if (buttonElement) {
                 buttonElement.disabled = false;
                 buttonElement.style.opacity = '1';
@@ -3275,6 +3404,7 @@ function playElifBaHarekelerAudio(hareketliHarf, okunus, harf, hareket, buttonEl
     arabicUtterance.onerror = (event) => {
         console.warn('Arapça ses çalma hatası:', event);
         pronunciationUtterance.onend = () => {
+            elifBaIsPlaying = false;
             if (buttonElement) {
                 buttonElement.disabled = false;
                 buttonElement.style.opacity = '1';
@@ -3293,6 +3423,7 @@ function playElifBaHarekelerAudio(hareketliHarf, okunus, harf, hareket, buttonEl
 function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
     if (!('speechSynthesis' in window)) {
         // Web Speech API desteklenmiyorsa
+        elifBaIsPlaying = false;
         if (buttonElement) {
             buttonElement.disabled = false;
             buttonElement.style.opacity = '1';
@@ -3302,6 +3433,26 @@ function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
         }
         return;
     }
+    
+    // Eğer bir ses çalıyorsa, yeni sesi başlatma (önceki ses bitene kadar bekle)
+    if (elifBaIsPlaying) {
+        console.log('Bir ses zaten çalıyor, yeni ses başlatılmıyor');
+        return;
+    }
+    
+    // Şimdi yeni sesi çal
+    elifBaIsPlaying = true;
+    
+    // Önceki sesleri temizle (güvenlik için)
+    if (elifBaCurrentAudio) {
+        elifBaCurrentAudio.pause();
+        elifBaCurrentAudio.currentTime = 0;
+        elifBaCurrentAudio = null;
+    }
+    if (typeof stopCurrentAudio === 'function') {
+        stopCurrentAudio();
+    }
+    window.speechSynthesis.cancel();
     
     // Önce Arapça metni okut (eğer Arapça karakter varsa)
     const hasArabic = /[\u0600-\u06FF]/.test(arabicText);
@@ -3324,6 +3475,7 @@ function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
         // Arapça bittiğinde Türkçe'yi başlat
         arabicUtterance.onend = () => {
             pronunciationUtterance.onend = () => {
+                elifBaIsPlaying = false;
                 if (buttonElement) {
                     buttonElement.disabled = false;
                     buttonElement.style.opacity = '1';
@@ -3337,6 +3489,7 @@ function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
             console.warn('Arapça ses çalma hatası:', event);
             // Hata olsa bile Türkçe'yi dene
             pronunciationUtterance.onend = () => {
+                elifBaIsPlaying = false;
                 if (buttonElement) {
                     buttonElement.disabled = false;
                     buttonElement.style.opacity = '1';
@@ -3356,6 +3509,7 @@ function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
         utterance.volume = 1;
         
         utterance.onend = () => {
+            elifBaIsPlaying = false;
             if (buttonElement) {
                 buttonElement.disabled = false;
                 buttonElement.style.opacity = '1';
@@ -3364,6 +3518,7 @@ function playElifBaAudioWithTTS(arabicText, pronunciation, buttonElement) {
         
         utterance.onerror = (event) => {
             console.warn('Ses çalma hatası:', event);
+            elifBaIsPlaying = false;
             if (buttonElement) {
                 buttonElement.disabled = false;
                 buttonElement.style.opacity = '1';

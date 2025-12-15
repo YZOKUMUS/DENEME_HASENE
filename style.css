@@ -2003,6 +2003,217 @@ body {
     max-width: 100%;
 }
 
+/* ============================================
+   ELİF BA HARFLER GRİD GÖRÜNÜMÜ
+   ============================================ */
+/* iPhone tarzı modern harf tablosu */
+.elif-ba-harfler-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    padding: 32px 24px;
+    max-width: 700px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 32px;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+        0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    direction: rtl; /* Arapça sağdan sola sıralama */
+    grid-auto-flow: row; /* Satır satır doldur */
+    border: none;
+}
+
+/* Grid içindeki kartların sıralamasını sağdan sola yap */
+.elif-ba-harfler-grid > * {
+    direction: ltr; /* Kart içindeki içerik soldan sağa */
+}
+
+.elif-ba-harf-card {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', serif;
+    position: relative;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+    overflow: hidden;
+}
+
+/* Kart içinde hafif gradient overlay */
+.elif-ba-harf-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.elif-ba-harf-card:hover::before {
+    opacity: 1;
+}
+
+.elif-ba-harf-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+        0 2px 4px rgba(0, 0, 0, 0.06);
+    border-color: rgba(255, 255, 255, 0.9);
+    z-index: 10;
+}
+
+.elif-ba-harf-card:active {
+    transform: translateY(-2px) scale(0.98);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+}
+
+.elif-ba-harf-card.selected {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%);
+    border-color: rgba(76, 175, 80, 0.4);
+    box-shadow: 
+        0 8px 16px rgba(76, 175, 80, 0.2),
+        0 0 0 2px rgba(76, 175, 80, 0.3) inset;
+}
+
+.elif-ba-harf-card.selected::before {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, transparent 100%);
+    opacity: 1;
+}
+
+.elif-ba-harf-card.correct {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 100%);
+    border-color: rgba(76, 175, 80, 0.5);
+    animation: pulse-green 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 8px 20px rgba(76, 175, 80, 0.3),
+        0 0 0 2px rgba(76, 175, 80, 0.4) inset;
+}
+
+.elif-ba-harf-card.wrong {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.25) 0%, rgba(244, 67, 54, 0.15) 100%);
+    border-color: rgba(244, 67, 54, 0.5);
+    animation: shake 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 8px 20px rgba(244, 67, 54, 0.3),
+        0 0 0 2px rgba(244, 67, 54, 0.4) inset;
+}
+
+/* Disabled durumu */
+.elif-ba-harf-card:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}
+
+@keyframes pulse-green {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 
+            0 8px 20px rgba(76, 175, 80, 0.3),
+            0 0 0 2px rgba(76, 175, 80, 0.4) inset;
+    }
+    50% { 
+        transform: scale(1.08);
+        box-shadow: 
+            0 12px 28px rgba(76, 175, 80, 0.4),
+            0 0 0 3px rgba(76, 175, 80, 0.5) inset;
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px) rotate(-2deg); }
+    75% { transform: translateX(8px) rotate(2deg); }
+}
+
+/* Son satır için özel düzenleme (4 harf) */
+.elif-ba-harfler-grid .elif-ba-harf-card:nth-child(29) {
+    grid-column: 1 / 3;
+}
+
+.elif-ba-harfler-grid .elif-ba-harf-card:nth-child(30) {
+    grid-column: 3 / 5;
+}
+
+.elif-ba-harfler-grid .elif-ba-harf-card:nth-child(31) {
+    grid-column: 5 / 7;
+}
+
+/* Tablet için responsive */
+@media (max-width: 768px) {
+    .elif-ba-harfler-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+        padding: 24px 20px;
+        border-radius: 28px;
+    }
+
+    .elif-ba-harf-card {
+        font-size: 2.4rem;
+        border-radius: 18px;
+    }
+}
+
+/* Mobil için responsive */
+@media (max-width: 600px) {
+    .elif-ba-harfler-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        padding: 20px 16px;
+        border-radius: 24px;
+        max-width: 100%;
+    }
+
+    .elif-ba-harf-card {
+        font-size: 2rem;
+        border-radius: 16px;
+    }
+
+    .elif-ba-harfler-grid .elif-ba-harf-card:nth-child(29),
+    .elif-ba-harfler-grid .elif-ba-harf-card:nth-child(30),
+    .elif-ba-harfler-grid .elif-ba-harf-card:nth-child(31) {
+        grid-column: auto;
+    }
+}
+
+/* Küçük ekranlar için */
+@media (max-width: 480px) {
+    .elif-ba-harfler-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 16px 12px;
+    }
+
+    .elif-ba-harf-card {
+        font-size: 1.8rem;
+        border-radius: 14px;
+    }
+}
+
 .btn-primary {
     flex: 1;
     padding: var(--spacing-md) var(--spacing-lg);

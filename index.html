@@ -733,31 +733,40 @@
                     <button class="submode-btn" data-mode="harfler">🔤 Arapça Harfler</button>
                     <button class="submode-btn" data-mode="kelimeler">📝 Üç Harfli Kelimeler</button>
                     <button class="submode-btn" data-mode="harekeler">✨ Harfler ve Harekeler</button>
+                    <button class="submode-btn" data-mode="harfler-grid">📋 Harf Tablosu</button>
                 </div>
             </div>
 
             <!-- Oyun İçeriği -->
             <div id="elif-ba-game-content" class="game-content" style="display:none;">
-                    <div class="question-section">
-                        <div class="arabic-word-container">
-                            <div class="arabic-word" id="elif-ba-word" style="font-size: 3rem; font-weight: bold;">ا</div>
-                            <div class="kelime-metadata">
-                                <span id="elif-ba-instruction" class="instruction-text">Arapça harfi seçin</span>
-                                <button class="play-audio-speaker-btn kelime-speaker-btn" id="elif-ba-play-audio-btn" title="Dinle">
-                                    <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
-                                </button>
+                    <!-- Harfler Grid Görünümü (Harfler modu için) -->
+                    <div id="elif-ba-harfler-grid" class="elif-ba-harfler-grid" style="display:none;">
+                        <!-- Grid buraya dinamik olarak eklenecek -->
+                    </div>
+
+                    <!-- Normal Oyun Görünümü (Kelimeler ve Harekeler modu için) -->
+                    <div id="elif-ba-normal-game" style="display:none;">
+                        <div class="question-section">
+                            <div class="arabic-word-container">
+                                <div class="arabic-word" id="elif-ba-word" style="font-size: 3rem; font-weight: bold;">ا</div>
+                                <div class="kelime-metadata">
+                                    <span id="elif-ba-instruction" class="instruction-text">Arapça harfi seçin</span>
+                                    <button class="play-audio-speaker-btn kelime-speaker-btn" id="elif-ba-play-audio-btn" title="Dinle">
+                                        <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="options-section">
-                        <button class="option-btn" data-index="0"></button>
-                        <button class="option-btn" data-index="1"></button>
-                        <button class="option-btn" data-index="2"></button>
-                        <button class="option-btn" data-index="3"></button>
-                    </div>
+                        <div class="options-section">
+                            <button class="option-btn" data-index="0"></button>
+                            <button class="option-btn" data-index="1"></button>
+                            <button class="option-btn" data-index="2"></button>
+                            <button class="option-btn" data-index="3"></button>
+                        </div>
 
-                    <div class="feedback-message" id="elif-ba-feedback" style="display:none; text-align: center; margin-top: 20px; padding: 15px; border-radius: 10px; font-size: 1.1rem;"></div>
+                        <div class="feedback-message" id="elif-ba-feedback" style="display:none; text-align: center; margin-top: 20px; padding: 15px; border-radius: 10px; font-size: 1.1rem;"></div>
+                    </div>
             </div>
         </div>
     </div>
