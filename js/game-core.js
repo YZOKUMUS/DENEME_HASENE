@@ -2712,38 +2712,7 @@ function displayHadis(hadis, allHadis) {
 
 // Elif ba verileri
 const elifBaData = {
-    harfler: [
-        // Diyanet URL formatı: https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_{numara}.mp3
-        // audioUrl: JSON dosyasından yüklenecek (data/harf.json)
-        { harf: 'ا', isim: 'Elif', okunus: 'elif', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_1.mp3' },
-        { harf: 'ب', isim: 'Be', okunus: 'be', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_2.mp3' },
-        { harf: 'ت', isim: 'Te', okunus: 'te', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_3.mp3' },
-        { harf: 'ث', isim: 'Se', okunus: 'se', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_4.mp3' },
-        { harf: 'ج', isim: 'Cim', okunus: 'cim', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_5.mp3' },
-        { harf: 'ح', isim: 'Ha', okunus: 'ha', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_6.mp3' },
-        { harf: 'خ', isim: 'Hı', okunus: 'hı', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_7.mp3' },
-        { harf: 'د', isim: 'Dal', okunus: 'dal', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_8.mp3' },
-        { harf: 'ذ', isim: 'Zel', okunus: 'zel', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_9.mp3' },
-        { harf: 'ر', isim: 'Ra', okunus: 'ra', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_10.mp3' },
-        { harf: 'ز', isim: 'Ze', okunus: 'ze', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_11.mp3' },
-        { harf: 'س', isim: 'Sin', okunus: 'sin', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_12.mp3' },
-        { harf: 'ش', isim: 'Şın', okunus: 'şın', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_13.mp3' },
-        { harf: 'ص', isim: 'Sad', okunus: 'sad', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_14.mp3' },
-        { harf: 'ض', isim: 'Dad', okunus: 'dad', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_15.mp3' },
-        { harf: 'ط', isim: 'Tı', okunus: 'tı', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_16.mp3' },
-        { harf: 'ظ', isim: 'Zı', okunus: 'zı', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_17.mp3' },
-        { harf: 'ع', isim: 'Ayn', okunus: 'ayn', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_18.mp3' },
-        { harf: 'غ', isim: 'Gayn', okunus: 'gayn', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_19.mp3' },
-        { harf: 'ف', isim: 'Fe', okunus: 'fe', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_20.mp3' },
-        { harf: 'ق', isim: 'Gaf', okunus: 'gaf', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_21.mp3' },
-        { harf: 'ك', isim: 'Kef', okunus: 'kef', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_22.mp3' },
-        { harf: 'ل', isim: 'Lâm', okunus: 'lâm', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_23.mp3' },
-        { harf: 'م', isim: 'Mim', okunus: 'mim', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_24.mp3' },
-        { harf: 'ن', isim: 'Nun', okunus: 'nun', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_25.mp3' },
-        { harf: 'و', isim: 'Vav', okunus: 'vav', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_26.mp3' },
-        { harf: 'ه', isim: 'He', okunus: 'he', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_27.mp3' },
-        { harf: 'ي', isim: 'Ye', okunus: 'ye', audioUrl: 'https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_28.mp3' }
-    ],
+    harfler: [], // Sadece JSON'dan yüklenecek (data/harf.json)
     kelimeler: [
         { kelime: 'دَرَجَ', okunus: 'derece', anlam: 'derece' },
         { kelime: 'دَرَكَ', okunus: 'dereke', anlam: 'dereke' },
@@ -2871,8 +2840,13 @@ async function updateHarfDataFromJSON() {
         // JSON'dan gelen verileri direkt kullan (tamamen JSON'dan okunuyor)
         elifBaData.harfler = jsonData;
         console.log('✅ Harf verileri JSON\'dan yüklendi:', jsonData.length, 'harf');
+        return true;
     } else {
-        console.warn('⚠️ JSON\'dan veri yüklenemedi, varsayılan veriler kullanılıyor');
+        console.error('❌ JSON\'dan veri yüklenemedi! Harf verileri bulunamadı.');
+        if (typeof showErrorMessage === 'function') {
+            showErrorMessage('Harf verileri yüklenemedi. Lütfen sayfayı yenileyin.');
+        }
+        return false;
     }
 }
 
@@ -2884,7 +2858,11 @@ async function startElifBaGame(mode) {
     elifBaCurrentMode = mode;
     
     // JSON'dan harf verilerini yükle ve güncelle
-    await updateHarfDataFromJSON();
+    const jsonYuklendi = await updateHarfDataFromJSON();
+    if (!jsonYuklendi || !elifBaData.harfler || elifBaData.harfler.length === 0) {
+        console.error('❌ Harf verileri yüklenemedi, oyun başlatılamıyor');
+        return;
+    }
     
     // Mod seçimini gizle, oyun içeriğini göster
     const modeSelection = document.getElementById('elif-ba-mode-selection');
@@ -2893,14 +2871,45 @@ async function startElifBaGame(mode) {
     if (modeSelection) modeSelection.style.display = 'none';
     if (gameContent) gameContent.style.display = 'block';
     
-    // Soruları hazırla
+    // Soruları hazırla (TEST MODU: sıralı göster, karıştırma)
     if (mode === 'harfler') {
-        elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.harfler]);
+        // elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.harfler]);
+        elifBaQuestions = [...elifBaData.harfler]; // Sıralı göster (test için)
     } else if (mode === 'kelimeler') {
-        elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.kelimeler]);
+        // elifBaQuestions = (typeof shuffleArray === 'function' ? shuffleArray : window.shuffleArray)([...elifBaData.kelimeler]);
+        elifBaQuestions = [...elifBaData.kelimeler]; // Sıralı göster (test için)
     } else if (mode === 'harekeler') {
         // Harekeler modu için harfleri harekelerle birleştir
-        elifBaQuestions = generateHarekelerQuestions();
+        const harekelerQuestions = generateHarekelerQuestions();
+        // elifBaQuestions = harekelerQuestions; // Karışık
+        // Sıralı göster: önce tüm harflerin üstünü, sonra esresini, sonra ötresini
+        elifBaQuestions = [];
+        elifBaData.harfler.forEach(harf => {
+            // Üstün
+            elifBaQuestions.push({
+                harf: harf.harf,
+                hareket: 'ustun',
+                hareketliHarf: harf.harf + harekeler.ustun.unicode,
+                okunus: harf.okunus + harekeler.ustun.okunus,
+                isim: harf.isim + ' ' + harekeler.ustun.isim
+            });
+            // Esre
+            elifBaQuestions.push({
+                harf: harf.harf,
+                hareket: 'esre',
+                hareketliHarf: harf.harf + harekeler.esre.unicode,
+                okunus: harf.okunus + harekeler.esre.okunus,
+                isim: harf.isim + ' ' + harekeler.esre.isim
+            });
+            // Ötre
+            elifBaQuestions.push({
+                harf: harf.harf,
+                hareket: 'otre',
+                hareketliHarf: harf.harf + harekeler.otre.unicode,
+                okunus: harf.okunus + harekeler.otre.okunus,
+                isim: harf.isim + ' ' + harekeler.otre.isim
+            });
+        });
     }
     
     elifBaCurrentQuestion = 0;
