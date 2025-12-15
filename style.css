@@ -2214,6 +2214,92 @@ body {
     }
 }
 
+/* Elif-ba oyun ekranı için responsive tasarım */
+#elif-ba-screen .arabic-word {
+    font-size: clamp(2rem, 8vw, 3rem) !important;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#elif-ba-screen .instruction-text {
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    line-height: 1.4;
+}
+
+#elif-ba-screen .kelime-metadata {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+#elif-ba-screen .play-audio-speaker-btn {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+}
+
+#elif-ba-screen .options-section {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+}
+
+#elif-ba-screen .option-btn {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    padding: var(--spacing-md);
+    min-height: 48px;
+}
+
+/* Tablet için elif-ba responsive */
+@media (max-width: 768px) {
+    #elif-ba-screen .arabic-word {
+        font-size: clamp(2.2rem, 7vw, 2.8rem) !important;
+    }
+    
+    #elif-ba-screen .options-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobil için elif-ba responsive */
+@media (max-width: 600px) {
+    #elif-ba-screen .arabic-word {
+        font-size: clamp(1.8rem, 6vw, 2.5rem) !important;
+    }
+    
+    #elif-ba-screen .game-content {
+        padding: var(--spacing-md);
+    }
+    
+    #elif-ba-screen .submode-selection {
+        padding: var(--spacing-sm);
+    }
+    
+    #elif-ba-screen .submode-btn {
+        font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+/* Küçük mobil ekranlar için elif-ba */
+@media (max-width: 480px) {
+    #elif-ba-screen .arabic-word {
+        font-size: clamp(1.6rem, 5vw, 2.2rem) !important;
+    }
+    
+    #elif-ba-screen .option-btn {
+        font-size: clamp(0.85rem, 2.5vw, 1rem);
+        padding: var(--spacing-sm);
+        min-height: 44px;
+    }
+    
+    #elif-ba-screen .play-audio-speaker-btn {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+    }
+}
+
 .btn-primary {
     flex: 1;
     padding: var(--spacing-md) var(--spacing-lg);
