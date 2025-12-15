@@ -38,8 +38,8 @@
     },
     {
       "harf": "خ",
-      "isim": "Hı",
-      "okunus": "hı",
+      "isim": "Ha",
+      "okunus": "ha",
       "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_7.mp3"
     },
     {
@@ -50,8 +50,8 @@
     },
     {
       "harf": "ذ",
-      "isim": "Zel",
-      "okunus": "zel",
+      "isim": "Zal",
+      "okunus": "zal",
       "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_9.mp3"
     },
     {
@@ -154,13 +154,13 @@
       "harf": "و",
       "isim": "Vav",
       "okunus": "vav",
-      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_26.mp3"
+      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_27.mp3"
     },
     {
       "harf": "ه",
       "isim": "He",
       "okunus": "he",
-      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_27.mp3"
+      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/isimleri/btn_26.mp3"
     },
     {
       "harf": "ي",
