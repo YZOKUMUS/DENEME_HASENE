@@ -2965,7 +2965,15 @@ function loadElifBaQuestion() {
     
     if (elifBaCurrentMode === 'harfler') {
         // Harf modu
-        if (wordEl) wordEl.textContent = elifBaCurrentQuestionData.harf;
+        if (wordEl) {
+            wordEl.textContent = elifBaCurrentQuestionData.harf;
+            // JSON'dan gelen renk kodunu uygula
+            if (elifBaCurrentQuestionData.renkKodu) {
+                wordEl.style.color = elifBaCurrentQuestionData.renkKodu;
+            } else {
+                wordEl.style.color = ''; // Varsayılan renge dön
+            }
+        }
         if (instructionEl) instructionEl.textContent = 'Bu harfin ismini seçin';
         
         // Seçenekleri hazırla
@@ -2999,7 +3007,23 @@ function loadElifBaQuestion() {
         
     } else if (elifBaCurrentMode === 'kelimeler') {
         // Kelime modu
-        if (wordEl) wordEl.textContent = elifBaCurrentQuestionData.kelime;
+        if (wordEl) {
+            const kelime = elifBaCurrentQuestionData.kelime;
+            // Kelimeyi harf harf ayır ve her harfe renk uygula
+            let kelimeHTML = '';
+            for (let i = 0; i < kelime.length; i++) {
+                const harf = kelime[i];
+                // Bu harfi elifBaData.harfler içinde bul
+                const harfData = elifBaData.harfler.find(h => h.harf === harf);
+                const renkKodu = harfData && harfData.renkKodu ? harfData.renkKodu : '';
+                if (renkKodu) {
+                    kelimeHTML += `<span style="color: ${renkKodu}">${harf}</span>`;
+                } else {
+                    kelimeHTML += harf;
+                }
+            }
+            wordEl.innerHTML = kelimeHTML;
+        }
         if (instructionEl) instructionEl.textContent = 'Bu kelimenin okunuşunu seçin';
         
         // Seçenekleri hazırla
@@ -3032,7 +3056,32 @@ function loadElifBaQuestion() {
         
     } else if (elifBaCurrentMode === 'harekeler') {
         // Harekeler modu
-        if (wordEl) wordEl.textContent = elifBaCurrentQuestionData.hareketliHarf;
+        if (wordEl) {
+            const hareketliHarf = elifBaCurrentQuestionData.hareketliHarf;
+            // Hareketli harfi göster (hareket işaretini ayır)
+            const harf = elifBaCurrentQuestionData.harf;
+            const harfData = elifBaData.harfler.find(h => h.harf === harf);
+            const renkKodu = harfData && harfData.renkKodu ? harfData.renkKodu : '';
+            
+            // Hareket işaretini bul (Unicode karakterler)
+            const hareketIsaretleri = ['\u064E', '\u0650', '\u064F']; // üstün, esre, ötre
+            let harfHTML = '';
+            for (let i = 0; i < hareketliHarf.length; i++) {
+                const karakter = hareketliHarf[i];
+                if (hareketIsaretleri.includes(karakter)) {
+                    // Hareket işareti - renksiz göster
+                    harfHTML += karakter;
+                } else {
+                    // Harf - renkli göster
+                    if (renkKodu) {
+                        harfHTML += `<span style="color: ${renkKodu}">${karakter}</span>`;
+                    } else {
+                        harfHTML += karakter;
+                    }
+                }
+            }
+            wordEl.innerHTML = harfHTML;
+        }
         if (instructionEl) instructionEl.textContent = 'Bu hareketli harfin okunuşunu seçin';
         
         // Seçenekleri hazırla - aynı harfin farklı harekeleri
