@@ -23,7 +23,7 @@ Kuran-ı Kerim kelimelerini eğlenceli bir şekilde öğrenerek hem bilginizi ar
 - 🎯 Günlük Vird Sistemi
 - 🎁 Günlük Ödül Kutusu (İslami öğretiler ile sürpriz ödüller)
 - 📱 Tam Responsive Tasarım (mobil, tablet, desktop)
-- 💾 Offline Çalışma (PWA)
+- 💾 Offline Çalışma (PWA - LocalStorage)
 - 🎨 iOS 16 Liquid Glass Tasarımı (Glassmorphism)
 - 📖 Rozet Detay Modalı (tarihsel bilgiler, Arapça terimler)
 - 🎯 iPhone Tarzı Bottom Navigation
@@ -54,13 +54,20 @@ deneme_hasene/
 │   ├── game-core.js   # Ana oyun mantığı
 │   ├── constants.js   # Sabitler ve rozet tanımları
 │   ├── config.js      # Yapılandırma
-│   ├── utils.js       # Yardımcı fonksiyonlar
+│   ├── api-service.js # LocalStorage API servisi
+│   ├── auth.js        # Kullanıcı kimlik doğrulama (localStorage)
 │   └── ...
 ├── data/
 │   ├── kelimebul.json # Kelime verileri
 │   ├── ayetoku.json   # Ayet verileri
 │   ├── duaet.json     # Dua verileri
 │   └── hadisoku.json  # Hadis verileri
+├── docs/              # Dokümantasyon
+│   ├── README.md      # Bu dosya
+│   ├── DIL_OGRETME_ALGORITMALARI.md
+│   ├── analiz/        # Analiz raporları
+│   ├── sistem/        # Sistem dokümantasyonu
+│   └── rozetler/      # Rozet sistemi dokümantasyonu
 └── assets/            # Görseller ve ikonlar
 ```
 
@@ -74,13 +81,13 @@ deneme_hasene/
 
 ### Temel Puanlar
 - **Doğru cevap**: 10 Hasene
-- **Her 3 doğru cevapta**: +5 Hasene (Combo Bonus)
-- **Mükemmel ders** (0 yanlış): %50 ekstra bonus
+- **Combo Bonus**: Her doğru cevap için +2 Hasene
+- **Mükemmel ders** (0 yanlış, min 3 soru): +50 Hasene
 
 ### Bonuslar
 - **Günlük Görev Ödülleri**: Tüm görevler tamamlandığında sürpriz ödül (100, 250 veya 500 Hasene)
 - **Günlük Ödül Kutusu**: Her gün kurdelalı kutu ile İslami öğreti ve sürpriz Hasene ödülü
-- **Günlük Vird Bonusu**: Günlük hedefi tamamlayınca bonus Hasene
+- **Günlük Vird Bonusu**: Günlük hedefi tamamlayınca +100 Hasene bonus
 
 Tüm bonuslar detaylı istatistiklere kaydedilir.
 
@@ -164,14 +171,32 @@ Duolingo tarzı takvim:
 - Seri günler turuncu/sarı
 - Oynanmayan günler gri
 
+## 💾 Veri Saklama
+
+Uygulama tamamen **offline** çalışır ve tüm veriler **localStorage**'da saklanır:
+- Kullanıcı istatistikleri
+- Rozetler ve başarımlar
+- Günlük ve haftalık görevler
+- Kelime istatistikleri
+- Favori kelimeler
+- Oyun geçmişi
+
 ## 🔧 Teknolojiler
 
 - Vanilla JavaScript
 - HTML5
 - CSS3
-- IndexedDB (veri saklama)
+- LocalStorage (veri saklama)
+- IndexedDB (cache)
 - Service Worker (PWA)
-- LocalStorage (yedek veri)
+
+## 📚 Dokümantasyon
+
+Detaylı dokümantasyon için `docs/` klasörüne bakın:
+- **DIL_OGRETME_ALGORITMALARI.md** - Dil öğretme algoritmaları
+- **analiz/** - Analiz raporları
+- **sistem/** - Sistem dokümantasyonu
+- **rozetler/** - Rozet sistemi dokümantasyonu
 
 ## 📝 Lisans
 
@@ -180,4 +205,3 @@ Bu proje eğitim amaçlıdır.
 ## 👤 Geliştirici
 
 YZOKUMUS
-
