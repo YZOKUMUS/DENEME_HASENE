@@ -586,16 +586,27 @@ async function getCurrentUser() {
     const username = localStorage.getItem('hasene_username');
     const userId = localStorage.getItem('hasene_user_id');
     
+    console.log('🔍 getCurrentUser fallback kontrolü:', {
+        email: email,
+        username: username,
+        userId: userId
+    });
+    
     if (email || username || userId) {
         // Email yoksa username'den oluştur
         const finalEmail = email || (username ? username + '@local' : 'user@local');
         const finalUsername = username || (email ? email.split('@')[0] : 'Kullanıcı');
         const finalUserId = userId || 'local-' + Date.now();
         
-        console.log('✅ getCurrentUser: localStorage\'dan kullanıcı bulundu:', finalEmail, finalUsername);
+        console.log('✅ getCurrentUser: localStorage\'dan kullanıcı bulundu (fallback):', {
+            id: finalUserId,
+            email: finalEmail,
+            username: finalUsername
+        });
         return { id: finalUserId, email: finalEmail, username: finalUsername };
     }
     
+    console.log('❌ getCurrentUser: Hiçbir koşul sağlanmadı, localStorage\'da da veri yok, null döndürülüyor');
     return null;
 }
 
