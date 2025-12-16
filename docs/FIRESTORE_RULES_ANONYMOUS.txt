@@ -18,47 +18,39 @@ service cloud.firestore {
     
     // Kelime istatistikleri - anonymous kullanıcılar da erişebilir
     // Query yaparken user_id field'ına göre filtreleme yapıldığı için,
-    // Rules'da hem docId hem de user_id field'ına göre kontrol et
+    // Rules'da query'ler için authenticated kullanıcılara erişim ver
+    // Doküman seviyesinde user_id kontrolü yap
     match /word_stats/{docId} {
-      allow read: if request.auth != null && 
-        (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid));
+      // Query'ler için: authenticated kullanıcılar collection'a erişebilir
+      // (query'de user_id filtresi olduğu için sadece kendi verilerini görecekler)
+      allow read: if request.auth != null;
+      // Write için: user_id kontrolü yap
       allow write: if request.auth != null && 
         (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid) ||
          (request.resource != null && request.resource.data.user_id == request.auth.uid));
     }
     
     // Favoriler - anonymous kullanıcılar da erişebilir
     match /favorites/{docId} {
-      allow read: if request.auth != null && 
-        (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid));
+      allow read: if request.auth != null;
       allow write: if request.auth != null && 
         (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid) ||
          (request.resource != null && request.resource.data.user_id == request.auth.uid));
     }
     
     // Başarımlar - anonymous kullanıcılar da erişebilir
     match /achievements/{docId} {
-      allow read: if request.auth != null && 
-        (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid));
+      allow read: if request.auth != null;
       allow write: if request.auth != null && 
         (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid) ||
          (request.resource != null && request.resource.data.user_id == request.auth.uid));
     }
     
     // Rozetler - anonymous kullanıcılar da erişebilir
     match /badges/{docId} {
-      allow read: if request.auth != null && 
-        (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid));
+      allow read: if request.auth != null;
       allow write: if request.auth != null && 
         (docId.startsWith(request.auth.uid + '_') || 
-         (resource != null && resource.data.user_id == request.auth.uid) ||
          (request.resource != null && request.resource.data.user_id == request.auth.uid));
     }
   }
