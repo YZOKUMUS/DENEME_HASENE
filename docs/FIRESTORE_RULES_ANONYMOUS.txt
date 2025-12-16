@@ -3,7 +3,10 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Kullanıcı profilleri - anonymous kullanıcılar da erişebilir
     match /users/{userId} {
+      // Kendi profilini oku/yaz
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Kullanıcı adına göre arama yapabilmek için (giriş sırasında mevcut kullanıcıyı bulmak için)
+      allow read: if request.auth != null;
     }
     
     // Kullanıcı istatistikleri - anonymous kullanıcılar da erişebilir
