@@ -144,7 +144,9 @@ const elements = {
  * Tüm istatistikleri yükler
  */
 async function loadStats() {
-    console.log('📥 loadStats() çağrıldı');
+    if (typeof debugLog === 'function') {
+        debugLog('loadStats() çağrıldı');
+    }
     try {
         // Mobil cihaz tespiti (daha uzun timeout'lar için)
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -310,7 +312,9 @@ async function loadStats() {
         // - daily_stats, weekly_stats, monthly_stats, favorites
         
         // ÖNCE: localStorage/IndexedDB'den kritik verileri yükle ve UI'ı göster (Optimistic UI)
-        console.log('⚡ Optimistic UI: localStorage/IndexedDB\'den kritik veriler yükleniyor...');
+        if (typeof debugLog === 'function') {
+            debugLog('Optimistic UI: localStorage/IndexedDB\'den kritik veriler yükleniyor...');
+        }
         const cachedPoints = await loadFromIndexedDB('hasene_totalPoints');
         if (cachedPoints !== null) {
             totalPoints = parseInt(cachedPoints) || 0;
@@ -337,15 +341,19 @@ async function loadStats() {
         // UI'ı hemen güncelle (cache'den)
         updateStatsBar();
         updateStreakDisplay();
-        console.log('✅ Optimistic UI: Cache\'den veriler yüklendi ve UI güncellendi');
+        if (typeof infoLog === 'function') {
+            infoLog('Optimistic UI: Cache\'den veriler yüklendi ve UI güncellendi');
+        }
         
         // ============================================
         // ÖNCELİK 1: KRİTİK VERİLER (Backend'den öncelikli yükleme)
         // ============================================
-        console.log('🔍 Backend yükleme kontrolü:', {
-            user: user ? `✅ Var (${user.id})` : '❌ Yok',
-            loadUserStats: typeof window.loadUserStats === 'function' ? '✅ Mevcut' : '❌ Yok'
-        });
+        if (typeof debugLog === 'function') {
+            debugLog('Backend yükleme kontrolü:', {
+                user: user ? `✅ Var (${user.id})` : '❌ Yok',
+                loadUserStats: typeof window.loadUserStats === 'function' ? '✅ Mevcut' : '❌ Yok'
+            });
+        }
         
         let backendDataLoaded = false;
         
@@ -1193,12 +1201,52 @@ function getDailyHasene() {
     
     // LOG: Çift sayma kontrolü
     if (dailyPointsFromDetailed !== dailyXP) {
-        console.warn('⚠️ getDailyHasene - Tutarsızlık tespit edildi:', {
-            dailyPointsFromDetailed,
-            dailyXP,
-            fark: Math.abs(dailyPointsFromDetailed - dailyXP),
-            not: 'dailyXP ve dailyData.points senkronize değil!'
-        });
+        // Aynı gün içinde log spam'ini engellemek için sadece bir kez uyarı ver
+        const desyncFlagKey = `hasene_dailyHaseneDesyncLogged_${today}`;
+        const alreadyLoggedDesync = localStorage.getItem(desyncFlagKey) === 'true';
+        
+        if (!alreadyLoggedDesync) {
+            // LOG seviyesi: warn → sadece önemli durumda göster
+            if (typeof warnLog === 'function') {
+                warnLog('getDailyHasene - Tutarsızlık tespit edildi:', {
+                    dailyPointsFromDetailed,
+                    dailyXP,
+                    fark: Math.abs(dailyPointsFromDetailed - dailyXP),
+                    not: 'dailyXP ve dailyData.points senkronize değil!'
+                });
+            } else {
+                console.warn('⚠️ getDailyHasene - Tutarsızlık tespit edildi:', {
+                    dailyPointsFromDetailed,
+                    dailyXP,
+                    fark: Math.abs(dailyPointsFromDetailed - dailyXP),
+                    not: 'dailyXP ve dailyData.points senkronize değil!'
+                });
+            }
+            localStorage.setItem(desyncFlagKey, 'true');
+        } else if (typeof debugLog === 'function') {
+            // Sonraki çağrılarda sadece debug seviyesinde sessiz log
+            debugLog('getDailyHasene - Tutarsızlık devam ediyor, sessizce senkronize ediliyor.', {
+                dailyPointsFromDetailed,
+                dailyXP
+            });
+        }
+
+        // Eğer detaylı istatistiklerde puan var ama dailyXP geride/0 kalmışsa,
+        // dailyXP'yi daha güvenilir olan dailyData.points ile senkronize et
+        if (dailyPointsFromDetailed > 0 && dailyPointsFromDetailed !== dailyXP) {
+            localStorage.setItem('dailyXP', dailyPointsFromDetailed.toString());
+            if (typeof infoLog === 'function') {
+                infoLog('getDailyHasene - dailyXP, dailyData.points ile senkronize edildi:', {
+                    eskiDailyXP: dailyXP,
+                    yeniDailyXP: dailyPointsFromDetailed
+                });
+            } else {
+                console.log('🔄 getDailyHasene - dailyXP, dailyData.points ile senkronize edildi:', {
+                    eskiDailyXP: dailyXP,
+                    yeniDailyXP: dailyPointsFromDetailed
+                });
+            }
+        }
     }
     
     // Her zaman dailyData.points'i kullan (daha güvenilir, saveDetailedStats tarafından güncelleniyor)
@@ -3674,9 +3722,6 @@ async function saveCurrentGameProgress() {
         not: 'dailyXP zaten her soru için saveDetailedStats() ile kaydedildi'
     });
     
-    // Kaydet (totalPoints güncellendi)
-    await saveStatsImmediate();
-    
     // NOT: saveDetailedStats() çağrılmıyor çünkü her soru cevaplandığında zaten çağrılıyor!
     // Burada duplicate kayıt yapmamak için sadece localStorage senkronizasyonu yapıyoruz.
     
@@ -3747,7 +3792,10 @@ async function saveCurrentGameProgress() {
     
     // Eğer detaylı istatistikler modalı açıksa, panelleri yenile
     refreshDetailedStatsIfOpen();
-    
+
+    // Global istatistikler (gameStats) güncellendikten sonra backend'e kaydet
+    await saveStatsImmediate();
+
     // Session değişkenlerini sıfırla
     sessionScore = 0;
     sessionCorrect = 0;
@@ -3791,6 +3839,23 @@ async function endGame() {
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
         console.log('⭐ Perfect bonus eklendi (ders bazlı):', perfectBonus);
     }
+
+    // ================================
+    // GLOBAL İSTATİSTİKLERİ GÜNCELLE
+    // ================================
+    // Toplam doğru / yanlış sayacı (user_stats.game_stats içinde)
+    // Not: Bu değerler kümülatif; her oyun sonunda üzerine eklenir
+    if (!gameStats) {
+        gameStats = { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} };
+    }
+    if (typeof gameStats.totalCorrect !== 'number') {
+        gameStats.totalCorrect = parseInt(gameStats.totalCorrect || '0', 10) || 0;
+    }
+    if (typeof gameStats.totalWrong !== 'number') {
+        gameStats.totalWrong = parseInt(gameStats.totalWrong || '0', 10) || 0;
+    }
+    gameStats.totalCorrect += sessionCorrect || 0;
+    gameStats.totalWrong += sessionWrong || 0;
     
     // Global puanlara ekle
     // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
@@ -3956,6 +4021,9 @@ async function endGame() {
     refreshDetailedStatsIfOpen();
     
     // Not: Sonuç modalı yukarıda gösterildi (performans için backend kayıtlarından önce)
+
+    // Global istatistik değişikliklerinden sonra backend'e kaydet
+    await saveStatsImmediate();
 }
 
 /**
@@ -6620,7 +6688,7 @@ async function resetAllStats(skipConfirm = false) {
     localStorage.setItem('hasene_statsJustReset', 'true');
     console.log('ℹ️ hasene_statsJustReset flag\'i set edildi - backend silme işlemi başlıyor');
     
-    // Backend'den TÜM kullanıcı verilerini sil
+    // Backend'den TÜM kullanıcı verilerini sil + user_stats'ı SIFIR KAYIT ile yeniden başlat
     if (typeof window.getCurrentUser === 'function') {
         try {
             const user = await window.getCurrentUser();
@@ -6695,7 +6763,31 @@ async function resetAllStats(skipConfirm = false) {
                     }
                 }
                 
-                console.log('✅ Tüm backend verileri temizlendi');
+                // ÖNEMLİ: user_stats'ı sıfır kayıtla yeniden başlat (silme başarısız olsa bile)
+                try {
+                    const zeroStats = {
+                        user_id: user.id,
+                        total_points: 0,
+                        badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                        streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                        game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                        perfect_lessons_count: 0
+                    };
+                    
+                    const { error: upsertError } = await window.supabaseClient
+                        .from('user_stats')
+                        .upsert(zeroStats, { onConflict: 'user_id' });
+                    
+                    if (upsertError) {
+                        console.warn('⚠️ user_stats sıfırlama (upsert) hatası:', upsertError);
+                    } else {
+                        console.log('✅ user_stats toplam Hasene sıfırlandı (0 olarak upsert edildi)');
+                    }
+                } catch (upsertCatch) {
+                    console.warn('⚠️ user_stats sıfırlama sırasında beklenmeyen hata:', upsertCatch);
+                }
+                
+                console.log('✅ Tüm backend verileri temizlendi ve user_stats sıfırlandı');
             }
         } catch (e) {
             console.warn('⚠️ Backend veri silme hatası (normal olabilir):', e);

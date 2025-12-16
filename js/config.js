@@ -7,8 +7,10 @@ const CONFIG = {
     DEBUG: false,
     
     // Logging
-    LOG_LEVEL: 'info', // 'debug', 'info', 'warn', 'error'
-    GAME_DEBUG: true, // Oyun adımları için detaylı log (test için)
+    // TEST ve normal kullanım için neredeyse sadece HATA logları kalsın
+    // Detaylı akış istendiğinde LOG_LEVEL: 'debug' veya 'info' yapılabilir
+    LOG_LEVEL: 'error', // 'debug', 'info', 'warn', 'error'
+    GAME_DEBUG: false, // Oyun adımları için detaylı log (test sırasında elle açılacak)
     
     // Performance
     DEBOUNCE_DELAY: 500, // ms

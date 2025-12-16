@@ -843,3 +843,142 @@ LEFT JOIN profiles p ON p.id = au.id
 LEFT JOIN user_stats us ON us.user_id = au.id
 WHERE EXISTS (SELECT 1 FROM user_stats WHERE user_id = au.id)
 ORDER BY us.total_points DESC, au.created_at DESC;
+
+-- ============================================
+-- 3. KAPSAMLI KULLANICI RAPOR VIEW'LERİ
+-- ============================================
+-- Tüm kullanıcı istatistiklerini tek bir view'da toplar
+-- Test ve raporlama için kullanılır
+-- ============================================
+
+-- 3.1) KULLANICI + TEMEL İSTATİSTİKLER
+create or replace view vw_user_overview as
+select
+  u.id                           as kullanici_id,
+  u.email                        as kullanici_mail_id,
+  us.total_points                as toplam_hasene,
+  (us.badges->>'stars')::int     as yildiz,
+  (us.badges->>'bronze')::int    as rozet_bronz,
+  (us.badges->>'silver')::int    as rozet_gumus,
+  (us.badges->>'gold')::int      as rozet_altin,
+  (us.badges->>'diamond')::int   as rozet_elmas,
+  case
+    when us.total_points >= 100000 then 'Üstad'
+    when us.total_points >=  50000 then 'İleri'
+    when us.total_points >=  10000 then 'Orta'
+    when us.total_points >=   1000 then 'Başlangıç'
+    else 'Yeni'
+  end                             as mertebe,
+  (us.streak_data->>'currentStreak')::int as seri_mevcut,
+  (us.streak_data->>'bestStreak')::int    as seri_en_iyi,
+  (us.streak_data->>'totalPlayDays')::int as toplam_oyun_gunu,
+  COALESCE((us.game_stats->>'totalCorrect')::int, 0) as toplam_dogru,
+  COALESCE((us.game_stats->>'totalWrong')::int, 0)   as toplam_yanlis,
+  COALESCE(us.game_stats->'gameModeCounts', '{}'::jsonb) as oyun_modlari
+from
+  auth.users u
+  join user_stats us on us.user_id = u.id;
+
+-- 3.2) KELİME İSTATİSTİKLERİ ÖZETİ (ZORLANILAN / İYİ BİLİNEN / ÇOK DENENEN / SON YANLIŞLAR)
+create or replace view vw_user_word_stats_summary as
+select
+  user_id,
+  count(*) filter (
+    where (stats->>'attempts')::int >= 2
+      and (stats->>'successRate')::float < 60
+  ) as zorlanilan,
+  count(*) filter (
+    where (stats->>'attempts')::int >= 3
+      and (stats->>'successRate')::float >= 80
+  ) as iyi_bilinen,
+  count(*)                    as cok_denenen,
+  count(*) filter (
+    where stats ? 'lastWrong'
+  ) as son_yanlis
+from
+  word_stats
+group by
+  user_id;
+
+-- 3.3) FAVORİLER ÖZETİ
+create or replace view vw_user_favorites_summary as
+select
+  user_id,
+  count(*) as favoriler
+from
+  favorite_words
+group by
+  user_id;
+
+-- 3.4) BAŞARIMLAR / MUVAFFAKİYETLER ÖZETİ
+create or replace view vw_user_achievements_summary as
+select
+  user_id,
+  count(*)                                       as basarim_sayisi,
+  json_agg(achievement_id order by unlocked_at) as basarimlar_detay
+from
+  achievements
+group by
+  user_id;
+
+-- 3.5) HAFTALIK LİGLER (ŞİMDİLİK SADECE LİG ADI)
+create or replace view vw_user_league_summary as
+select
+  user_id,
+  current_league as haftalik_lig_adi
+from
+  user_leagues;
+
+-- 3.6) VAZİFELER PANELİ ÖZETİ
+create or replace view vw_user_daily_tasks_summary as
+select
+  user_id,
+  last_task_date                               as vazifeler_son_tarih,
+  -- Toplam görev = ana görevler (tasks) + bonus görevler (bonus_tasks)
+  jsonb_array_length(tasks) 
+    + jsonb_array_length(coalesce(bonus_tasks, '[]'::jsonb)) 
+                                                as vazifeler_toplam_gorev_sayisi,
+  jsonb_array_length(completed_tasks)          as vazifeler_tamamlanan_gorev_sayisi,
+  (today_stats->>'toplamPuan')::int            as vazifeler_bugun_hasene
+from
+  daily_tasks;
+
+-- 3.7) TÜMÜ: KAPSAMLI KULLANICI RAPORU (TEST İÇİN ANA VIEW)
+-- Bu view'ı kullanarak tüm kullanıcı istatistiklerini tek bir sorguda görebilirsiniz
+-- Örnek kullanım: SELECT * FROM vw_user_full_report;
+create or replace view vw_user_full_report as
+select
+  o.kullanici_mail_id,
+  o.kullanici_id,
+  o.toplam_hasene,
+  o.toplam_dogru,
+  o.toplam_yanlis,
+  o.oyun_modlari,
+  o.yildiz,
+  o.rozet_bronz,
+  o.rozet_gumus,
+  o.rozet_altin,
+  o.rozet_elmas,
+  o.mertebe,
+  o.seri_mevcut,
+  o.seri_en_iyi,
+  o.toplam_oyun_gunu,
+  coalesce(w.zorlanilan, 0)        as zorlanilan,
+  coalesce(w.iyi_bilinen, 0)       as iyi_bilinen,
+  coalesce(w.cok_denenen, 0)       as cok_denenen,
+  coalesce(w.son_yanlis, 0)        as son_yanlis,
+  coalesce(f.favoriler, 0)         as favoriler,
+  coalesce(a.basarim_sayisi, 0)    as basarim_sayisi,
+  a.basarimlar_detay,
+  l.haftalik_lig_adi,
+  d.vazifeler_son_tarih,
+  d.vazifeler_toplam_gorev_sayisi,
+  d.vazifeler_tamamlanan_gorev_sayisi,
+  d.vazifeler_bugun_hasene
+from
+  vw_user_overview              o
+  left join vw_user_word_stats_summary   w on w.user_id = o.kullanici_id
+  left join vw_user_favorites_summary    f on f.user_id = o.kullanici_id
+  left join vw_user_achievements_summary a on a.user_id = o.kullanici_id
+  left join vw_user_league_summary       l on l.user_id = o.kullanici_id
+  left join vw_user_daily_tasks_summary  d on d.user_id = o.kullanici_id;

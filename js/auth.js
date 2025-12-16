@@ -405,13 +405,17 @@ async function updateAuthModalUI() {
  * Kullanıcı UI'ını güncelle
  */
 async function updateUserUI() {
-    console.log('🔄 updateUserUI çağrıldı');
+    if (typeof debugLog === 'function') {
+        debugLog('updateUserUI çağrıldı');
+    }
     
     // getCurrentUser fonksiyonunu kullan (api-service.js'den)
     let user = null;
     if (typeof window.getCurrentUser === 'function') {
         user = await window.getCurrentUser();
-        console.log('👤 Kullanıcı durumu:', user ? 'Giriş yapmış' : 'Giriş yapmamış', user);
+        if (typeof infoLog === 'function') {
+            infoLog('Kullanıcı durumu:', user ? 'Giriş yapmış' : 'Giriş yapmamış', user);
+        }
     } else {
         console.warn('⚠️ getCurrentUser fonksiyonu bulunamadı');
     }
@@ -421,14 +425,18 @@ async function updateUserUI() {
     const authNavBtn = document.getElementById('auth-nav-btn');
     // registerTabBtn ve registerBenefitsInfo kaldırıldı (sadece Google ile giriş)
     
-    console.log('🔍 Elementler:', {
-        userProfileBtn: !!userProfileBtn,
-        authNavBtn: !!authNavBtn
-    });
+    if (typeof debugLog === 'function') {
+        debugLog('updateUserUI element durumu', {
+            userProfileBtn: !!userProfileBtn,
+            authNavBtn: !!authNavBtn
+        });
+    }
     
     if (user && user.email) {
         // Kullanıcı giriş yapmış
-        console.log('✅ Kullanıcı giriş yapmış, avatar gösteriliyor');
+        if (typeof infoLog === 'function') {
+            infoLog('Kullanıcı giriş yapmış, avatar gösteriliyor');
+        }
         if (userProfileBtn) {
             userProfileBtn.style.display = 'flex';
             console.log('👤 user-profile-btn gösterildi');
@@ -446,12 +454,14 @@ async function updateUserUI() {
             const displayName = user.username || user.email || 'U';
             const initial = displayName.charAt(0).toUpperCase();
             userAvatarInitial.textContent = initial;
-            console.log('🎨 Avatar harfi güncellendi:', {
-                initial: initial,
-                username: user.username,
-                email: user.email,
-                displayName: displayName
-            });
+            if (typeof debugLog === 'function') {
+                debugLog('Avatar harfi güncellendi:', {
+                    initial: initial,
+                    username: user.username,
+                    email: user.email,
+                    displayName: displayName
+                });
+            }
             
             // Avatar rengini kullanıcı adına göre belirle (tutarlı renk için)
             const colors = [
@@ -468,7 +478,9 @@ async function updateUserUI() {
             const avatarEl = document.getElementById('user-avatar');
             if (avatarEl) {
                 avatarEl.style.background = colors[colorIndex];
-                console.log('🎨 Avatar rengi güncellendi:', colors[colorIndex]);
+                if (typeof debugLog === 'function') {
+                    debugLog('Avatar rengi güncellendi:', colors[colorIndex]);
+                }
             } else {
                 console.error('❌ user-avatar elementi bulunamadı!');
             }
@@ -489,7 +501,9 @@ async function updateUserUI() {
         // ÖNEMLİ: Kullanıcı giriş yaptıysa, backend'den verileri yükle
         // Bu, OAuth callback sonrası veya sayfa yüklendiğinde verilerin gelmesini sağlar
         if (typeof window.loadStats === 'function') {
-            console.log('📥 Kullanıcı giriş yapmış, backend\'den veriler yükleniyor...');
+            if (typeof infoLog === 'function') {
+                infoLog('Kullanıcı giriş yapmış, backend\'den veriler yükleniyor...');
+            }
             // Asenkron olarak çağır, UI güncellemesini engellemesin
             window.loadStats().catch(err => {
                 console.error('❌ loadStats hatası (updateUserUI):', err);
@@ -497,7 +511,9 @@ async function updateUserUI() {
         }
     } else {
         // Kullanıcı giriş yapmamış
-        console.log('❌ Kullanıcı giriş yapmamış, giriş butonu gösteriliyor');
+        if (typeof infoLog === 'function') {
+            infoLog('Kullanıcı giriş yapmamış, giriş butonu gösteriliyor');
+        }
         if (userProfileBtn) {
             userProfileBtn.style.display = 'none';
         }
@@ -510,7 +526,9 @@ async function updateUserUI() {
     // Auth modal UI'ını da güncelle
     updateAuthModalUI();
     
-    console.log('✅ updateUserUI tamamlandı');
+    if (typeof debugLog === 'function') {
+        debugLog('updateUserUI tamamlandı');
+    }
 }
 
 /**
@@ -591,14 +609,18 @@ function showUserMenu() {
  * Auth'u başlat
  */
 async function initializeAuth() {
-    console.log('🔐 initializeAuth başlatılıyor...');
+    if (typeof debugLog === 'function') {
+        debugLog('initializeAuth başlatılıyor...');
+    }
     
     // Supabase client'ın başlatılmasını bekle
     await new Promise(resolve => {
         let attempts = 0;
         const checkSupabase = () => {
             if (typeof window.supabase !== 'undefined' && window.supabase) {
-                console.log('✅ Supabase client bulundu');
+                if (typeof infoLog === 'function') {
+                    infoLog('Supabase client bulundu');
+                }
                 resolve();
             } else if (attempts < 50) { // 5 saniye timeout
                 attempts++;
@@ -619,11 +641,15 @@ async function initializeAuth() {
     if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
         try {
             window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('🔄 Auth state changed:', event, session ? 'Session var' : 'Session yok');
+                if (typeof debugLog === 'function') {
+                    debugLog('Auth state changed:', event, session ? 'Session var' : 'Session yok');
+                }
                 
                 if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                     // Kullanıcı giriş yaptı, UI'ı güncelle
-                    console.log('✅ Kullanıcı giriş yaptı, UI güncelleniyor...');
+                    if (typeof infoLog === 'function') {
+                        infoLog('Kullanıcı giriş yaptı, UI güncelleniyor...');
+                    }
                     
                     // Google OAuth ile giriş yapıldıysa da kayıt durumunu işaretle
                     localStorage.setItem('hasene_user_has_registered', 'true');
@@ -633,7 +659,9 @@ async function initializeAuth() {
                         
                         // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
                         if (typeof window.loadStats === 'function') {
-                            console.log('📥 Backend\'den veriler yükleniyor (OAuth callback)...');
+                            if (typeof infoLog === 'function') {
+                                infoLog('Backend\'den veriler yükleniyor (OAuth callback)...');
+                            }
                             await window.loadStats();
                         }
                         
@@ -647,11 +675,15 @@ async function initializeAuth() {
                     }, 500);
                 } else if (event === 'SIGNED_OUT') {
                     // Kullanıcı çıkış yaptı
-                    console.log('👋 Kullanıcı çıkış yaptı');
+                    if (typeof infoLog === 'function') {
+                        infoLog('Kullanıcı çıkış yaptı');
+                    }
                     updateUserUI();
                 }
             });
-            console.log('✅ Auth state change listener eklendi');
+            if (typeof debugLog === 'function') {
+                debugLog('Auth state change listener eklendi');
+            }
         } catch (error) {
             console.error('❌ Auth state change listener eklenemedi:', error);
         }
@@ -661,13 +693,17 @@ async function initializeAuth() {
             if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
                 try {
                     window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                        console.log('🔄 Auth state changed (delayed):', event);
+                        if (typeof debugLog === 'function') {
+                            debugLog('Auth state changed (delayed):', event);
+                        }
                         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                             updateUserUI();
                             
                             // ÖNEMLİ: Backend'den verileri yükle
                             if (typeof window.loadStats === 'function') {
-                                console.log('📥 Backend\'den veriler yükleniyor (delayed)...');
+                                if (typeof infoLog === 'function') {
+                                    infoLog('Backend\'den veriler yükleniyor (delayed)...');
+                                }
                                 window.loadStats().catch(err => {
                                     console.error('❌ loadStats hatası:', err);
                                 });
@@ -679,24 +715,34 @@ async function initializeAuth() {
                             updateUserUI();
                         }
                     });
-                    console.log('✅ Auth state change listener eklendi (delayed)');
+                    if (typeof debugLog === 'function') {
+                        debugLog('Auth state change listener eklendi (delayed)');
+                    }
                 } catch (error) {
                     console.warn('⚠️ Auth state listener eklenemedi:', error);
                 }
             }
         }, 1000);
-        console.warn('⚠️ Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
+        if (typeof warnLog === 'function') {
+            warnLog('Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
+        } else {
+            console.warn('⚠️ Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
+        }
     }
     
     // Kullanıcı giriş durumunu kontrol et
-    console.log('🔄 updateUserUI çağrılıyor...');
+    if (typeof debugLog === 'function') {
+        debugLog('initializeAuth içinde updateUserUI çağrılıyor...');
+    }
     await updateUserUI();
     
     // OAuth callback kontrolü (URL'de hash fragment varsa - Supabase OAuth hash kullanır)
     if (window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         if (hashParams.get('access_token') || hashParams.get('code')) {
-            console.log('🔄 OAuth callback tespit edildi, session bekleniyor...');
+            if (typeof infoLog === 'function') {
+                infoLog('OAuth callback tespit edildi, session bekleniyor...');
+            }
             // Auth state change listener yukarıda halleder
             // Sadece biraz bekle ve UI'ı güncelle
         setTimeout(async () => {
@@ -704,7 +750,9 @@ async function initializeAuth() {
             
             // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
             if (typeof window.loadStats === 'function') {
-                console.log('📥 Backend\'den veriler yükleniyor (OAuth callback)...');
+                if (typeof infoLog === 'function') {
+                    infoLog('Backend\'den veriler yükleniyor (OAuth callback)...');
+                }
                 await window.loadStats();
             }
             
