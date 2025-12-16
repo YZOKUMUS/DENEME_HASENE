@@ -164,13 +164,18 @@ async function loadStats() {
         
         if (typeof window.getCurrentUser === 'function') {
             let userRetryCount = 0;
-            const maxUserRetries = isMobile ? 5 : 3;
+            const maxUserRetries = isMobile ? 10 : 5; // Daha fazla retry
             
             // Kullanıcı bulunana kadar retry yap
             while (userRetryCount < maxUserRetries && !user) {
                 try {
+                    // Her retry'de biraz bekle (authentication tamamlanması için)
+                    if (userRetryCount > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                    
                     user = await window.getCurrentUser();
-                    console.log(`📥 getCurrentUser() sonucu (deneme ${userRetryCount + 1}):`, user ? `✅ Kullanıcı var (${user.id}, ${user.email || 'email yok'})` : '❌ Kullanıcı yok');
+                    console.log(`📥 getCurrentUser() sonucu (deneme ${userRetryCount + 1}/${maxUserRetries}):`, user ? `✅ Kullanıcı var (${user.id}, ${user.username || user.email || 'email yok'})` : '❌ Kullanıcı yok');
                     
                     if (user) {
                         break; // Kullanıcı bulundu, döngüden çık
