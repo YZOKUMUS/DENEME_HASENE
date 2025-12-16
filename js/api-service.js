@@ -6,6 +6,8 @@
 const BACKEND_TYPE = window.BACKEND_TYPE || 'supabase';
 
 // API Base URL
+// Supabase için kullanılmaz; 'mongodb' backend'inde Express API adresi olarak kullanılır
+// Örn: window.VITE_API_URL = 'http://localhost:3000' veya Vercel/Render URL'iniz
 const API_BASE_URL = window.VITE_API_URL || 'https://your-api.vercel.app';
 
 // ============================================
@@ -13,6 +15,68 @@ const API_BASE_URL = window.VITE_API_URL || 'https://your-api.vercel.app';
 // ============================================
 
 let supabaseClient = null;
+
+// ============================================
+// MONGODB / EXPRESS BACKEND YARDIMCI FONKSİYONLARI
+// ============================================
+
+/**
+ * Mongo/Express backend için userId belirler
+ * - Eğer Supabase kullanılıyorsa: Supabase user.id
+ * - Değilse: localStorage'da kalıcı bir misafir ID
+ */
+async function getMongoUserId() {
+    // Supabase oturumu varsa onu kullan (kimlik tek olsun)
+    if (BACKEND_TYPE === 'mongodb' && typeof getCurrentUser === 'function') {
+        try {
+            const user = await getCurrentUser();
+            if (user && user.id) {
+                return user.id;
+            }
+        } catch (e) {
+            console.warn('getMongoUserId Supabase user alınamadı:', e);
+        }
+    }
+    
+    // Fallback: local guest ID
+    const key = 'hasene_mongo_user_id';
+    let id = localStorage.getItem(key);
+    if (!id) {
+        id = 'guest-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem(key, id);
+    }
+    return id;
+}
+
+/**
+ * Mongo/Express backend'e istek atan yardımcı fonksiyon
+ */
+async function mongoRequest(path, options = {}) {
+    if (!API_BASE_URL) {
+        throw new Error('API_BASE_URL tanımlı değil. Lütfen window.VITE_API_URL ayarlayın.');
+    }
+    
+    const userId = await getMongoUserId();
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-user-id': userId,
+        ...(options.headers || {})
+    };
+    
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    
+    if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Mongo API hata (${res.status}): ${text || res.statusText}`);
+    }
+    
+    if (res.status === 204) return null;
+    return res.json();
+}
 
 // ============================================
 // BATCH QUEUE SİSTEMİ - Performans İyileştirmesi
@@ -746,7 +810,28 @@ async function loadUserStats() {
         }
     }
     
-    // Fallback: localStorage
+    // MongoDB / Express backend
+    if (BACKEND_TYPE === 'mongodb') {
+        try {
+            const data = await mongoRequest('/api/user/stats');
+            // Express backend default objesi:
+            // {
+            //   totalPoints, badges, streakData, gameStats, perfectLessonsCount
+            // }
+            const mapped = {
+                total_points: parseInt(data?.totalPoints || '0'),
+                badges: data?.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                streak_data: data?.streakData || { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                game_stats: data?.gameStats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                perfect_lessons_count: parseInt(data?.perfectLessonsCount || '0')
+            };
+            return mapped;
+        } catch (err) {
+            console.warn('loadUserStats (mongodb) hatası, localStorage kullanılacak:', err);
+        }
+    }
+    
+    // Fallback: localStorage (offline veya backend yoksa)
     return {
         total_points: parseInt(localStorage.getItem('hasene_totalPoints') || '0'),
         badges: JSON.parse(localStorage.getItem('hasene_badges') || '{"stars":0,"bronze":0,"silver":0,"gold":0,"diamond":0}'),
@@ -761,18 +846,9 @@ async function loadUserStats() {
  */
 async function saveUserStats(stats) {
     const user = await getCurrentUser();
-    if (!user) {
-        console.warn('No user logged in, saving to localStorage');
-        // Fallback: localStorage
-        localStorage.setItem('hasene_totalPoints', stats.total_points.toString());
-        localStorage.setItem('hasene_badges', JSON.stringify(stats.badges));
-        localStorage.setItem('hasene_streakData', JSON.stringify(stats.streak_data));
-        localStorage.setItem('hasene_gameStats', JSON.stringify(stats.game_stats));
-        localStorage.setItem('perfectLessonsCount', stats.perfect_lessons_count.toString());
-        return;
-    }
     
-    if (BACKEND_TYPE === 'supabase' && supabaseClient) {
+    // Supabase backend
+    if (BACKEND_TYPE === 'supabase' && supabaseClient && user) {
         const { error } = await supabaseClient
             .from('user_stats')
             .upsert({
@@ -791,7 +867,27 @@ async function saveUserStats(stats) {
         return;
     }
     
-    // Fallback: localStorage
+    // MongoDB / Express backend
+    if (BACKEND_TYPE === 'mongodb') {
+        try {
+            await mongoRequest('/api/user/stats', {
+                method: 'PUT',
+                body: {
+                    totalPoints: stats.total_points,
+                    badges: stats.badges,
+                    streakData: stats.streak_data,
+                    gameStats: stats.game_stats,
+                    perfectLessonsCount: stats.perfect_lessons_count
+                }
+            });
+        } catch (err) {
+            console.warn('saveUserStats (mongodb) hatası, localStorage\'a yazılıyor:', err);
+        }
+    } else if (!user) {
+        console.warn('No user logged in, saving to localStorage');
+    }
+    
+    // Fallback: localStorage (her durumda local olarak da sakla)
     localStorage.setItem('hasene_totalPoints', stats.total_points.toString());
     localStorage.setItem('hasene_badges', JSON.stringify(stats.badges));
     localStorage.setItem('hasene_streakData', JSON.stringify(stats.streak_data));

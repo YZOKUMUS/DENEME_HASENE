@@ -1554,6 +1554,13 @@
 
     <!-- Scripts -->
     <script src="js/config.js"></script>
+    <!-- Backend yapılandırması: Express/MongoDB backend kullan -->
+    <script>
+        // Express backend kullanımı için ayarlar
+        // Server varsayılan olarak http://localhost:3000 üzerinde çalışıyor (backend/express-backend/server.js)
+        window.BACKEND_TYPE = 'mongodb';
+        window.VITE_API_URL = 'http://localhost:3000';
+    </script>
     <script src="js/constants.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/indexeddb-cache.js"></script>
