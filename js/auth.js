@@ -320,41 +320,113 @@ async function handleDirectLogin() {
         
         if (auth && window.BACKEND_TYPE === 'firebase') {
             try {
-                const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-                showAuthMessage('Giriş yapılıyor ve verileriniz kaydediliyor...', 'info');
+                // Önce localStorage'da mevcut kullanıcı ID'sini kontrol et
+                const existingUserId = localStorage.getItem('hasene_user_id');
+                const existingUsername = localStorage.getItem('hasene_username');
                 
-                const userCredential = await signInAnonymously(auth);
-                firebaseUser = userCredential.user;
-                
-                console.log('✅ Firebase Anonymous Authentication başarılı:', firebaseUser.uid);
-                
-                // Kullanıcı profilini Firestore'a kaydet
-                const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
-                if (db && typeof window.firestoreSet === 'function') {
-                    try {
-                        await window.firestoreSet('users', firebaseUser.uid, {
-                            email: username + '@local',
-                            username: username,
-                            created_at: new Date().toISOString(),
-                            auth_type: 'anonymous'
-                        });
-                        console.log('✅ Kullanıcı profili Firestore\'a kaydedildi');
-                    } catch (err) {
-                        console.warn('⚠️ Firestore kullanıcı kayıt hatası (normal olabilir):', err);
+                // Eğer aynı kullanıcı adıyla giriş yapıyorsa ve Firebase UID varsa, mevcut kullanıcıyı kullan
+                if (existingUserId && existingUsername === username && !existingUserId.startsWith('local-')) {
+                    console.log('🔄 Mevcut kullanıcı bulundu, Firebase\'de kontrol ediliyor...', existingUserId);
+                    
+                    // Firebase'de bu kullanıcıyı kontrol et
+                    const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
+                    if (db && typeof window.firestoreGet === 'function') {
+                        try {
+                            const userData = await window.firestoreGet('users', existingUserId);
+                            if (userData && userData.username === username) {
+                                console.log('✅ Mevcut Firebase kullanıcısı bulundu:', existingUserId);
+                                // Mevcut kullanıcıyı kullan - yeni anonymous auth yapma
+                                // Firebase Auth'da mevcut kullanıcıyı kontrol et
+                                const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                                showAuthMessage('Giriş yapılıyor...', 'info');
+                                
+                                // Yeni anonymous auth yap (Firebase Anonymous Auth her seferinde yeni kullanıcı oluşturur)
+                                // Ama biz UID'yi koruyacağız ve Firestore'da aynı kullanıcıyı kullanacağız
+                                const userCredential = await signInAnonymously(auth);
+                                firebaseUser = userCredential.user;
+                                
+                                // ÖNEMLİ: Mevcut kullanıcı bulundu, eski UID'yi koru (yeni UID'yi kullanma)
+                                // Firebase Anonymous Auth her seferinde yeni kullanıcı oluşturur,
+                                // ama biz eski UID'yi kullanacağız (Firestore'da veriler eski UID'de)
+                                console.log('⚠️ Yeni Firebase UID alındı ama eski UID kullanılacak:', {
+                                    yeniUID: firebaseUser.uid,
+                                    eskiUID: existingUserId
+                                });
+                                
+                                // Eski UID'yi koru (Firestore'da veriler eski UID'de)
+                                // firebaseUser.uid'yi değiştiremeyiz (read-only), ama localStorage'da eski UID'yi tutacağız
+                                console.log('✅ Mevcut kullanıcı bulundu, eski UID korunuyor:', existingUserId);
+                                
+                                // Mevcut kullanıcı için localStorage'ı güncelle (ESKİ UID'yi kullan)
+                                const userEmail = username + '@local';
+                                localStorage.setItem('hasene_username', username);
+                                localStorage.setItem('hasene_user_email', userEmail);
+                                localStorage.setItem('hasene_user_id', existingUserId); // ESKİ UID'yi koru!
+                            } else {
+                                // Kullanıcı bulunamadı, yeni kullanıcı oluştur
+                                throw new Error('Mevcut kullanıcı bulunamadı');
+                            }
+                        } catch (err) {
+                            console.warn('⚠️ Mevcut kullanıcı kontrolü hatası, yeni kullanıcı oluşturuluyor:', err);
+                            // Yeni kullanıcı oluştur
+                            const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                            showAuthMessage('Giriş yapılıyor ve verileriniz kaydediliyor...', 'info');
+                            
+                            const userCredential = await signInAnonymously(auth);
+                            firebaseUser = userCredential.user;
+                            
+                            console.log('✅ Firebase Anonymous Authentication başarılı (yeni kullanıcı):', firebaseUser.uid);
+                        }
+                    } else {
+                        // Firestore kontrolü yapılamadı, yeni kullanıcı oluştur
+                        const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                        showAuthMessage('Giriş yapılıyor ve verileriniz kaydediliyor...', 'info');
+                        
+                        const userCredential = await signInAnonymously(auth);
+                        firebaseUser = userCredential.user;
+                        
+                        console.log('✅ Firebase Anonymous Authentication başarılı:', firebaseUser.uid);
                     }
+                } else {
+                    // Yeni kullanıcı veya farklı kullanıcı adı
+                    const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                    showAuthMessage('Giriş yapılıyor ve verileriniz kaydediliyor...', 'info');
+                    
+                    const userCredential = await signInAnonymously(auth);
+                    firebaseUser = userCredential.user;
+                    
+                    console.log('✅ Firebase Anonymous Authentication başarılı:', firebaseUser.uid);
                 }
                 
-                // Firebase kullanıcı bilgilerini localStorage'a kaydet
-                const userEmail = username + '@local';
-                localStorage.setItem('hasene_username', username);
-                localStorage.setItem('hasene_user_email', userEmail);
-                localStorage.setItem('hasene_user_id', firebaseUser.uid); // Firebase UID kullan
-                
-                console.log('✅ Firebase kullanıcı bilgileri localStorage\'a kaydedildi:', {
-                    uid: firebaseUser.uid,
-                    username: username,
-                    email: userEmail
-                });
+                // Kullanıcı profilini Firestore'a kaydet (hem mevcut hem yeni kullanıcılar için)
+                if (firebaseUser) {
+                    const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
+                    if (db && typeof window.firestoreSet === 'function') {
+                        try {
+                            await window.firestoreSet('users', firebaseUser.uid, {
+                                email: username + '@local',
+                                username: username,
+                                created_at: new Date().toISOString(),
+                                auth_type: 'anonymous'
+                            });
+                            console.log('✅ Kullanıcı profili Firestore\'a kaydedildi');
+                        } catch (err) {
+                            console.warn('⚠️ Firestore kullanıcı kayıt hatası (normal olabilir):', err);
+                        }
+                    }
+                    
+                    // Firebase kullanıcı bilgilerini localStorage'a kaydet
+                    const userEmail = username + '@local';
+                    localStorage.setItem('hasene_username', username);
+                    localStorage.setItem('hasene_user_email', userEmail);
+                    localStorage.setItem('hasene_user_id', firebaseUser.uid); // Firebase UID kullan
+                    
+                    console.log('✅ Firebase kullanıcı bilgileri localStorage\'a kaydedildi:', {
+                        uid: firebaseUser.uid,
+                        username: username,
+                        email: userEmail
+                    });
+                }
             } catch (error) {
                 console.warn('⚠️ Firebase Anonymous Authentication hatası, localStorage kullanılıyor:', error);
                 // Fallback: Sadece localStorage kullan

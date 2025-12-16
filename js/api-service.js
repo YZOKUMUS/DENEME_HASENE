@@ -426,25 +426,63 @@ async function loginWithGitHub() {
  */
 async function logoutUser() {
     const auth = getFirebaseAuth();
-    
+
     if (getBackendType() === 'firebase' && auth) {
         try {
             const { signOut } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
             await signOut(auth);
+            console.log('✅ Firebase signOut başarılı');
         } catch (error) {
             console.error('Firebase logout error:', error);
         }
     }
-    
+
+    // Email ve username'i temizle (UI için)
     localStorage.removeItem('hasene_user_email');
     localStorage.removeItem('hasene_username');
+    
+    // ÖNEMLİ: hasene_user_id'yi SİLME - tekrar giriş yapınca aynı kullanıcıyı bulabilmek için
+    // localStorage.removeItem('hasene_user_id'); // SİLME!
+    console.log('ℹ️ hasene_user_id korundu (tekrar giriş için):', localStorage.getItem('hasene_user_id'));
 }
 
 /**
  * Mevcut kullanıcıyı al
  */
 async function getCurrentUser() {
-    // Önce Firebase auth state'ini kontrol et (anonymous kullanıcılar için önemli)
+    // ÖNCE localStorage'da hasene_user_id var mı kontrol et (çıkış yapınca korunur)
+    const savedUserId = localStorage.getItem('hasene_user_id');
+    const savedUsername = localStorage.getItem('hasene_username');
+    
+    // Eğer localStorage'da Firebase UID varsa (local- ile başlamıyorsa), önce onu kullan
+    if (savedUserId && !savedUserId.startsWith('local-') && savedUsername) {
+        console.log('🔄 localStorage\'da mevcut Firebase UID bulundu:', savedUserId);
+        
+        // Firebase'de bu kullanıcıyı kontrol et
+        const auth = getFirebaseAuth();
+        if (getBackendType() === 'firebase' && auth) {
+            try {
+                const userData = await firestoreGet('users', savedUserId);
+                if (userData && userData.username === savedUsername) {
+                    // Mevcut kullanıcı bulundu, bu UID'yi kullan
+                    const email = userData.email || savedUsername + '@local';
+                    const username = userData.username || savedUsername;
+                    
+                    // localStorage'ı güncelle
+                    localStorage.setItem('hasene_user_email', email);
+                    localStorage.setItem('hasene_username', username);
+                    localStorage.setItem('hasene_user_id', savedUserId);
+                    
+                    console.log('✅ getCurrentUser: Mevcut Firebase kullanıcısı bulundu (localStorage\'dan):', savedUserId, username);
+                    return { id: savedUserId, email, username };
+                }
+            } catch (error) {
+                console.warn('⚠️ Mevcut kullanıcı kontrolü hatası:', error);
+            }
+        }
+    }
+    
+    // Firebase auth state'ini kontrol et (anonymous kullanıcılar için önemli)
     const auth = getFirebaseAuth();
     if (getBackendType() === 'firebase' && auth) {
         try {
@@ -547,10 +585,24 @@ async function getCurrentUser() {
 async function loadUserStats() {
     const user = await getCurrentUser();
     
+    console.log('📥 loadUserStats çağrıldı:', {
+        user: user ? { id: user.id, username: user.username } : null,
+        backendType: getBackendType()
+    });
+    
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            console.log('🔥 Firebase\'den yükleniyor:', {
+                collection: 'user_stats',
+                docId: user.id
+            });
+            
             const stats = await firestoreGet('user_stats', user.id);
             if (stats) {
+                console.log('✅ Firebase\'den veri yüklendi:', {
+                    docId: user.id,
+                    total_points: stats.total_points
+                });
                 // Firestore'dan gelen veriyi localStorage'a da kaydet (senkronizasyon)
                 localStorage.setItem('hasene_totalPoints', (stats.total_points || 0).toString());
                 localStorage.setItem('hasene_badges', JSON.stringify(stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 }));
@@ -565,13 +617,19 @@ async function loadUserStats() {
                     game_stats: stats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
                     perfect_lessons_count: parseInt(stats.perfect_lessons_count || 0)
                 };
+            } else {
+                console.log('ℹ️ Firebase\'de veri bulunamadı (yeni kullanıcı olabilir):', user.id);
             }
         } catch (error) {
-            console.warn('Firebase loadUserStats error:', error);
+            console.error('❌ Firebase loadUserStats error:', error);
         }
     }
     
     // Fallback: localStorage
+    console.log('📦 localStorage\'dan yükleniyor (Firebase\'den yüklenemedi)');
+    const localPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+    console.log('📦 localStorage totalPoints:', localPoints);
+    
     return {
         total_points: parseInt(localStorage.getItem('hasene_totalPoints') || '0'),
         badges: JSON.parse(localStorage.getItem('hasene_badges') || '{"stars":0,"bronze":0,"silver":0,"gold":0,"diamond":0}'),
@@ -587,6 +645,12 @@ async function loadUserStats() {
 async function saveUserStats(stats) {
     const user = await getCurrentUser();
     
+    console.log('💾 saveUserStats çağrıldı:', {
+        user: user ? { id: user.id, username: user.username } : null,
+        total_points: stats.total_points,
+        backendType: getBackendType()
+    });
+    
     // Her durumda localStorage'a kaydet
     localStorage.setItem('hasene_totalPoints', stats.total_points.toString());
     localStorage.setItem('hasene_badges', JSON.stringify(stats.badges));
@@ -597,6 +661,12 @@ async function saveUserStats(stats) {
     // Firebase'e de kaydet
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            console.log('🔥 Firebase\'e kaydediliyor:', {
+                collection: 'user_stats',
+                docId: user.id,
+                total_points: stats.total_points
+            });
+            
             await firestoreSet('user_stats', user.id, {
                 user_id: user.id,
                 total_points: stats.total_points,
@@ -605,9 +675,19 @@ async function saveUserStats(stats) {
                 game_stats: stats.game_stats,
                 perfect_lessons_count: stats.perfect_lessons_count
             });
+            
+            console.log('✅ Firebase\'e başarıyla kaydedildi:', {
+                docId: user.id,
+                total_points: stats.total_points
+            });
         } catch (error) {
-            console.warn('Firebase saveUserStats error:', error);
+            console.error('❌ Firebase saveUserStats error:', error);
         }
+    } else {
+        console.warn('⚠️ Firebase\'e kaydedilmedi:', {
+            backendType: getBackendType(),
+            user: user ? { id: user.id, isLocal: user.id.startsWith('local-') } : null
+        });
     }
 }
 

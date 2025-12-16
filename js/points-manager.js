@@ -119,8 +119,19 @@ function calculateBadges(points) {
  * @param {number} correctAnswers - Doğru cevap sayısı
  */
 async function addToGlobalPoints(points, correctAnswers) {
+    console.log('💰 addToGlobalPoints çağrıldı:', {
+        points: points,
+        correctAnswers: correctAnswers,
+        totalPointsBefore: totalPoints
+    });
+    
     const oldLevel = calculateLevel(totalPoints);
     totalPoints += points;
+    
+    console.log('💰 addToGlobalPoints: totalPoints güncellendi:', {
+        totalPointsAfter: totalPoints,
+        addedPoints: points
+    });
     
     // Rozetleri güncelle (eğer calculateBadges fonksiyonu varsa)
     if (typeof calculateBadges === 'function' && typeof badges !== 'undefined') {
@@ -151,12 +162,11 @@ async function addToGlobalPoints(points, correctAnswers) {
         updateStreakDisplay(); // Streak (Seri) güncellenir
     }
     
-    // Kaydet (arka planda, UI'ı bekletmeden)
+    // Kaydet (ÖNEMLİ: await et - totalPoints güncellenmeden kayıt yapılmamalı)
     if (typeof saveStatsImmediate === 'function') {
-        // await kaldırıldı - arka planda çalışsın, UI güncellemesini bekletmesin
-        saveStatsImmediate().catch(err => {
-            console.error('Backend kayıt hatası (kritik değil):', err);
-        });
+        // ÖNEMLİ: await ekle - totalPoints güncellenmeden kayıt yapılmamalı
+        await saveStatsImmediate();
+        console.log('✅ addToGlobalPoints: saveStatsImmediate tamamlandı, totalPoints:', totalPoints);
     }
     
     // Rozetleri kontrol et

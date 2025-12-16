@@ -828,10 +828,24 @@ async function loadStats() {
  */
 async function saveStats() {
     try {
-        console.log('🟣 saveStats çağrıldı');
+        // ÖNEMLİ: totalPoints 0 ise localStorage'dan kontrol et (race condition önleme)
+        let pointsToSave = totalPoints;
+        const savedPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+        if (pointsToSave === 0 && savedPoints > 0) {
+            console.warn('⚠️ saveStats: totalPoints 0, localStorage\'dan alınıyor:', savedPoints);
+            pointsToSave = savedPoints;
+            totalPoints = savedPoints; // totalPoints'i de güncelle
+        }
+        
+        console.log('🟣 saveStats çağrıldı:', {
+            totalPoints: totalPoints,
+            pointsToSave: pointsToSave,
+            savedPoints: savedPoints,
+            stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
+        });
         
         // localStorage'a hemen kaydet (en hızlı - senkron)
-        localStorage.setItem('hasene_totalPoints', totalPoints.toString());
+        localStorage.setItem('hasene_totalPoints', pointsToSave.toString());
         safeSetItem('hasene_badges', badges);
         safeSetItem('hasene_streakData', streakData);
         
@@ -853,14 +867,14 @@ async function saveStats() {
         if (typeof window.saveUserStats === 'function') {
             savePromises.push(
                 window.saveUserStats({
-                    total_points: totalPoints,
+                    total_points: pointsToSave, // pointsToSave kullan (0 değil)
                     badges: badges,
                     streak_data: streakData,
                     game_stats: gameStats,
                     perfect_lessons_count: perfectLessonsCount
                 }).then(() => {
                     console.log('✅ Backend\'e istatistikler kaydedildi:', {
-                        total_points: totalPoints,
+                        total_points: pointsToSave,
                         badges: badges,
                         streak: streakData.currentStreak
                     });
