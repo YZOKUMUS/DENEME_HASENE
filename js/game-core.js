@@ -153,67 +153,8 @@ async function loadStats() {
         const sessionWaitTime = isMobile ? 1000 : 500; // Mobil için daha uzun bekleme
         const maxSessionRetries = isMobile ? 5 : 3; // Mobil için daha fazla retry
         
-        // ÖNEMLİ: Auth session'ın restore edilmesini bekle
-        // Supabase session restore için bekle (mobil cihazlarda daha uzun)
-        if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-            let sessionRetryCount = 0;
-            let session = null;
-            
-            // Session restore edilene kadar retry yap
-            while (sessionRetryCount < maxSessionRetries && !session) {
-                try {
-                    const { data, error } = await window.supabaseClient.auth.getSession();
-                    if (data && data.session) {
-                        session = data.session;
-                        console.log('✅ Auth session restore edildi:', session.user.email);
-                        // Session restore edildi, biraz daha bekle (güvenli olmak için)
-                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
-                        break;
-                    } else if (error) {
-                        console.warn(`⚠️ Session kontrolü hatası (deneme ${sessionRetryCount + 1}):`, error);
-                    }
-                } catch (sessionError) {
-                    console.warn(`⚠️ Session kontrolü hatası (deneme ${sessionRetryCount + 1}):`, sessionError);
-                }
-                
-                // Session yoksa, tekrar dene
-                if (!session && sessionRetryCount < maxSessionRetries - 1) {
-                    console.log(`🔄 Session restore bekleniyor... (${sessionRetryCount + 1}/${maxSessionRetries})`);
-                    await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
-                    sessionRetryCount++;
-                } else {
-                    break;
-                }
-            }
-            
-            if (!session) {
-                console.log('⚠️ Session restore edilemedi, devam ediliyor...');
-            }
-        } else {
-            // Supabase client henüz hazır değil, bekle
-            console.log('⏳ Supabase client hazır değil, bekleniyor...');
-            let clientWaitCount = 0;
-            const maxClientWaits = 10;
-            
-            while (clientWaitCount < maxClientWaits && (typeof window.supabaseClient === 'undefined' || !window.supabaseClient || !window.supabaseClient.auth)) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-                clientWaitCount++;
-            }
-            
-            if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-                console.log('✅ Supabase client hazır');
-                // Client hazır, session'ı kontrol et
-                try {
-                    const { data: { session } } = await window.supabaseClient.auth.getSession();
-                    if (session) {
-                        console.log('✅ Auth session restore edildi:', session.user.email);
-                        await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
-                    }
-                } catch (sessionError) {
-                    console.warn('⚠️ Session kontrolü hatası:', sessionError);
-                }
-            }
-        }
+        // Kullanıcı kontrolü için kısa bir bekleme
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Önce kullanıcı kontrolü yap (session yüklenmesini bekle)
         let user = null;
@@ -235,24 +176,6 @@ async function loadStats() {
                         break; // Kullanıcı bulundu, döngüden çık
                     }
                     
-                    // Eğer kullanıcı yoksa ama session varsa, tekrar dene (session restore gecikmesi olabilir)
-                    if (!user && typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-                        try {
-                            const { data: { session } } = await window.supabaseClient.auth.getSession();
-                            console.log('🔍 Session kontrolü:', session ? `✅ Session var (${session.user.email})` : '❌ Session yok');
-                            if (session && session.user) {
-                                console.log('🔄 Session var ama getCurrentUser null döndü, tekrar deneniyor...');
-                                await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
-                                user = await window.getCurrentUser();
-                                if (user) {
-                                    console.log('✅ getCurrentUser() tekrar deneme başarılı:', user.id);
-                                    break;
-                                }
-                            }
-                        } catch (sessionError) {
-                            console.warn('⚠️ Session kontrolü hatası:', sessionError);
-                        }
-                    }
                     
                     // Kullanıcı hala yoksa, tekrar dene
                     if (!user && userRetryCount < maxUserRetries - 1) {
@@ -1266,7 +1189,7 @@ function updateStatsBar() {
     }
     
     if (elements.totalPointsEl) {
-        // Üst bardaki Hasene: Supabase/user_stats.total_points ile eşlenen TOPLAM Hasene
+        // Üst bardaki Hasene: localStorage'dan yüklenen TOPLAM Hasene
         elements.totalPointsEl.textContent = formatNumber(totalPoints);
     }
     
@@ -4865,7 +4788,7 @@ if (typeof updateWordStats === 'undefined') {
 /**
  * Detaylı istatistikleri kaydeder (günlük, haftalık, aylık)
  */
-async function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, incrementGamesPlayed = false) {
+function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, incrementGamesPlayed = false) {
     const today = getLocalDateString();
     const todayDate = new Date();
     
@@ -5061,35 +4984,9 @@ async function saveDetailedStats(points, correct, wrong, maxCombo, perfectLesson
     
     safeSetItem(monthlyKey, monthlyData);
     
-    // Backend'e de kaydet (Supabase tablolarına)
-    // NOT: Eğer kullanıcı giriş yaptıysa backend'e de kaydet
-    if (typeof window.saveDailyStat === 'function') {
-        try {
-            await window.saveDailyStat(today, dailyData);
-        } catch (err) {
-            console.warn('saveDailyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
-        }
-    }
-    
-    if (typeof window.saveWeeklyStat === 'function') {
-        try {
-            await window.saveWeeklyStat(weekStartStr, weeklyData);
-        } catch (err) {
-            console.warn('saveWeeklyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
-        }
-    }
-    
-    if (typeof window.saveMonthlyStat === 'function') {
-        try {
-            await window.saveMonthlyStat(monthStr, monthlyData);
-        } catch (err) {
-            console.warn('saveMonthlyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
-        }
-    }
-    
-    // NOT: Veriler hem localStorage hem de Supabase'e kaydediliyor
-    // localStorage: hasene_daily_*, hasene_weekly_*, hasene_monthly_* key'leri ile
-    // Supabase: daily_stats, weekly_stats, monthly_stats tablolarına
+    // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
+    // Artık sadece localStorage'a kayıt yapılıyor (backend'e kayıt yok)
+    // Veriler localStorage'da hasene_daily_*, hasene_weekly_*, hasene_monthly_* key'leri ile saklanıyor
 }
 
 // getStrugglingWords ve selectIntelligentWords artık word-stats-manager.js modülünde
@@ -6530,7 +6427,7 @@ function clearUserLocalStorage() {
  * Buton: Test butonu olarak eklenebilir
  */
 async function resetAllData(skipConfirm = false) {
-    if (!skipConfirm && !confirm('⚠️ TÜM VERİLER SIFIRLANACAK!\n\nBu işlem:\n- Tüm localStorage verilerini siler\n- Tüm IndexedDB verilerini siler\n- Tüm backend (Supabase) verilerini siler\n- Tüm global değişkenleri sıfırlar\n\nBu işlem GERİ ALINAMAZ!\n\nDevam etmek istiyor musunuz?')) {
+    if (!skipConfirm && !confirm('⚠️ TÜM VERİLER SIFIRLANACAK!\n\nBu işlem:\n- Tüm localStorage verilerini siler\n- Tüm IndexedDB verilerini siler\n- Tüm global değişkenleri sıfırlar\n\nBu işlem GERİ ALINAMAZ!\n\nDevam etmek istiyor musunuz?')) {
         return;
     }
     
@@ -6538,8 +6435,7 @@ async function resetAllData(skipConfirm = false) {
     console.log('📋 İşlem listesi:');
     console.log('  1. LocalStorage temizleniyor...');
     console.log('  2. IndexedDB temizleniyor...');
-    console.log('  3. Backend (Supabase) verileri siliniyor...');
-    console.log('  4. Global değişkenler sıfırlanıyor...');
+    console.log('  3. Global değişkenler sıfırlanıyor...');
     
     // resetAllStats() fonksiyonunu çağır (zaten tüm işlemleri yapıyor)
     await resetAllStats(true);
@@ -6714,111 +6610,6 @@ async function resetAllStats(skipConfirm = false) {
     localStorage.setItem('hasene_statsJustReset', 'true');
     console.log('ℹ️ hasene_statsJustReset flag\'i set edildi - backend silme işlemi başlıyor');
     
-    // Backend'den TÜM kullanıcı verilerini sil + user_stats'ı SIFIR KAYIT ile yeniden başlat
-    if (typeof window.getCurrentUser === 'function') {
-        try {
-            const user = await window.getCurrentUser();
-            if (user && window.supabaseClient && (window.BACKEND_TYPE === 'supabase' || !window.BACKEND_TYPE)) {
-                console.log('🗑️ Backend verileri siliniyor...');
-                
-                // Tüm backend tablolarını temizle (kullanıcı verileri)
-                const tablesToDelete = [
-                    'user_stats',
-                    'daily_tasks',
-                    'weekly_tasks',
-                    // NOT: 'daily_stats', 'weekly_stats', 'monthly_stats' tabloları kaldırıldı
-                    'word_stats', // Kelime istatistikleri - ÖNEMLİ: Tüm kelime verileri silinecek
-                    'favorite_words', // NOT: 'favorites' tablosu yok, doğru tablo adı 'favorite_words'
-                    'achievements',
-                    'badges',
-                    'weekly_leaderboard',
-                    'user_leagues'
-                    // NOT: 'leaderboard' tablosu yok (sadece weekly_leaderboard var)
-                    // NOT: 'league_rankings' bir VIEW, view'lardan silme yapılamaz
-                    //      Underlying tablolardan (weekly_leaderboard, user_leagues) silme yapılıyor
-                ];
-                // Not: 'profiles' tablosu username için kullanılıyor, silinmemeli
-                // Not: 'league_config' sistem tablosu, silinmemeli
-                // Not: 'league_rankings' bir VIEW, view'lardan silme yapılamaz
-                
-                for (const table of tablesToDelete) {
-                    try {
-                        // word_stats tablosu için özel kontrol
-                        if (table === 'word_stats') {
-                            console.log('🗑️ word_stats tablosu temizleniyor...');
-                            // Önce tüm word_stats kayıtlarını sil
-                            const { error: deleteError } = await window.supabaseClient
-                                .from(table)
-                                .delete()
-                                .eq('user_id', user.id);
-                            
-                            if (deleteError && deleteError.code !== '42501' && deleteError.code !== 'PGRST301' && deleteError.code !== 'PGRST116') {
-                                console.warn(`⚠️ Backend ${table} silme hatası:`, deleteError);
-                            } else if (!deleteError) {
-                                console.log(`✅ Backend ${table} tüm kelime istatistikleri silindi`);
-                            }
-                        } else {
-                            // user_leagues tablosu için özel kontrol (user_id PRIMARY KEY)
-                            if (table === 'user_leagues') {
-                                const { error } = await window.supabaseClient
-                                    .from(table)
-                                    .delete()
-                                    .eq('user_id', user.id);
-                                
-                                if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
-                                    console.warn(`⚠️ Backend ${table} silme hatası:`, error);
-                                } else if (!error) {
-                                    console.log(`✅ Backend ${table} silindi`);
-                                }
-                            } else {
-                                // Diğer tablolar için normal silme
-                                const { error } = await window.supabaseClient
-                                    .from(table)
-                                    .delete()
-                                    .eq('user_id', user.id);
-                                
-                                if (error && error.code !== '42501' && error.code !== 'PGRST301' && error.code !== 'PGRST116') {
-                                    console.warn(`⚠️ Backend ${table} silme hatası:`, error);
-                                } else if (!error) {
-                                    console.log(`✅ Backend ${table} silindi`);
-                                }
-                            }
-                        }
-                    } catch (tableError) {
-                        console.warn(`⚠️ ${table} tablosu silinirken hata (normal olabilir):`, tableError);
-                    }
-                }
-                
-                // ÖNEMLİ: user_stats'ı sıfır kayıtla yeniden başlat (silme başarısız olsa bile)
-                try {
-                    const zeroStats = {
-                        user_id: user.id,
-                        total_points: 0,
-                        badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
-                        streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
-                        game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
-                        perfect_lessons_count: 0
-                    };
-                    
-                    const { error: upsertError } = await window.supabaseClient
-                        .from('user_stats')
-                        .upsert(zeroStats, { onConflict: 'user_id' });
-                    
-                    if (upsertError) {
-                        console.warn('⚠️ user_stats sıfırlama (upsert) hatası:', upsertError);
-                    } else {
-                        console.log('✅ user_stats toplam Hasene sıfırlandı (0 olarak upsert edildi)');
-                    }
-                } catch (upsertCatch) {
-                    console.warn('⚠️ user_stats sıfırlama sırasında beklenmeyen hata:', upsertCatch);
-                }
-                
-                console.log('✅ Tüm backend verileri temizlendi ve user_stats sıfırlandı');
-            }
-        } catch (e) {
-            console.warn('⚠️ Backend veri silme hatası (normal olabilir):', e);
-        }
-    }
     
     // Favori kelimeleri local'den de sıfırla (backend zaten yukarıda temizlendi)
     if (typeof window.loadFavorites === 'function') {
@@ -6977,30 +6768,8 @@ window.addEventListener('load', async () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const clientWaitTime = isMobile ? 1000 : 500; // Mobil için daha uzun bekleme
     
-    // Supabase client'ın başlatılmasını bekle (eğer varsa)
-    if (typeof window.supabase !== 'undefined') {
-        await new Promise(resolve => {
-            let checkCount = 0;
-            const maxChecks = 20; // Maksimum kontrol sayısı
-            
-            const checkSupabase = () => {
-                if (typeof window.getCurrentUser === 'function' && typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
-                    // Client hazır, session restore için bekle
-                    console.log('✅ Supabase client hazır, session restore bekleniyor...');
-                    setTimeout(resolve, clientWaitTime);
-                } else if (checkCount < maxChecks) {
-                    // Henüz hazır değil, tekrar kontrol et
-                    checkCount++;
-                    setTimeout(checkSupabase, 200);
-                } else {
-                    // Maksimum kontrol sayısına ulaşıldı, devam et
-                    console.warn('⚠️ Supabase client hazır olmadı, devam ediliyor...');
-                    setTimeout(resolve, clientWaitTime);
-                }
-            };
-            checkSupabase();
-        });
-    }
+    // Kısa bir bekleme (kullanıcı kontrolü için)
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // İstatistikleri yükle
     await loadStats();

@@ -154,7 +154,7 @@ async function handleLogin() {
         } else if (error.message && (error.message.includes('Invalid login credentials') || error.message.includes('invalid') || error.message.includes('Email veya şifre hatalı'))) {
             errorMessage = error.message;
         } else if (error.message && error.message.includes('Email not confirmed')) {
-            errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın. Eğer email gelmediyse, Supabase Dashboard\'dan "Authentication" > "Providers" > "Email" bölümünde "Confirm email" seçeneğini kapatabilirsiniz.';
+            errorMessage = 'Email doğrulanmamış.';
         } else if (error.message) {
             errorMessage = error.message;
         }
@@ -240,13 +240,13 @@ async function handleRegister() {
         let errorMessage = 'Kayıt olunamadı. Lütfen tekrar deneyin.';
         
         if (error.message && error.message.includes('Email signups are disabled')) {
-            errorMessage = 'Email kayıtları şu an devre dışı. Lütfen Supabase Dashboard\'da Authentication → Providers → Email bölümünden email signup\'ları açın.';
+            errorMessage = 'Email kayıtları şu an devre dışı.';
         } else if (error.message && error.message.includes('Unable to validate email address: invalid format')) {
             errorMessage = 'Geçersiz email formatı. Lütfen geçerli bir email adresi girin (örn: kullanici@example.com)';
         } else if (error.message && error.message.includes('invalid format')) {
             errorMessage = 'Email formatı geçersiz. Lütfen doğru formatta bir email adresi girin.';
         } else if (error.message && error.message.includes('Email not confirmed')) {
-            errorMessage = 'Email doğrulanmamış. Lütfen email\'inize gelen doğrulama linkine tıklayın veya Supabase ayarlarından email confirmation\'ı kapatın.';
+            errorMessage = 'Email doğrulanmamış.';
         } else if (error.message && (error.message.includes('User already registered') || error.message.includes('already registered'))) {
             errorMessage = 'Bu email adresi ile zaten bir hesap var. Lütfen giriş yapın.';
             // Otomatik olarak login tab'ına geç
@@ -286,9 +286,9 @@ async function handleGoogleLogin() {
         let errorMessage = 'Google ile giriş yapılamadı.';
         
         if (error.message && error.message.includes('yapılandırılmamış')) {
-            errorMessage = 'Google girişi yapılandırılmamış. Lütfen Supabase Dashboard\'da Google OAuth provider\'ını yapılandırın. Detaylar için: backend/GOOGLE_OAUTH_AYARLARI.md';
+            errorMessage = 'Google girişi kullanılamıyor.';
         } else if (error.message && error.message.includes('500')) {
-            errorMessage = 'Google giriş hatası (500). Lütfen Supabase Dashboard\'da Google OAuth ayarlarını kontrol edin.';
+            errorMessage = 'Google giriş hatası.';
         } else if (error.message) {
             errorMessage = `Google giriş hatası: ${error.message}`;
         }
@@ -498,11 +498,10 @@ async function updateUserUI() {
             closeAuthModal();
         }
         
-        // ÖNEMLİ: Kullanıcı giriş yaptıysa, backend'den verileri yükle
-        // Bu, OAuth callback sonrası veya sayfa yüklendiğinde verilerin gelmesini sağlar
+        // Kullanıcı giriş yaptıysa, verileri yükle
         if (typeof window.loadStats === 'function') {
             if (typeof infoLog === 'function') {
-                infoLog('Kullanıcı giriş yapmış, backend\'den veriler yükleniyor...');
+                infoLog('Kullanıcı giriş yapmış, veriler yükleniyor...');
             }
             // Asenkron olarak çağır, UI güncellemesini engellemesin
             window.loadStats().catch(err => {
@@ -577,19 +576,16 @@ async function syncUserData() {
             }
         }
         
-        console.log('✅ Kullanıcı verileri backend\'e senkronize edildi');
+        console.log('✅ Kullanıcı verileri kaydedildi');
         
-        // ÖNEMLİ: Backend'e gönderdikten sonra backend'den güncel verileri çek ve UI'ı güncelle
-        // Böylece backend'deki diğer cihazlardan gelen veriler de görünür
-        // NOT: Eğer çağıran kod zaten loadStats() çağıracaksa, burada tekrar çağırmaya gerek yok
-        // Ama güvenli olmak için her zaman çağırıyoruz (idempotent)
+        // Verileri yükle ve UI'ı güncelle
         if (typeof window.loadStats === 'function') {
-            console.log('📥 Backend\'den güncel veriler yükleniyor (syncUserData sonrası)...');
+            console.log('📥 Veriler yükleniyor (syncUserData sonrası)...');
             try {
                 await window.loadStats();
-                console.log('✅ Backend\'den veriler yüklendi ve UI güncellendi');
+                console.log('✅ Veriler yüklendi ve UI güncellendi');
             } catch (loadError) {
-                console.warn('⚠️ Backend\'den veri yükleme hatası (normal olabilir):', loadError);
+                console.warn('⚠️ Veri yükleme hatası (normal olabilir):', loadError);
             }
         }
     } catch (error) {
@@ -613,157 +609,13 @@ async function initializeAuth() {
         debugLog('initializeAuth başlatılıyor...');
     }
     
-    // Supabase client'ın başlatılmasını bekle
-    await new Promise(resolve => {
-        let attempts = 0;
-        const checkSupabase = () => {
-            if (typeof window.supabase !== 'undefined' && window.supabase) {
-                if (typeof infoLog === 'function') {
-                    infoLog('Supabase client bulundu');
-                }
-                resolve();
-            } else if (attempts < 50) { // 5 saniye timeout
-                attempts++;
-                setTimeout(checkSupabase, 100);
-            } else {
-                console.warn('⚠️ Supabase client başlatılamadı, auth devre dışı');
-                resolve(); // Devam et
-            }
-        };
-        checkSupabase();
-    });
-    
-    // Biraz daha bekle (Supabase client init için)
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // Supabase auth state change listener ekle (OAuth callback için kritik!)
-    // api-service.js'den supabaseClient'ı al (global olarak expose edilmiş)
-    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-        try {
-            window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (typeof debugLog === 'function') {
-                    debugLog('Auth state changed:', event, session ? 'Session var' : 'Session yok');
-                }
-                
-                if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                    // Kullanıcı giriş yaptı, UI'ı güncelle
-                    if (typeof infoLog === 'function') {
-                        infoLog('Kullanıcı giriş yaptı, UI güncelleniyor...');
-                    }
-                    
-                    // Google OAuth ile giriş yapıldıysa da kayıt durumunu işaretle
-                    localStorage.setItem('hasene_user_has_registered', 'true');
-                    
-                    setTimeout(async () => {
-                        await updateUserUI();
-                        
-                        // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
-                        if (typeof window.loadStats === 'function') {
-                            if (typeof infoLog === 'function') {
-                                infoLog('Backend\'den veriler yükleniyor (OAuth callback)...');
-                            }
-                            await window.loadStats();
-                        }
-                        
-                        // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
-                        await syncUserData();
-                        
-                        // URL'den hash fragment'i temizle (OAuth callback sonrası)
-                        if (window.location.hash.includes('access_token') || window.location.hash.includes('code')) {
-                            window.history.replaceState({}, document.title, window.location.pathname);
-                        }
-                    }, 500);
-                } else if (event === 'SIGNED_OUT') {
-                    // Kullanıcı çıkış yaptı
-                    if (typeof infoLog === 'function') {
-                        infoLog('Kullanıcı çıkış yaptı');
-                    }
-                    updateUserUI();
-                }
-            });
-            if (typeof debugLog === 'function') {
-                debugLog('Auth state change listener eklendi');
-            }
-        } catch (error) {
-            console.error('❌ Auth state change listener eklenemedi:', error);
-        }
-    } else {
-        // Biraz daha bekle, supabaseClient henüz hazır olmayabilir
-        setTimeout(() => {
-            if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && window.supabaseClient.auth) {
-                try {
-                    window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                        if (typeof debugLog === 'function') {
-                            debugLog('Auth state changed (delayed):', event);
-                        }
-                        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                            updateUserUI();
-                            
-                            // ÖNEMLİ: Backend'den verileri yükle
-                            if (typeof window.loadStats === 'function') {
-                                if (typeof infoLog === 'function') {
-                                    infoLog('Backend\'den veriler yükleniyor (delayed)...');
-                                }
-                                window.loadStats().catch(err => {
-                                    console.error('❌ loadStats hatası:', err);
-                                });
-                            }
-                            
-                            // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
-                            syncUserData();
-                        } else if (event === 'SIGNED_OUT') {
-                            updateUserUI();
-                        }
-                    });
-                    if (typeof debugLog === 'function') {
-                        debugLog('Auth state change listener eklendi (delayed)');
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Auth state listener eklenemedi:', error);
-                }
-            }
-        }, 1000);
-        if (typeof warnLog === 'function') {
-            warnLog('Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
-        } else {
-            console.warn('⚠️ Supabase client henüz hazır değil, listener gecikmeli eklenmeye çalışılacak');
-        }
-    }
-    
     // Kullanıcı giriş durumunu kontrol et
     if (typeof debugLog === 'function') {
         debugLog('initializeAuth içinde updateUserUI çağrılıyor...');
     }
     await updateUserUI();
     
-    // OAuth callback kontrolü (URL'de hash fragment varsa - Supabase OAuth hash kullanır)
-    if (window.location.hash) {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        if (hashParams.get('access_token') || hashParams.get('code')) {
-            if (typeof infoLog === 'function') {
-                infoLog('OAuth callback tespit edildi, session bekleniyor...');
-            }
-            // Auth state change listener yukarıda halleder
-            // Sadece biraz bekle ve UI'ı güncelle
-        setTimeout(async () => {
-            await updateUserUI();
-            
-            // ÖNEMLİ: Backend'den verileri yükle (OAuth callback sonrası)
-            if (typeof window.loadStats === 'function') {
-                if (typeof infoLog === 'function') {
-                    infoLog('Backend\'den veriler yükleniyor (OAuth callback)...');
-                }
-                await window.loadStats();
-            }
-            
-            // Sonra mevcut localStorage verilerini backend'e senkronize et (varsa)
-            await syncUserData();
-            }, 1500);
-        }
-    }
-    
     // Eğer kullanıcı giriş yapmamışsa, auth butonunu göster
-    // (updateUserUI zaten bunu yapıyor, ama emin olmak için)
     if (typeof window.getCurrentUser === 'function') {
         const user = await window.getCurrentUser();
         const authNavBtn = document.getElementById('auth-nav-btn');

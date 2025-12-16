@@ -16,12 +16,7 @@ function getLocalDateString(date = new Date()) {
 
 /**
  * Yerel saat dilimine göre ISO string formatında timestamp döndürür
- * PostgreSQL timestamp alanları UTC olarak saklanır, bu yüzden yerel saati UTC'ye çeviriyoruz
- * Ama timezone bilgisiyle birlikte gönderiyoruz ki Supabase doğru şekilde işlesin
- * Örnek: "2025-01-15T14:30:00+03:00" (Türkiye saati için, PostgreSQL bunu UTC'ye çevirir)
- * 
- * NOT: Supabase dashboard'unda zaman dilimi ayarını kontrol edin.
- * Eğer hala farklı saat görünüyorsa, Supabase dashboard'unun timezone ayarını değiştirin.
+ * Örnek: "2025-01-15T14:30:00+03:00" (Türkiye saati için)
  */
 function getLocalISOString(date = new Date()) {
     // Yerel saat dilimini kullan, ama timezone bilgisiyle birlikte gönder

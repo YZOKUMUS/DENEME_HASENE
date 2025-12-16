@@ -38,17 +38,17 @@ async function loadDailyStats() {
         date.setDate(date.getDate() - i);
         const dateStr = getLocalDateString(date);
         
-        // Önce Supabase'den yüklemeyi dene
+        // localStorage'dan yükle
         let dailyData = null;
         if (typeof window.loadDailyStat === 'function') {
             try {
                 dailyData = await window.loadDailyStat(dateStr);
             } catch (error) {
-                console.warn(`Supabase'den ${dateStr} tarihi yüklenemedi:`, error);
+                console.warn(`${dateStr} tarihi yüklenemedi:`, error);
             }
         }
         
-        // Supabase'den yüklenemediyse localStorage'dan yükle
+        // Yüklenemediyse varsayılan değerleri kullan
         if (!dailyData) {
             dailyData = safeGetItem(`hasene_daily_${dateStr}`, {
                 correct: 0,
@@ -59,11 +59,6 @@ async function loadDailyStats() {
                 maxCombo: 0,
                 gameModes: {}
             });
-        }
-        
-        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
-        if (dailyData && typeof window.loadDailyStat === 'function') {
-            localStorage.setItem(`hasene_daily_${dateStr}`, JSON.stringify(dailyData));
         }
         
         const isToday = dateStr === today;
@@ -225,17 +220,17 @@ async function loadWeeklyStats() {
         const weekEndDate = getWeekEndDate(referenceDate);
         const weekEndStr = getLocalDateString(weekEndDate);
         
-        // Önce Supabase'den yüklemeyi dene
+        // localStorage'dan yükle
         let weeklyData = null;
         if (typeof window.loadWeeklyStat === 'function') {
             try {
                 weeklyData = await window.loadWeeklyStat(weekStartStr);
             } catch (error) {
-                console.warn(`Supabase'den ${weekStartStr} haftası yüklenemedi:`, error);
+                console.warn(`${weekStartStr} haftası yüklenemedi:`, error);
             }
         }
         
-        // Supabase'den yüklenemediyse localStorage'dan yükle
+        // Yüklenemediyse varsayılan değerleri kullan
         if (!weeklyData) {
             weeklyData = safeGetItem(`hasene_weekly_${weekStartStr}`, {
                 hasene: 0,
@@ -247,11 +242,6 @@ async function loadWeeklyStats() {
                 maxCombo: 0,
                 streakDays: 0
             });
-        }
-        
-        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
-        if (weeklyData && typeof window.loadWeeklyStat === 'function') {
-            localStorage.setItem(`hasene_weekly_${weekStartStr}`, JSON.stringify(weeklyData));
         }
         
         const isCurrentWeek = weekStartDate <= today && weekEndDate >= today;
@@ -393,17 +383,17 @@ async function loadMonthlyStats() {
         month.setMonth(month.getMonth() - i);
         const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
         
-        // Önce Supabase'den yüklemeyi dene
+        // localStorage'dan yükle
         let monthlyData = null;
         if (typeof window.loadMonthlyStat === 'function') {
             try {
                 monthlyData = await window.loadMonthlyStat(monthStr);
             } catch (error) {
-                console.warn(`Supabase'den ${monthStr} ayı yüklenemedi:`, error);
+                console.warn(`${monthStr} ayı yüklenemedi:`, error);
             }
         }
         
-        // Supabase'den yüklenemediyse localStorage'dan yükle
+        // Yüklenemediyse varsayılan değerleri kullan
         if (!monthlyData) {
             monthlyData = safeGetItem(`hasene_monthly_${monthStr}`, {
                 hasene: 0,
@@ -417,11 +407,6 @@ async function loadMonthlyStats() {
                 streakDays: 0,
                 bestStreak: 0
             });
-        }
-        
-        // Eğer Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
-        if (monthlyData && typeof window.loadMonthlyStat === 'function') {
-            localStorage.setItem(`hasene_monthly_${monthStr}`, JSON.stringify(monthlyData));
         }
         
         const isCurrentMonth = month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear();
@@ -590,31 +575,22 @@ async function loadWordsStats() {
             } else {
                 try {
                     wordStatsData = await window.loadWordStats();
-                    // Supabase'den veri geldiyse localStorage'a da kaydet (senkronizasyon için)
-                    // ÖNEMLİ: Eğer wordStatsData boşsa localStorage'ı da temizle
+                    // Veri varsa localStorage'a kaydet
                     if (wordStatsData && Object.keys(wordStatsData).length > 0) {
                         localStorage.setItem('hasene_wordStats', JSON.stringify(wordStatsData));
                         // Global değişkeni de güncelle
                         if (typeof window.wordStats !== 'undefined') {
                             window.wordStats = wordStatsData;
                         }
-                        // Backend'den başarılı yükleme yapıldı ve veri varsa flag'i temizle
-                        const statsJustReset = localStorage.getItem('hasene_statsJustReset') === 'true';
-                        if (statsJustReset) {
-                            localStorage.removeItem('hasene_statsJustReset');
-                            console.log('ℹ️ Backend\'den wordStats yüklendi ve veri var - flag temizlendi');
-                        }
                     } else {
-                        // Backend boş döndüyse localStorage'ı da temizle
+                        // Boş döndüyse localStorage'ı da temizle
                         localStorage.removeItem('hasene_wordStats');
                         if (typeof window.wordStats !== 'undefined') {
                             window.wordStats = {};
                         }
-                        // Backend boş döndüyse flag'i koru (resetAllStats sonrası normal durum)
-                        // Flag sadece yeni veri oluşturulduğunda temizlenecek
                     }
                 } catch (error) {
-                    console.warn('Supabase\'den kelime istatistikleri yüklenemedi:', error);
+                    console.warn('Kelime istatistikleri yüklenemedi:', error);
                     // Fallback: localStorage (sadece window.wordStats tanımlı değilse)
                     wordStatsData = safeGetItem('hasene_wordStats', {});
                 }
