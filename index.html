@@ -334,9 +334,9 @@
                 <!-- Birleşik Stats ve Günlük Vird Kartı -->
                 <div class="combined-stats-card">
                     <!-- Giriş/Profil Butonu (Kart içinde sağ üst köşe) -->
-                    <button id="auth-nav-btn" class="auth-nav-btn-inline" onclick="showAuthModal()" style="display: none;">
+                    <button id="auth-nav-btn" class="auth-nav-btn-inline" style="display: flex;">
                         <span>🔐</span>
-                        <span>Giriş</span>
+                        <span>Giriş Yap</span>
                     </button>
                     <div id="user-profile-btn" class="user-profile-btn-inline" style="display: none;">
                         <div class="user-avatar-inline" id="user-avatar">
@@ -808,31 +808,23 @@
         <div class="modal-content auth-modal-content">
             <div class="modal-header">
                 <h2>Giriş Yap</h2>
-                <button class="modal-close" onclick="closeAuthModal()">×</button>
+                <button class="modal-close" id="auth-modal-close">×</button>
             </div>
             <div class="modal-body">
-                <!-- Tab Navigation - Kayıt Ol kaldırıldı, sadece Google ile giriş -->
-                <div class="auth-tabs" style="display: none;">
-                    <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Giriş Yap</button>
-                    <!-- Kayıt Ol sekmesi kaldırıldı -->
+                <!-- Direkt Giriş -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;">
+                        Kullanıcı adınızı girin ve oyuna başlayın.
+                    </p>
                 </div>
-
-                <!-- Login Form -->
-                <!-- Login Form - Sadece Google ile giriş -->
-                <form id="login-form" class="auth-form" style="display: flex;">
-                    <div style="text-align: center; margin-bottom: 20px; width: 100%;">
-                        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;">
-                            Google hesabınızla giriş yaparak oyuna başlayabilirsiniz.
-                        </p>
-                    </div>
-                    <div id="auth-message" class="auth-message" style="display:none;"></div>
-                    <button type="button" class="btn-google" onclick="handleGoogleLogin()" style="width: 100%; margin-top: 10px;">
-                        <span>🔐</span>
-                        Google ile Giriş Yap
-                    </button>
-                </form>
-
-                <!-- Register Form - Kaldırıldı: Sadece Google ile giriş yapılıyor -->
+                <div id="auth-message" class="auth-message" style="display:none;"></div>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="username-input" placeholder="Kullanıcı adınızı girin" style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                </div>
+                <button type="button" class="btn-google" id="direct-login-btn" style="width: 100%; padding: 12px; font-size: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <span>🚀</span>
+                    Giriş Yap ve Başla
+                </button>
                     </div>
                     </div>
                     </div>
@@ -1559,9 +1551,23 @@
     <script src="js/indexeddb-cache.js"></script>
     <script src="js/data-loader.js"></script>
     <script src="js/error-handler.js"></script>
-    <!-- Local Storage API ve Auth -->
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    <!-- Firebase SDK (ES6 Modules) -->
+    <script type="module" src="js/firebase-init.js"></script>
+    <!-- Firebase API ve Auth -->
     <script src="js/api-service.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        // Auth.js yüklendikten sonra kontrol et
+        console.log('🔍 Auth.js yüklendikten sonra kontrol:');
+        console.log('🔍 window.showAuthModal:', typeof window.showAuthModal);
+        if (typeof window.showAuthModal === 'function') {
+            console.log('✅ showAuthModal başarıyla yüklendi');
+        } else {
+            console.error('❌ showAuthModal yüklenemedi!');
+        }
+    </script>
     <!-- Yeni modüler yapı -->
     <script src="js/audio-manager.js"></script>
     <script src="js/points-manager.js"></script>
