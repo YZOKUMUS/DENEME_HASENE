@@ -324,22 +324,50 @@ async function handleDirectLogin() {
                 const existingUserId = localStorage.getItem('hasene_user_id');
                 const existingUsername = localStorage.getItem('hasene_username');
                 let useExistingUid = false;
+                let foundUid = null;
                 
                 // Eğer aynı kullanıcı adıyla giriş yapıyorsa ve Firebase UID varsa, eski UID'yi kullan
                 if (existingUserId && existingUsername === username && !existingUserId.startsWith('local-')) {
                     console.log('✅ Mevcut kullanıcı bulundu (localStorage\'dan), eski UID kullanılacak:', existingUserId);
                     useExistingUid = true;
+                    foundUid = existingUserId;
                 }
                 
-                // Firebase Anonymous Authentication yap (Firebase Auth için gerekli)
+                // Firebase Anonymous Authentication yap (Firebase Auth için gerekli - query yapabilmek için)
                 const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-                showAuthMessage(useExistingUid ? 'Giriş yapılıyor...' : 'Giriş yapılıyor ve verileriniz kaydediliyor...', 'info');
+                showAuthMessage('Giriş yapılıyor...', 'info');
                 
                 const userCredential = await signInAnonymously(auth);
                 firebaseUser = userCredential.user;
                 
+                // Eğer localStorage'da UID yoksa, Firestore'da kullanıcı adına göre ara
+                if (!useExistingUid) {
+                    const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
+                    if (db) {
+                        try {
+                            const { getDocs, collection: col, query, where } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                            const q = query(col(db, 'users'), where('username', '==', username));
+                            const querySnapshot = await getDocs(q);
+                            
+                            if (!querySnapshot.empty) {
+                                // Mevcut kullanıcı bulundu!
+                                const userDoc = querySnapshot.docs[0];
+                                foundUid = userDoc.id;
+                                console.log('✅ Mevcut kullanıcı Firestore\'da bulundu:', foundUid, username);
+                                useExistingUid = true;
+                            } else {
+                                console.log('ℹ️ Firestore\'da mevcut kullanıcı bulunamadı (yeni kullanıcı):', username);
+                            }
+                        } catch (err) {
+                            console.error('❌ Firestore kullanıcı arama hatası:', err);
+                            console.error('❌ Hata detayı:', err.message, err.code);
+                            // Hata olsa bile devam et (yeni kullanıcı olarak)
+                        }
+                    }
+                }
+                
                 // ÖNEMLİ: Eğer mevcut kullanıcı varsa, eski UID'yi koru (Firestore'da veriler eski UID'de)
-                const finalUid = useExistingUid ? existingUserId : firebaseUser.uid;
+                const finalUid = useExistingUid ? foundUid : firebaseUser.uid;
                 
                 // Kullanıcı profilini Firestore'a kaydet (eski UID ile)
                 const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
