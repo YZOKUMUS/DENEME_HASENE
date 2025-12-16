@@ -437,13 +437,16 @@ async function logoutUser() {
         }
     }
 
-    // Email ve username'i temizle (UI için)
+    // Email'i temizle (UI için)
     localStorage.removeItem('hasene_user_email');
-    localStorage.removeItem('hasene_username');
     
-    // ÖNEMLİ: hasene_user_id'yi SİLME - tekrar giriş yapınca aynı kullanıcıyı bulabilmek için
-    // localStorage.removeItem('hasene_user_id'); // SİLME!
-    console.log('ℹ️ hasene_user_id korundu (tekrar giriş için):', localStorage.getItem('hasene_user_id'));
+    // ÖNEMLİ: hasene_username ve hasene_user_id'yi SİLME - tekrar giriş yapınca aynı kullanıcıyı bulabilmek için
+    // localStorage.removeItem('hasene_username'); // SİLME! (getCurrentUser için gerekli)
+    // localStorage.removeItem('hasene_user_id'); // SİLME! (getCurrentUser için gerekli)
+    console.log('ℹ️ hasene_user_id ve hasene_username korundu (tekrar giriş için):', {
+        userId: localStorage.getItem('hasene_user_id'),
+        username: localStorage.getItem('hasene_username')
+    });
 }
 
 /**
@@ -456,13 +459,15 @@ async function getCurrentUser() {
     
     // Eğer localStorage'da Firebase UID varsa (local- ile başlamıyorsa), ÖNCE ONU KULLAN
     // Bu çok önemli - çıkış yapıp tekrar giriş yapınca eski UID'yi kullanmak için
-    if (savedUserId && !savedUserId.startsWith('local-') && savedUsername) {
+    // NOT: savedUsername yoksa da UID varsa kullan (username sonra set edilebilir)
+    if (savedUserId && !savedUserId.startsWith('local-')) {
         console.log('🔄 localStorage\'da mevcut Firebase UID bulundu, öncelikli kullanılıyor:', savedUserId);
         
         // Firestore kontrolü yapmadan direkt döndür (daha hızlı ve güvenilir)
         // localStorage'da UID varsa, o UID'yi kullan (Firestore'da veriler o UID'de)
-        const email = localStorage.getItem('hasene_user_email') || savedUsername + '@local';
-        const username = savedUsername;
+        const savedEmail = localStorage.getItem('hasene_user_email');
+        const username = savedUsername || savedEmail?.split('@')[0] || 'Kullanıcı';
+        const email = savedEmail || username + '@local';
         
         // localStorage'ı güncelle (tutarlılık için)
         localStorage.setItem('hasene_user_email', email);
