@@ -4865,7 +4865,7 @@ if (typeof updateWordStats === 'undefined') {
 /**
  * Detaylı istatistikleri kaydeder (günlük, haftalık, aylık)
  */
-function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, incrementGamesPlayed = false) {
+async function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, incrementGamesPlayed = false) {
     const today = getLocalDateString();
     const todayDate = new Date();
     
@@ -5061,9 +5061,35 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     
     safeSetItem(monthlyKey, monthlyData);
     
-    // NOT: daily_stats, weekly_stats, monthly_stats tabloları kaldırıldı
-    // Artık sadece localStorage'a kayıt yapılıyor (backend'e kayıt yok)
-    // Veriler localStorage'da hasene_daily_*, hasene_weekly_*, hasene_monthly_* key'leri ile saklanıyor
+    // Backend'e de kaydet (Supabase tablolarına)
+    // NOT: Eğer kullanıcı giriş yaptıysa backend'e de kaydet
+    if (typeof window.saveDailyStat === 'function') {
+        try {
+            await window.saveDailyStat(today, dailyData);
+        } catch (err) {
+            console.warn('saveDailyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
+        }
+    }
+    
+    if (typeof window.saveWeeklyStat === 'function') {
+        try {
+            await window.saveWeeklyStat(weekStartStr, weeklyData);
+        } catch (err) {
+            console.warn('saveWeeklyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
+        }
+    }
+    
+    if (typeof window.saveMonthlyStat === 'function') {
+        try {
+            await window.saveMonthlyStat(monthStr, monthlyData);
+        } catch (err) {
+            console.warn('saveMonthlyStat backend hatası (localStorage\'a zaten kaydedildi):', err);
+        }
+    }
+    
+    // NOT: Veriler hem localStorage hem de Supabase'e kaydediliyor
+    // localStorage: hasene_daily_*, hasene_weekly_*, hasene_monthly_* key'leri ile
+    // Supabase: daily_stats, weekly_stats, monthly_stats tablolarına
 }
 
 // getStrugglingWords ve selectIntelligentWords artık word-stats-manager.js modülünde
