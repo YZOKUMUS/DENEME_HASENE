@@ -1218,9 +1218,8 @@ function updateStatsBar() {
     }
     
     if (elements.totalPointsEl) {
-        // Oyun üst tarafında bugünkü hasene'yi göster (tüm yerlerde aynı kaynak)
-        const dailyXPToUse = getDailyHasene();
-        elements.totalPointsEl.textContent = formatNumber(dailyXPToUse);
+        // Üst bardaki Hasene: Supabase/user_stats.total_points ile eşlenen TOPLAM Hasene
+        elements.totalPointsEl.textContent = formatNumber(totalPoints);
     }
     
     if (elements.starPointsEl) {
@@ -1265,10 +1264,8 @@ function updateDailyGoalDisplay() {
         elements.dailyGoalPercent.textContent = `(${percent}%)`;
     }
     
-    // Oyun üst tarafındaki hasene değerini de güncelle (bugünkü hasene ile senkronize)
-    if (elements.totalPointsEl) {
-        elements.totalPointsEl.textContent = formatNumber(dailyXPToUse);
-    }
+    // Üst bardaki Hasene artık TOPLAM Hasene gösteriyor (günlük değil),
+    // bu yüzden burada totalPoints değiştirilmez.
     
     // Günlük hedef tamamlandı mı?
     if (dailyXPToUse >= dailyGoalHasene && !localStorage.getItem('dailyGoalCompleted')) {
