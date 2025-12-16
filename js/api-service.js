@@ -459,35 +459,18 @@ async function getCurrentUser() {
     if (savedUserId && !savedUserId.startsWith('local-') && savedUsername) {
         console.log('🔄 localStorage\'da mevcut Firebase UID bulundu, öncelikli kullanılıyor:', savedUserId);
         
-        // Firebase'de bu kullanıcıyı kontrol et
-        const auth = getFirebaseAuth();
-        if (getBackendType() === 'firebase' && auth) {
-            try {
-                const userData = await firestoreGet('users', savedUserId);
-                if (userData && userData.username === savedUsername) {
-                    // Mevcut kullanıcı bulundu, bu UID'yi kullan (Firebase auth'dan değil!)
-                    const email = userData.email || savedUsername + '@local';
-                    const username = userData.username || savedUsername;
-                    
-                    // localStorage'ı güncelle
-                    localStorage.setItem('hasene_user_email', email);
-                    localStorage.setItem('hasene_username', username);
-                    localStorage.setItem('hasene_user_id', savedUserId); // ESKİ UID'yi koru!
-                    
-                    console.log('✅ getCurrentUser: Mevcut Firebase kullanıcısı bulundu (localStorage\'dan, öncelikli):', savedUserId, username);
-                    return { id: savedUserId, email, username };
-                } else {
-                    console.warn('⚠️ localStorage\'da UID var ama Firestore\'da kullanıcı bulunamadı, Firebase auth\'a bakılıyor');
-                }
-            } catch (error) {
-                console.warn('⚠️ Mevcut kullanıcı kontrolü hatası, Firebase auth\'a bakılıyor:', error);
-            }
-        } else {
-            // Firebase yok, localStorage'dan döndür
-            const email = savedUsername + '@local';
-            console.log('✅ getCurrentUser: localStorage\'dan kullanıcı bulundu (Firebase yok):', savedUserId, savedUsername);
-            return { id: savedUserId, email, username: savedUsername };
-        }
+        // Firestore kontrolü yapmadan direkt döndür (daha hızlı ve güvenilir)
+        // localStorage'da UID varsa, o UID'yi kullan (Firestore'da veriler o UID'de)
+        const email = localStorage.getItem('hasene_user_email') || savedUsername + '@local';
+        const username = savedUsername;
+        
+        // localStorage'ı güncelle (tutarlılık için)
+        localStorage.setItem('hasene_user_email', email);
+        localStorage.setItem('hasene_username', username);
+        localStorage.setItem('hasene_user_id', savedUserId); // ESKİ UID'yi koru!
+        
+        console.log('✅ getCurrentUser: localStorage\'dan Firebase UID bulundu (öncelikli, Firestore kontrolü yok):', savedUserId, username);
+        return { id: savedUserId, email, username };
     }
     
     // Firebase auth state'ini kontrol et (sadece localStorage'da UID yoksa)
