@@ -3694,8 +3694,10 @@ async function saveCurrentGameProgress() {
     });
     
     // Oyun istatistiklerini güncelle
-    gameStats.totalCorrect += sessionCorrect;
-    gameStats.totalWrong += sessionWrong;
+    // NOT: gameStats.totalCorrect / totalWrong bu fonksiyonun başında zaten
+    // güncellendi (GLOBAL İSTATİSTİKLERİ GÜNCELLE bloğunda).
+    // Burada tekrar artırmak doğru/yanlış sayılarını 2'ye katlıyordu.
+    // Bu nedenle sadece oyun modu sayaçlarını güncelliyoruz.
     
     // Oyun modunu belirle (currentGameMode veya currentGame'den)
     const gameModeKey = currentGameMode || 
@@ -3940,8 +3942,10 @@ async function endGame() {
     }
     
     // Oyun istatistiklerini güncelle
-    gameStats.totalCorrect += sessionCorrect;
-    gameStats.totalWrong += sessionWrong;
+    // NOT: gameStats.totalCorrect / totalWrong bu fonksiyonun başında zaten
+    // güncellendi (GLOBAL İSTATİSTİKLERİ GÜNCELLE bloğunda - satır 3788+).
+    // Burada tekrar artırmak doğru/yanlış sayılarını 2'ye katlıyordu.
+    // Bu nedenle sadece oyun modu sayaçlarını güncelliyoruz.
     if (currentGameMode) {
         gameStats.gameModeCounts[currentGameMode] = (gameStats.gameModeCounts[currentGameMode] || 0) + 1;
     }

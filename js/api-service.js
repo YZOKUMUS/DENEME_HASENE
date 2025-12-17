@@ -1279,23 +1279,41 @@ async function getLeagueConfig(leagueName) {
 // ============================================
 
 if (typeof window !== 'undefined') {
+    // Backend / Firestore helper'larını da global yap
+    // Böylece auth.js gibi diğer dosyalar aynı helper'ları kullanarak
+    // TEK BİR yerden Firestore erişimi yapabilir (tutarlı ve merkezi yapı).
+    window.getBackendType = getBackendType;
+    window.getFirebaseAuth = getFirebaseAuth;
+    window.getFirebaseDb = getFirebaseDb;
+    window.firestoreGet = firestoreGet;
+    window.firestoreSet = firestoreSet;
+    window.firestoreGetCollection = firestoreGetCollection;
+    window.firestoreGetSubCollection = firestoreGetSubCollection;
+
+    // Auth API
     window.registerUser = registerUser;
     window.loginUser = loginUser;
     window.loginWithGoogle = loginWithGoogle;
     window.loginWithGitHub = loginWithGitHub;
     window.logoutUser = logoutUser;
     window.getCurrentUser = getCurrentUser;
+
+    // Stats & Tasks API
     window.loadUserStats = loadUserStats;
     window.saveUserStats = saveUserStats;
     window.loadDailyTasks = loadDailyTasks;
     window.saveDailyTasks = saveDailyTasks;
     window.loadWeeklyTasks = loadWeeklyTasks;
     window.saveWeeklyTasks = saveWeeklyTasks;
+
+    // Word / Favorites API
     window.loadWordStats = loadWordStats;
     window.saveWordStat = saveWordStat;
     window.loadFavorites = loadFavorites;
     window.addFavorite = addFavorite;
     window.removeFavorite = removeFavorite;
+
+    // Detailed stats API
     window.saveDailyStat = saveDailyStat;
     window.saveWeeklyStat = saveWeeklyStat;
     window.saveMonthlyStat = saveMonthlyStat;
@@ -1303,12 +1321,14 @@ if (typeof window !== 'undefined') {
     window.loadWeeklyStat = loadWeeklyStat;
     window.loadMonthlyStat = loadMonthlyStat;
     window.loadAllDailyStatsDates = loadAllDailyStatsDates;
+
+    // Achievements / Badges / Leaderboard
     window.loadLeaderboard = loadLeaderboard;
     window.loadAchievements = loadAchievements;
     window.saveAchievement = saveAchievement;
     window.loadBadges = loadBadges;
     window.saveBadge = saveBadge;
-    
+
     // Weekly Leaderboard API
     window.getWeekStart = getWeekStart;
     window.getWeekEnd = getWeekEnd;
