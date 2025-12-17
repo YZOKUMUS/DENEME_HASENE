@@ -1146,6 +1146,31 @@ function getDailyHasene() {
     const dailyPointsFromDetailed = dailyData.points || 0;
     const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
     
+    // ÖNEMLİ: todayStats.toplamPuan'ı da kontrol et (vazifeler paneli için)
+    // todayStats.toplamPuan daha güvenilir olabilir çünkü backend'den geliyor
+    const todayStatsPuan = (dailyTasks && dailyTasks.todayStats) ? (dailyTasks.todayStats.toplamPuan || 0) : 0;
+    
+    // En güvenilir değeri kullan: todayStats.toplamPuan > hasene_daily_points > dailyXP
+    let finalDailyHasene = dailyPointsFromDetailed || dailyXP;
+    
+    // Eğer todayStats.toplamPuan varsa ve farklıysa, onu kullan (daha güvenilir)
+    if (todayStatsPuan > 0 && todayStatsPuan !== finalDailyHasene) {
+        // todayStats.toplamPuan daha güvenilir, hasene_daily_points'i güncelle
+        if (todayStatsPuan > finalDailyHasene) {
+            finalDailyHasene = todayStatsPuan;
+            // hasene_daily_points'i senkronize et
+            dailyData.points = todayStatsPuan;
+            dailyData.correct = dailyTasks.todayStats.toplamDogru || 0;
+            safeSetItem(dailyKey, dailyData);
+            localStorage.setItem('dailyXP', todayStatsPuan.toString());
+            console.log('🔄 getDailyHasene - hasene_daily_points senkronize edildi (todayStats.toplamPuan daha güvenilir):', {
+                eski: dailyPointsFromDetailed,
+                yeni: todayStatsPuan,
+                kaynak: 'todayStats.toplamPuan'
+            });
+        }
+    }
+    
     // LOG: Çift sayma kontrolü
     if (dailyPointsFromDetailed !== dailyXP) {
         // Aynı gün içinde log spam'ini engellemek için sadece bir kez uyarı ver
@@ -1158,6 +1183,7 @@ function getDailyHasene() {
                 warnLog('getDailyHasene - Tutarsızlık tespit edildi:', {
                     dailyPointsFromDetailed,
                     dailyXP,
+                    todayStatsPuan,
                     fark: Math.abs(dailyPointsFromDetailed - dailyXP),
                     not: 'dailyXP ve dailyData.points senkronize değil!'
                 });
@@ -1165,6 +1191,7 @@ function getDailyHasene() {
                 console.warn('⚠️ getDailyHasene - Tutarsızlık tespit edildi:', {
                     dailyPointsFromDetailed,
                     dailyXP,
+                    todayStatsPuan,
                     fark: Math.abs(dailyPointsFromDetailed - dailyXP),
                     not: 'dailyXP ve dailyData.points senkronize değil!'
                 });
@@ -1174,13 +1201,14 @@ function getDailyHasene() {
             // Sonraki çağrılarda sadece debug seviyesinde sessiz log
             debugLog('getDailyHasene - Tutarsızlık devam ediyor, sessizce senkronize ediliyor.', {
                 dailyPointsFromDetailed,
-                dailyXP
+                dailyXP,
+                todayStatsPuan
             });
         }
 
         // Eğer detaylı istatistiklerde puan var ama dailyXP geride/0 kalmışsa,
         // dailyXP'yi daha güvenilir olan dailyData.points ile senkronize et
-        if (dailyPointsFromDetailed > 0 && dailyPointsFromDetailed !== dailyXP) {
+        if (dailyPointsFromDetailed > 0 && dailyPointsFromDetailed !== dailyXP && todayStatsPuan === 0) {
             localStorage.setItem('dailyXP', dailyPointsFromDetailed.toString());
             if (typeof infoLog === 'function') {
                 infoLog('getDailyHasene - dailyXP, dailyData.points ile senkronize edildi:', {
@@ -1196,9 +1224,8 @@ function getDailyHasene() {
         }
     }
     
-    // Her zaman dailyData.points'i kullan (daha güvenilir, saveDetailedStats tarafından güncelleniyor)
-    // dailyXP sadece fallback olarak kullanılmalı
-    return dailyPointsFromDetailed || dailyXP;
+    // Öncelik sırası: todayStats.toplamPuan > hasene_daily_points > dailyXP
+    return finalDailyHasene;
 }
 
 /**
@@ -4281,6 +4308,15 @@ function updateTaskProgress(gameType, data) {
     dailyTasks.todayStats.toplamPuan += data.points || 0;
     dailyTasks.todayStats.comboCount = Math.max(dailyTasks.todayStats.comboCount || 0, data.combo || 0);
     
+    // NOT: hasene_daily_${today}.points güncellemesi YAPILMIYOR çünkü:
+    // 1. Oyun modlarında (kelime-cevir, dinle-bul, bosluk-doldur) her soru sonrası
+    //    saveDetailedStats() zaten hasene_daily_${today}.points güncelliyor
+    // 2. updateTaskProgress() oyun bitişinde çağrılıyor ve burada tekrar güncellemek
+    //    çift saymaya neden olur
+    // 3. Okuma modlarında (ayet-oku, dua-et, hadis-oku) points: 0 olduğu için
+    //    güncelleme gereksiz
+    // Sonuç: hasene_daily_${today}.points sadece saveDetailedStats() tarafından güncellenmeli
+    
     if (gameType) {
         dailyTasks.todayStats.allGameModes.add(gameType);
         
@@ -4948,6 +4984,47 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     }
     
     safeSetItem(dailyKey, dailyData);
+    
+    // ÖNEMLİ: hasene_daily_${today}.points güncellendiğinde todayStats.toplamPuan'ı da senkronize et
+    // Çünkü vazifeler paneli todayStats.toplamPuan kullanıyor
+    // NOT: saveDetailedStats her soru sonrası çağrılıyor, bu yüzden todayStats.toplamPuan'ı da güncellemeli
+    if (dailyTasks && dailyTasks.todayStats) {
+        const oldTodayStatsPuan = dailyTasks.todayStats.toplamPuan || 0;
+        
+        // ÖNEMLİ: saveDetailedStats her soru sonrası çağrılıyor, bu yüzden todayStats.toplamPuan'ı da güncelle
+        // hasene_daily_points her soru sonrası güncelleniyor, todayStats.toplamPuan da aynı değere sahip olmalı
+        if (dailyData.points !== oldTodayStatsPuan) {
+            // Fark varsa, daha büyük olanı kullan (çift saymayı önlemek için)
+            if (dailyData.points > oldTodayStatsPuan) {
+                // hasene_daily_points daha büyükse, todayStats.toplamPuan'ı güncelle
+                dailyTasks.todayStats.toplamPuan = dailyData.points;
+                dailyTasks.todayStats.toplamDogru = dailyData.correct;
+                console.log('🔄 saveDetailedStats - todayStats.toplamPuan senkronize edildi (hasene_daily_points daha büyük):', {
+                    eski: oldTodayStatsPuan,
+                    yeni: dailyData.points,
+                    kaynak: 'hasene_daily_points'
+                });
+            } else {
+                // todayStats.toplamPuan daha büyükse, hasene_daily_points'i güncelle (todayStats daha güvenilir)
+                dailyData.points = oldTodayStatsPuan;
+                dailyData.correct = dailyTasks.todayStats.toplamDogru || 0;
+                safeSetItem(dailyKey, dailyData);
+                localStorage.setItem('dailyXP', dailyData.points.toString());
+                console.log('🔄 saveDetailedStats - hasene_daily_points senkronize edildi (todayStats.toplamPuan daha büyük):', {
+                    eski: dailyData.points,
+                    yeni: oldTodayStatsPuan,
+                    kaynak: 'todayStats.toplamPuan'
+                });
+            }
+            
+            // dailyTasks güncellendi, backend'e kaydet (debounced değil, hemen kaydet)
+            if (typeof window.saveDailyTasks === 'function') {
+                window.saveDailyTasks(dailyTasks).catch(err => {
+                    console.warn('⚠️ saveDetailedStats - saveDailyTasks hatası:', err);
+                });
+            }
+        }
+    }
     
     // LOG: localStorage senkronizasyonu kontrolü
     const localStorageCorrect = parseInt(localStorage.getItem('dailyCorrect') || '0') || 0;
