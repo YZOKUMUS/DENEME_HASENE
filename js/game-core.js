@@ -2272,6 +2272,9 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         
         // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
         saveDetailedStats(0, 0, 1, 0, 0);
+        // Backend'e kaydet (kelime çevir ve dinle bul oyunlarında updateWordStats çağrılıyor,
+        // ama boşluk doldur oyununda kelime ID'si olmadığı için updateWordStats çağrılamıyor)
+        debouncedSaveStats();
         if (typeof refreshDetailedStatsIfOpen === 'function') {
             refreshDetailedStatsIfOpen();
         }
