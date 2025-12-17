@@ -390,6 +390,7 @@ async function handleDirectLogin() {
                 localStorage.setItem('hasene_username', username);
                 localStorage.setItem('hasene_user_email', userEmail);
                 localStorage.setItem('hasene_user_id', finalUid); // ESKİ UID'yi koru (eğer mevcut kullanıcı varsa)
+                localStorage.setItem('hasene_current_user_id', finalUid); // Kullanıcı değişikliği kontrolü için
                 
                 console.log('✅ Firebase kullanıcı bilgileri localStorage\'a kaydedildi:', {
                     uid: finalUid,

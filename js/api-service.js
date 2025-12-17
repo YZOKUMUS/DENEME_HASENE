@@ -514,11 +514,35 @@ async function getCurrentUser() {
                 }
                 
                 // Normal durum: Firebase auth'dan UID kullan
-                const userData = await firestoreGet('users', currentUser.uid);
-                const username = userData?.username || currentUser.displayName || localStorage.getItem('hasene_username') || 'Kullanıcı';
-                const email = currentUser.email || userData?.email || localStorage.getItem('hasene_user_email') || username + '@local';
+                // ÖNEMLİ: Önce localStorage'dan username al (kullanıcı YZOKUMUS ile giriş yaptıysa burada olmalı)
+                const localUsername = localStorage.getItem('hasene_username');
+                const localEmail = localStorage.getItem('hasene_user_email');
                 
-                // localStorage'ı güncelle
+                let userData = null;
+                try {
+                    userData = await firestoreGet('users', currentUser.uid);
+                } catch (err) {
+                    console.warn('⚠️ getCurrentUser: Firestore\'dan kullanıcı verisi yüklenemedi, localStorage kullanılıyor:', err);
+                }
+                
+                // Username ve email'i belirle (öncelik: localStorage > Firestore > Firebase Auth)
+                const username = localUsername || userData?.username || currentUser.displayName || 'Kullanıcı';
+                const email = localEmail || currentUser.email || userData?.email || username + '@local';
+                
+                // Eğer localStorage'da username varsa ve Firebase'de farklıysa, Firebase'i güncelle
+                if (localUsername && localUsername !== 'Kullanıcı' && userData?.username !== localUsername) {
+                    try {
+                        await firestoreSet('users', currentUser.uid, {
+                            ...userData,
+                            username: localUsername
+                        });
+                        console.log('✅ getCurrentUser: Firebase username güncellendi:', { eski: userData?.username, yeni: localUsername });
+                    } catch (err) {
+                        console.warn('⚠️ getCurrentUser: Firebase username güncelleme hatası:', err);
+                    }
+                }
+                
+                // localStorage'ı güncelle (ÖNEMLİ: Firestore başarısız olsa bile localStorage'a kaydet!)
                 localStorage.setItem('hasene_user_email', email);
                 localStorage.setItem('hasene_username', username);
                 localStorage.setItem('hasene_user_id', currentUser.uid);
@@ -782,6 +806,15 @@ async function loadDailyTasks() {
  * Günlük görevleri kaydet
  */
 async function saveDailyTasks(tasks) {
+    console.log('💾 saveDailyTasks çağrıldı:', {
+        todayStats: {
+            ayetOku: tasks.todayStats?.ayetOku,
+            duaEt: tasks.todayStats?.duaEt,
+            hadisOku: tasks.todayStats?.hadisOku,
+            allGameModes: tasks.todayStats?.allGameModes
+        }
+    });
+    
     const user = await getCurrentUser();
     const toSave = {
         ...tasks,
@@ -795,17 +828,33 @@ async function saveDailyTasks(tasks) {
     
     // Her durumda localStorage'a kaydet
     localStorage.setItem('hasene_dailyTasks', JSON.stringify(toSave));
+    console.log('💾 saveDailyTasks - localStorage kaydedildi');
     
     // Firebase'e de kaydet
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            console.log('🔥 saveDailyTasks - Firebase\'e kaydediliyor:', {
+                userId: user.id,
+                collection: 'daily_tasks',
+                todayStats: {
+                    ayetOku: toSave.todayStats.ayetOku,
+                    duaEt: toSave.todayStats.duaEt,
+                    hadisOku: toSave.todayStats.hadisOku
+                }
+            });
             await firestoreSet('daily_tasks', user.id, {
                 user_id: user.id,
                 ...toSave
             });
+            console.log('✅ saveDailyTasks - Firebase\'e başarıyla kaydedildi');
         } catch (error) {
-            console.warn('Firebase saveDailyTasks error:', error);
+            console.error('❌ saveDailyTasks - Firebase kaydetme hatası:', error);
         }
+    } else {
+        console.warn('⚠️ saveDailyTasks - Firebase\'e kaydedilmedi:', {
+            backendType: getBackendType(),
+            user: user ? { id: user.id, idStartsWithLocal: user.id?.startsWith('local-') } : null
+        });
     }
 }
 

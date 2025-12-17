@@ -208,17 +208,22 @@ async function loadStats() {
         
         // KULLANICI DEĞİŞİKLİĞİ KONTROLÜ
         // Eğer farklı bir kullanıcı giriş yaptıysa, localStorage'ı temizle
-        const lastUserId = localStorage.getItem('hasene_current_user_id');
+        // ÖNEMLİ: hasene_user_id ile karşılaştır (hasene_current_user_id değil)
+        // çünkü direkt giriş yapıldığında hasene_user_id doğru set ediliyor
+        const lastUserId = localStorage.getItem('hasene_user_id');
         const currentUserId = user ? user.id : null;
         
-        if (currentUserId && lastUserId && lastUserId !== currentUserId) {
+        if (currentUserId && lastUserId && lastUserId !== currentUserId && !lastUserId.startsWith('local-')) {
             // Farklı kullanıcı giriş yaptı, localStorage'ı temizle
-            console.log('🔄 Farklı kullanıcı tespit edildi, localStorage temizleniyor...');
+            console.log('🔄 Farklı kullanıcı tespit edildi, localStorage temizleniyor...', {
+                eski: lastUserId,
+                yeni: currentUserId
+            });
             clearUserLocalStorage();
             // Yeni kullanıcı ID'sini kaydet
             localStorage.setItem('hasene_current_user_id', currentUserId);
-        } else if (currentUserId && !lastUserId) {
-            // İlk kez giriş yapan kullanıcı
+        } else if (currentUserId && (!lastUserId || lastUserId.startsWith('local-'))) {
+            // İlk kez giriş yapan kullanıcı veya local kullanıcıdan Firebase'e geçiş
             localStorage.setItem('hasene_current_user_id', currentUserId);
         } else if (!currentUserId && lastUserId) {
             // Kullanıcı çıkış yaptı, localStorage'ı temizle
@@ -3642,26 +3647,23 @@ async function saveCurrentGameProgress() {
         maxCombo
     });
     
-    // Global puanlara ekle (sadece totalPoints, dailyXP zaten her soru için kaydedildi)
-    // NOT: addToGlobalPoints() kullanmıyoruz çünkü addDailyXP() çift saymaya neden oluyor
-    // Her soru zaten saveDetailedStats() ile kaydedildi ve dailyXP'ye eklendi
-    // Sadece totalPoints'i güncelle (dailyXP'ye dokunma)
-    const oldTotalPoints = totalPoints;
-    totalPoints += sessionScore;
+    // NOT: totalPoints güncellemesi YAPILMIYOR çünkü:
+    // 1. Eğer endGame() çağrıldıysa, addToGlobalPoints() zaten totalPoints'i güncelledi
+    // 2. Eğer oyun ortasında çıkıldıysa, her soru zaten saveDetailedStats() ile kaydedildi
+    //    ve dailyXP'ye eklendi. totalPoints ise endGame() çağrıldığında güncellenecek.
+    // Bu fonksiyon sadece localStorage senkronizasyonu ve oyun modu sayacı güncellemesi için kullanılıyor.
     
-    // Rozetleri güncelle
+    // Rozetleri güncelle (mevcut totalPoints'e göre)
     badges = calculateBadges(totalPoints);
     
     // UI'ı güncelle
     updateStatsBar();
     
-    // LOG: Puan ekleme
-    console.log('💰 saveCurrentGameProgress - totalPoints güncellendi:', {
-        eklenecek: sessionScore,
-        eskiTotal: oldTotalPoints,
-        yeniTotal: totalPoints,
-        fark: totalPoints - oldTotalPoints,
-        not: 'dailyXP zaten her soru için saveDetailedStats() ile kaydedildi'
+    // LOG: Puan ekleme YAPILMADI (çift saymayı önlemek için)
+    console.log('💰 saveCurrentGameProgress - totalPoints güncellenmedi:', {
+        sessionScore,
+        mevcutTotal: totalPoints,
+        not: 'endGame() zaten addToGlobalPoints() ile güncelledi veya oyun bitince güncellenecek'
     });
     
     // NOT: saveDetailedStats() çağrılmıyor çünkü her soru cevaplandığında zaten çağrılıyor!
@@ -4247,6 +4249,9 @@ function generateWeeklyTasks(weekStart) {
  * Görev ilerlemesini günceller
  */
 function updateTaskProgress(gameType, data) {
+    // DEBUG: updateTaskProgress çağrıldı
+    console.log('📋 updateTaskProgress çağrıldı:', { gameType, data, currentDifficulty });
+    
     // Günlük görevler - todayStats kontrolü
     if (!dailyTasks.todayStats) {
         dailyTasks.todayStats = {
@@ -4275,11 +4280,17 @@ function updateTaskProgress(gameType, data) {
         
         // Spesifik mod görevleri için sayaçları güncelle
         if (gameType === 'ayet-oku') {
-            dailyTasks.todayStats.ayetOku = (dailyTasks.todayStats.ayetOku || 0) + 1;
+            const oldValue = dailyTasks.todayStats.ayetOku || 0;
+            dailyTasks.todayStats.ayetOku = oldValue + 1;
+            console.log('📖 ayetOku güncellendi:', { eski: oldValue, yeni: dailyTasks.todayStats.ayetOku });
         } else if (gameType === 'dua-et') {
-            dailyTasks.todayStats.duaEt = (dailyTasks.todayStats.duaEt || 0) + 1;
+            const oldValue = dailyTasks.todayStats.duaEt || 0;
+            dailyTasks.todayStats.duaEt = oldValue + 1;
+            console.log('🤲 duaEt güncellendi:', { eski: oldValue, yeni: dailyTasks.todayStats.duaEt });
         } else if (gameType === 'hadis-oku') {
-            dailyTasks.todayStats.hadisOku = (dailyTasks.todayStats.hadisOku || 0) + 1;
+            const oldValue = dailyTasks.todayStats.hadisOku || 0;
+            dailyTasks.todayStats.hadisOku = oldValue + 1;
+            console.log('📚 hadisOku güncellendi:', { eski: oldValue, yeni: dailyTasks.todayStats.hadisOku });
         }
     }
     if (currentDifficulty) {
@@ -4360,6 +4371,31 @@ function updateTaskProgress(gameType, data) {
     // (Haftalık görevler UI'dan kaldırıldı)
     
     updateTasksDisplay();
+    
+    // Görevler güncellendi, backend'e hemen kaydet (özellikle ayet-oku, hadis-oku, dua-et için önemli)
+    // debouncedSaveStats() yerine direkt saveDailyTasks() çağırıyoruz çünkü bu modlar oyun değil,
+    // endGame() çağrılmıyor ve debounce süresi dolmadan sayfa kapatılabilir
+    console.log('💾 updateTaskProgress - saveDailyTasks çağrılıyor:', {
+        gameType,
+        todayStats: {
+            ayetOku: dailyTasks.todayStats?.ayetOku,
+            duaEt: dailyTasks.todayStats?.duaEt,
+            hadisOku: dailyTasks.todayStats?.hadisOku
+        },
+        saveDailyTasksExists: typeof window.saveDailyTasks === 'function'
+    });
+    
+    if (typeof window.saveDailyTasks === 'function') {
+        window.saveDailyTasks(dailyTasks).then(() => {
+            console.log('✅ updateTaskProgress - saveDailyTasks başarılı');
+        }).catch(apiError => {
+            console.error('❌ updateTaskProgress - saveDailyTasks hatası:', apiError);
+        });
+    } else {
+        console.warn('⚠️ updateTaskProgress - window.saveDailyTasks fonksiyonu bulunamadı!');
+    }
+    
+    // Genel istatistikleri de kaydet (debounced)
     debouncedSaveStats();
 }
 
