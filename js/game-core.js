@@ -6481,7 +6481,8 @@ async function resetAllStats(skipConfirm = false) {
     // LocalStorage temizle - Tüm hasene ile ilgili key'leri temizle
     const keysToRemove = [];
     Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('hasene_') || 
+        if (
+            key.startsWith('hasene_') || 
             key === 'unlockedAchievements' || 
             key === 'unlockedBadges' || 
             key === 'gameStats' || 
@@ -6494,7 +6495,13 @@ async function resetAllStats(skipConfirm = false) {
             key === 'dailyGoalCompleted' ||
             key === 'hasene_statsJustReset' ||
             key === 'hasene_onboarding_seen_v2' ||
-            key === 'hasene_wordStats') { // Kelime istatistikleri
+            key === 'hasene_wordStats' || // Kelime istatistikleri
+            // TEST reset'i için: kullanıcı oturumunu da tamamen sıfırla
+            key === 'hasene_user_id' ||
+            key === 'hasene_user_email' ||
+            key === 'hasene_username' ||
+            key === 'hasene_current_user_id'
+        ) {
             keysToRemove.push(key);
         }
     });
