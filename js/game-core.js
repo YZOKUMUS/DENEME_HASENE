@@ -1049,24 +1049,18 @@ function addSessionPoints(points) {
 }
 
 /**
- * Günlük XP ekler
- * ÖNEMLİ: Hem dailyXP hem de hasene_daily_${today}.points'i günceller (tutarlılık için)
+ * Günlük XP ekler - KALDIRILDI (saveDetailedStats kullanılmalı)
+ * 
+ * @deprecated Bu fonksiyon kaldırıldı. Günlük puan güncellemesi için
+ * saveDetailedStats() fonksiyonu kullanılmalı. Bu fonksiyon çift saymaya
+ * neden olabilir çünkü saveDetailedStats() zaten her soru sonrası çağrılıyor.
+ * 
+ * Eğer bu fonksiyon bir yerde kullanılıyorsa, saveDetailedStats() ile değiştir.
  */
 function addDailyXP(points) {
-    const today = getLocalDateString();
-    const dailyKey = `hasene_daily_${today}`;
-    
-    // dailyXP'yi güncelle
-    const currentXP = parseInt(localStorage.getItem('dailyXP') || '0');
-    const newXP = currentXP + points;
-    localStorage.setItem('dailyXP', newXP.toString());
-    
-    // hasene_daily_${today}.points'i de güncelle (tutarlılık için)
-    const dailyData = safeGetItem(dailyKey, { points: 0 });
-    dailyData.points = (dailyData.points || 0) + points;
-    safeSetItem(dailyKey, dailyData);
-    
-    updateDailyGoalDisplay();
+    console.warn('⚠️ addDailyXP() kullanıldı - Bu fonksiyon deprecated! saveDetailedStats() kullanılmalı.');
+    // Fonksiyon kaldırılmadı (geriye dönük uyumluluk için) ama hiçbir şey yapmıyor
+    // saveDetailedStats() zaten tüm güncellemeleri yapıyor
 }
 
 /**
@@ -1139,93 +1133,26 @@ async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = fal
  * Bugünkü hasene değerini hesaplar (tüm yerlerde aynı kaynağı kullan)
  * @returns {number} Bugünkü toplam hasene
  */
+/**
+ * Günlük Hasene değerini döndürür
+ * TEK KAYNAK: hasene_daily_${today}.points (ANA KAYNAK)
+ * Bu fonksiyon sadece ana kaynağı döndürür, senkronizasyon saveDetailedStats'da yapılır
+ */
 function getDailyHasene() {
     const today = getLocalDateString();
     const dailyKey = `hasene_daily_${today}`;
     const dailyData = safeGetItem(dailyKey, { points: 0 });
-    const dailyPointsFromDetailed = dailyData.points || 0;
-    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
     
-    // ÖNEMLİ: todayStats.toplamPuan'ı da kontrol et (vazifeler paneli için)
-    // todayStats.toplamPuan daha güvenilir olabilir çünkü backend'den geliyor
-    const todayStatsPuan = (dailyTasks && dailyTasks.todayStats) ? (dailyTasks.todayStats.toplamPuan || 0) : 0;
+    // TEK KAYNAK: hasene_daily_${today}.points
+    const dailyPoints = dailyData.points || 0;
     
-    // En güvenilir değeri kullan: todayStats.toplamPuan > hasene_daily_points > dailyXP
-    let finalDailyHasene = dailyPointsFromDetailed || dailyXP;
-    
-    // Eğer todayStats.toplamPuan varsa ve farklıysa, onu kullan (daha güvenilir)
-    if (todayStatsPuan > 0 && todayStatsPuan !== finalDailyHasene) {
-        // todayStats.toplamPuan daha güvenilir, hasene_daily_points'i güncelle
-        if (todayStatsPuan > finalDailyHasene) {
-            finalDailyHasene = todayStatsPuan;
-            // hasene_daily_points'i senkronize et
-            dailyData.points = todayStatsPuan;
-            dailyData.correct = dailyTasks.todayStats.toplamDogru || 0;
-            safeSetItem(dailyKey, dailyData);
-            localStorage.setItem('dailyXP', todayStatsPuan.toString());
-            console.log('🔄 getDailyHasene - hasene_daily_points senkronize edildi (todayStats.toplamPuan daha güvenilir):', {
-                eski: dailyPointsFromDetailed,
-                yeni: todayStatsPuan,
-                kaynak: 'todayStats.toplamPuan'
-            });
-        }
+    // dailyXP'yi senkronize et (görüntüleme için)
+    const currentDailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+    if (dailyPoints !== currentDailyXP) {
+        localStorage.setItem('dailyXP', dailyPoints.toString());
     }
     
-    // LOG: Çift sayma kontrolü
-    if (dailyPointsFromDetailed !== dailyXP) {
-        // Aynı gün içinde log spam'ini engellemek için sadece bir kez uyarı ver
-        const desyncFlagKey = `hasene_dailyHaseneDesyncLogged_${today}`;
-        const alreadyLoggedDesync = localStorage.getItem(desyncFlagKey) === 'true';
-        
-        if (!alreadyLoggedDesync) {
-            // LOG seviyesi: warn → sadece önemli durumda göster
-            if (typeof warnLog === 'function') {
-                warnLog('getDailyHasene - Tutarsızlık tespit edildi:', {
-                    dailyPointsFromDetailed,
-                    dailyXP,
-                    todayStatsPuan,
-                    fark: Math.abs(dailyPointsFromDetailed - dailyXP),
-                    not: 'dailyXP ve dailyData.points senkronize değil!'
-                });
-            } else {
-                console.warn('⚠️ getDailyHasene - Tutarsızlık tespit edildi:', {
-                    dailyPointsFromDetailed,
-                    dailyXP,
-                    todayStatsPuan,
-                    fark: Math.abs(dailyPointsFromDetailed - dailyXP),
-                    not: 'dailyXP ve dailyData.points senkronize değil!'
-                });
-            }
-            localStorage.setItem(desyncFlagKey, 'true');
-        } else if (typeof debugLog === 'function') {
-            // Sonraki çağrılarda sadece debug seviyesinde sessiz log
-            debugLog('getDailyHasene - Tutarsızlık devam ediyor, sessizce senkronize ediliyor.', {
-                dailyPointsFromDetailed,
-                dailyXP,
-                todayStatsPuan
-            });
-        }
-
-        // Eğer detaylı istatistiklerde puan var ama dailyXP geride/0 kalmışsa,
-        // dailyXP'yi daha güvenilir olan dailyData.points ile senkronize et
-        if (dailyPointsFromDetailed > 0 && dailyPointsFromDetailed !== dailyXP && todayStatsPuan === 0) {
-            localStorage.setItem('dailyXP', dailyPointsFromDetailed.toString());
-            if (typeof infoLog === 'function') {
-                infoLog('getDailyHasene - dailyXP, dailyData.points ile senkronize edildi:', {
-                    eskiDailyXP: dailyXP,
-                    yeniDailyXP: dailyPointsFromDetailed
-                });
-            } else {
-                console.log('🔄 getDailyHasene - dailyXP, dailyData.points ile senkronize edildi:', {
-                    eskiDailyXP: dailyXP,
-                    yeniDailyXP: dailyPointsFromDetailed
-                });
-            }
-        }
-    }
-    
-    // Öncelik sırası: todayStats.toplamPuan > hasene_daily_points > dailyXP
-    return finalDailyHasene;
+    return dailyPoints;
 }
 
 /**
@@ -1683,28 +1610,6 @@ function handleHint() {
     }
 }
 
-/**
- * Combo bonusu gösterir
- * NOT: Kullanıcı isteği üzerine devre dışı bırakıldı - performans ve odaklanma için
- */
-function showComboBonus() {
-    // Combo gösterimi kaldırıldı - performans ve kullanıcı odaklanması için
-    return;
-    /*
-    const comboDisplay = document.getElementById('combo-display');
-    if (comboDisplay) {
-        comboDisplay.style.display = 'block';
-        const comboCountEl = document.getElementById('combo-count');
-        if (comboCountEl) {
-            comboCountEl.textContent = comboCount;
-        }
-        // 2 saniye sonra otomatik gizle
-        setTimeout(() => {
-            comboDisplay.style.display = 'none';
-        }, 2000);
-    }
-    */
-}
 
 // ============================================
 // OYUN FONKSİYONLARI - DİNLE BUL
@@ -3752,13 +3657,28 @@ async function saveCurrentGameProgress() {
     }
     
     // Görev ilerlemesini güncelle
-    updateTaskProgress(gameModeKey, {
-        correct: sessionCorrect,
-        wrong: sessionWrong,
-        points: sessionScore,
-        combo: maxCombo,
-        perfect: 0 // Oyun bitmeden çıkıldığı için perfect bonus yok
-    });
+    // ÖNEMLİ: Oyun modlarında points, correct, wrong zaten her soru sonrası saveDetailedStats ile eklenmiş
+    // Burada sadece combo güncelle (oyun modlarında sadece sayaçlar güncelleniyor)
+    const isGameMode = gameModeKey === 'kelime-cevir' || gameModeKey === 'dinle-bul' || gameModeKey === 'bosluk-doldur';
+    if (isGameMode) {
+        // Oyun modları: Sadece combo gönder (correct/wrong/points zaten eklenmiş)
+        updateTaskProgress(gameModeKey, {
+            correct: 0, // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            wrong: 0,   // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            points: 0, // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            combo: maxCombo, // ✅ comboCount güncelleniyor
+            perfect: 0 // Oyun bitmeden çıkıldığı için perfect bonus yok
+        });
+    } else {
+        // Okuma modları: Tüm verileri gönder (points: 0 olduğu için sorun yok)
+        updateTaskProgress(gameModeKey, {
+            correct: sessionCorrect,
+            wrong: sessionWrong,
+            points: 0,
+            combo: maxCombo,
+            perfect: 0
+        });
+    }
     
     // NOT: saveStatsImmediate() zaten yukarıda çağrıldı (satır 2772)
     // debouncedSaveStats() ve saveStats() çağrıları kaldırıldı - çift kayıt önleme
@@ -3986,13 +3906,28 @@ async function endGame() {
     }
     
     // Görev ilerlemesini güncelle
-    updateTaskProgress(currentGameMode, {
-        correct: sessionCorrect,
-        wrong: sessionWrong,
-        points: sessionScore,
-        combo: maxCombo,
-        perfect: perfectBonus > 0 ? 1 : 0
-    });
+    // ÖNEMLİ: Oyun modlarında points, correct, wrong zaten her soru sonrası saveDetailedStats ile eklenmiş
+    // Burada sadece combo ve perfect güncelle (oyun modlarında sadece sayaçlar güncelleniyor)
+    const isGameMode = currentGameMode === 'kelime-cevir' || currentGameMode === 'dinle-bul' || currentGameMode === 'bosluk-doldur';
+    if (isGameMode) {
+        // Oyun modları: Sadece combo ve perfect gönder (correct/wrong/points zaten eklenmiş)
+        updateTaskProgress(currentGameMode, {
+            correct: 0, // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            wrong: 0,   // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            points: 0, // ✅ Oyun modlarında kullanılmıyor (saveDetailedStats zaten ekledi)
+            combo: maxCombo, // ✅ comboCount güncelleniyor
+            perfect: perfectBonus > 0 ? 1 : 0 // ✅ perfectStreak güncelleniyor
+        });
+    } else {
+        // Okuma modları: Tüm verileri gönder (points: 0 olduğu için sorun yok)
+        updateTaskProgress(currentGameMode, {
+            correct: sessionCorrect,
+            wrong: sessionWrong,
+            points: 0,
+            combo: maxCombo,
+            perfect: perfectBonus > 0 ? 1 : 0
+        });
+    }
     
     // Rozetleri ve başarımları kontrol et (addToGlobalPoints içinde zaten çağrılıyor)
     // Not: addToGlobalPoints() zaten checkBadges() ve checkAchievements() çağırıyor
@@ -4003,8 +3938,11 @@ async function endGame() {
     
     // Not: Sonuç modalı yukarıda gösterildi (performans için backend kayıtlarından önce)
 
-    // Global istatistik değişikliklerinden sonra backend'e kaydet
-    await saveStatsImmediate();
+    // NOT: saveStatsImmediate() çağrısı kaldırıldı
+    // Çünkü addToGlobalPoints() zaten saveStatsImmediate() çağırıyor (satır 1109)
+    // Tekrar çağırmak race condition'a neden olabilir ve eski totalPoints değerini kaydedebilir
+    // Ayrıca updateTaskProgress() içinde debouncedSaveStats() çağrılıyor (satır 4378)
+    // Bu yeterli - ekstra saveStatsImmediate() gereksiz
 }
 
 /**
@@ -4196,87 +4134,7 @@ function generateDailyTasks(date) {
     dailyTasks.completedTasks = [];
 }
 
-/**
- * Haftalık görevleri kontrol eder
- */
-function checkWeeklyTasks() {
-    const today = new Date();
-    const weekStart = getWeekStartDateString(today);
-    const weekEnd = getWeekEndDateString(today);
-    
-    if (weeklyTasks.lastWeekStart !== weekStart) {
-        // Yeni hafta, görevleri oluştur
-        generateWeeklyTasks(weekStart);
-        weeklyTasks.lastWeekStart = weekStart;
-        weeklyTasks.weekStart = weekStart;
-        weeklyTasks.weekEnd = weekEnd;
-        weeklyTasks.rewardsClaimed = false;
-        
-        // Haftalık istatistikleri sıfırla
-        weeklyTasks.weekStats = {
-            totalHasene: 0,
-            totalCorrect: 0,
-            totalWrong: 0,
-            daysPlayed: 0,
-            streakDays: 0,
-            allModesPlayed: new Set(),
-            comboCount: 0
-        };
-        
-        saveStats();
-    } else {
-        // Aynı hafta, mevcut görevleri template ile senkronize et
-        syncWeeklyTasksWithTemplate();
-        saveStats(); // Değişiklikleri kaydet
-    }
-    
-    updateTasksDisplay();
-}
 
-/**
- * Haftalık görevleri template ile senkronize eder (ad, açıklama ve target güncellemeleri için)
- */
-function syncWeeklyTasksWithTemplate() {
-    if (!weeklyTasks.tasks || weeklyTasks.tasks.length === 0) return;
-    
-    // Template'den görevleri al
-    const templateMap = new Map();
-    WEEKLY_TASKS_TEMPLATE.forEach(t => templateMap.set(t.id, t));
-    
-    // Mevcut görevleri güncelle
-    weeklyTasks.tasks.forEach(task => {
-        const template = templateMap.get(task.id);
-        if (template) {
-            task.name = template.name;
-            task.description = template.description;
-            // Target değerini güncelle (eğer değiştiyse)
-            if (template.target !== undefined && task.target !== template.target) {
-                // Eğer görev tamamlanmamışsa target'ı güncelle
-                if (!task.completed) {
-                    task.target = template.target;
-                    // Progress'i yeni target'a göre ayarla (orantılı olarak)
-                    if (task.target > 0 && task.progress > task.target) {
-                        // Eğer progress yeni target'tan fazlaysa, target'a eşitle
-                        task.progress = Math.min(task.progress, task.target);
-                    }
-                }
-            }
-        }
-    });
-}
-
-/**
- * Haftalık görevler oluşturur
- */
-function generateWeeklyTasks(weekStart) {
-    weeklyTasks.tasks = WEEKLY_TASKS_TEMPLATE.map(task => ({
-        ...task,
-        progress: 0,
-        completed: false
-    }));
-    
-    weeklyTasks.completedTasks = [];
-}
 
 /**
  * Görev ilerlemesini günceller
@@ -4304,18 +4162,24 @@ function updateTaskProgress(gameType, data) {
         };
     }
     
-    dailyTasks.todayStats.toplamDogru += data.correct || 0;
-    dailyTasks.todayStats.toplamPuan += data.points || 0;
-    dailyTasks.todayStats.comboCount = Math.max(dailyTasks.todayStats.comboCount || 0, data.combo || 0);
+    // ÖNEMLİ: Oyun modlarında (kelime-cevir, dinle-bul, bosluk-doldur) her soru sonrası
+    // saveDetailedStats() zaten todayStats.toplamPuan, todayStats.toplamDogru ve hasene_daily_${today}.points güncelliyor
+    // Burada tekrar eklemek ÇİFT SAYMAYA neden olur!
+    // Sadece okuma modlarında (ayet-oku, dua-et, hadis-oku) points: 0 olduğu için sorun yok
     
-    // NOT: hasene_daily_${today}.points güncellemesi YAPILMIYOR çünkü:
-    // 1. Oyun modlarında (kelime-cevir, dinle-bul, bosluk-doldur) her soru sonrası
-    //    saveDetailedStats() zaten hasene_daily_${today}.points güncelliyor
-    // 2. updateTaskProgress() oyun bitişinde çağrılıyor ve burada tekrar güncellemek
-    //    çift saymaya neden olur
-    // 3. Okuma modlarında (ayet-oku, dua-et, hadis-oku) points: 0 olduğu için
-    //    güncelleme gereksiz
-    // Sonuç: hasene_daily_${today}.points sadece saveDetailedStats() tarafından güncellenmeli
+    // Oyun modlarında points ve correct ekleme (çift saymayı önlemek için)
+    const isGameMode = gameType === 'kelime-cevir' || gameType === 'dinle-bul' || gameType === 'bosluk-doldur';
+    if (!isGameMode) {
+        // Okuma modları: points: 0, sadece sayaç güncelle
+        dailyTasks.todayStats.toplamDogru += data.correct || 0;
+        dailyTasks.todayStats.toplamPuan += data.points || 0; // points: 0 olduğu için sorun yok
+    } else {
+        // Oyun modları: correct ve points zaten saveDetailedStats ile eklenmiş
+        // SADECE sayaçları güncelle (allGameModes, farklıZorluk, comboCount), değerleri ekleme!
+        // todayStats.toplamDogru ve todayStats.toplamPuan saveDetailedStats tarafından zaten güncellenmiş
+    }
+    
+    dailyTasks.todayStats.comboCount = Math.max(dailyTasks.todayStats.comboCount || 0, data.combo || 0);
     
     if (gameType) {
         dailyTasks.todayStats.allGameModes.add(gameType);
@@ -4780,11 +4644,6 @@ function closeDailyRewardModal() {
 /**
  * Haftalık ödülü alır
  */
-// Haftalık görevler kaldırıldı - fonksiyon artık kullanılmıyor
-async function claimWeeklyRewards() {
-    // Haftalık görevler UI'dan kaldırıldı
-    return;
-}
 
 // ============================================
 // STREAK SİSTEMİ
@@ -4985,44 +4844,19 @@ function saveDetailedStats(points, correct, wrong, maxCombo, perfectLessons, inc
     
     safeSetItem(dailyKey, dailyData);
     
-    // ÖNEMLİ: hasene_daily_${today}.points güncellendiğinde todayStats.toplamPuan'ı da senkronize et
-    // Çünkü vazifeler paneli todayStats.toplamPuan kullanıyor
-    // NOT: saveDetailedStats her soru sonrası çağrılıyor, bu yüzden todayStats.toplamPuan'ı da güncellemeli
+    // ÖNEMLİ: TEK KAYNAK MANTIĞI - hasene_daily_${today}.points ANA KAYNAK
+    // todayStats.toplamPuan ve dailyXP bu kaynaktan senkronize edilir
     if (dailyTasks && dailyTasks.todayStats) {
-        const oldTodayStatsPuan = dailyTasks.todayStats.toplamPuan || 0;
+        // ANA KAYNAK: hasene_daily_${today}.points
+        // Diğer kaynakları bu kaynaktan senkronize et
+        dailyTasks.todayStats.toplamPuan = dailyData.points;
+        dailyTasks.todayStats.toplamDogru = dailyData.correct;
         
-        // ÖNEMLİ: saveDetailedStats her soru sonrası çağrılıyor, bu yüzden todayStats.toplamPuan'ı da güncelle
-        // hasene_daily_points her soru sonrası güncelleniyor, todayStats.toplamPuan da aynı değere sahip olmalı
-        if (dailyData.points !== oldTodayStatsPuan) {
-            // Fark varsa, daha büyük olanı kullan (çift saymayı önlemek için)
-            if (dailyData.points > oldTodayStatsPuan) {
-                // hasene_daily_points daha büyükse, todayStats.toplamPuan'ı güncelle
-                dailyTasks.todayStats.toplamPuan = dailyData.points;
-                dailyTasks.todayStats.toplamDogru = dailyData.correct;
-                console.log('🔄 saveDetailedStats - todayStats.toplamPuan senkronize edildi (hasene_daily_points daha büyük):', {
-                    eski: oldTodayStatsPuan,
-                    yeni: dailyData.points,
-                    kaynak: 'hasene_daily_points'
-                });
-            } else {
-                // todayStats.toplamPuan daha büyükse, hasene_daily_points'i güncelle (todayStats daha güvenilir)
-                dailyData.points = oldTodayStatsPuan;
-                dailyData.correct = dailyTasks.todayStats.toplamDogru || 0;
-                safeSetItem(dailyKey, dailyData);
-                localStorage.setItem('dailyXP', dailyData.points.toString());
-                console.log('🔄 saveDetailedStats - hasene_daily_points senkronize edildi (todayStats.toplamPuan daha büyük):', {
-                    eski: dailyData.points,
-                    yeni: oldTodayStatsPuan,
-                    kaynak: 'todayStats.toplamPuan'
-                });
-            }
-            
-            // dailyTasks güncellendi, backend'e kaydet (debounced değil, hemen kaydet)
-            if (typeof window.saveDailyTasks === 'function') {
-                window.saveDailyTasks(dailyTasks).catch(err => {
-                    console.warn('⚠️ saveDetailedStats - saveDailyTasks hatası:', err);
-                });
-            }
+        // Backend'e kaydet (debounced değil, hemen kaydet)
+        if (typeof window.saveDailyTasks === 'function') {
+            window.saveDailyTasks(dailyTasks).catch(err => {
+                console.warn('⚠️ saveDetailedStats - saveDailyTasks hatası:', err);
+            });
         }
     }
     
@@ -7069,7 +6903,6 @@ if (typeof window !== 'undefined') {
     window.showLevelUpModal = showLevelUpModal;
     window.claimDailyRewards = claimDailyRewards;
     window.closeDailyRewardModal = closeDailyRewardModal;
-    window.claimWeeklyRewards = claimWeeklyRewards;
     window.setCustomGoal = setCustomGoal;
     window.resetAllStats = resetAllStats;
     window.resetAllData = resetAllData; // TEST: Tüm verileri sıfırla (hem local hem backend)

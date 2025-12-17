@@ -453,25 +453,6 @@ async function handleDirectLogin() {
     }
 }
 
-/**
- * Google ile giriş (eski - artık kullanılmıyor)
- */
-async function handleGoogleLogin() {
-    try {
-        console.log('🔄 handleGoogleLogin çağrıldı');
-        console.log('🔍 loginWithGoogle fonksiyonu var mı?', typeof window.loginWithGoogle);
-        console.log('🔍 getFirebaseAuth fonksiyonu var mı?', typeof window.getFirebaseAuth);
-        
-        if (typeof window.loginWithGoogle === 'function') {
-            showAuthMessage('Google ile giriş yapılıyor, yönlendiriliyorsunuz...', 'info');
-            
-            console.log('🔄 Google login başlatılıyor...');
-            const auth = window.getFirebaseAuth ? window.getFirebaseAuth() : null;
-            console.log('🔍 Firebase Auth:', auth ? 'Mevcut' : 'Yok');
-            console.log('🔍 Backend Type:', window.BACKEND_TYPE);
-            
-            const result = await window.loginWithGoogle();
-            console.log('📥 Google login sonucu:', result);
             
             // Redirect başlatıldıysa (result null), kullanıcı Google'a yönlendirilecek
             // Sayfa yenilendikten sonra initializeAuth() redirect sonucunu kontrol edecek
@@ -1129,7 +1110,6 @@ if (typeof window !== 'undefined') {
     window.switchAuthTab = switchAuthTab;
     window.handleLogin = handleLogin;
     window.handleRegister = handleRegister;
-    window.handleGoogleLogin = handleGoogleLogin;
     window.handleGitHubLogin = handleGitHubLogin;
     window.handleLogout = handleLogout;
     window.updateUserUI = updateUserUI;
@@ -1163,7 +1143,6 @@ if (typeof window !== 'undefined') {
         window.handleLogin = handleLogin;
         window.handleRegister = handleRegister;
         window.handleDirectLogin = handleDirectLogin;
-        window.handleGoogleLogin = handleGoogleLogin;
         window.handleGitHubLogin = handleGitHubLogin;
         window.handleLogout = handleLogout;
         window.updateUserUI = updateUserUI;

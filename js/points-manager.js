@@ -27,14 +27,10 @@ function addSessionPoints(points) {
 }
 
 /**
- * Günlük XP ekler - GÜNLÜK VİRD SADECE HASENE PUAN VE KAZANILAN TÜM BONUS, COMBO, HEDİYE VS PUANLARA GÖRE ENDEKSLENMİŞTİR
- * @param {number} points - Eklenecek puan (doğru cevap + combo bonusu + perfect lesson bonusu + günlük görev ödülü + hediye vs)
+ * Günlük XP ekler - KALDIRILDI (game-core.js'deki versiyon kullanılıyor)
+ * Bu fonksiyon game-core.js:1055'te tanımlı ve daha kapsamlı
+ * @deprecated game-core.js'deki addDailyXP kullanılmalı
  */
-function addDailyXP(points) {
-    const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
-    localStorage.setItem('dailyXP', (dailyXP + points).toString());
-    updateDailyGoalDisplay();
-}
 
 /**
  * Seviye hesaplar
@@ -114,92 +110,17 @@ function calculateBadges(points) {
 }
 
 /**
- * Global puanlara ekler
- * @param {number} points - Eklenecek puan
- * @param {number} correctAnswers - Doğru cevap sayısı
+ * Global puanlara ekler - KALDIRILDI (game-core.js'deki versiyon kullanılıyor)
+ * Bu fonksiyon game-core.js:1075'te tanımlı ve skipDetailedStats parametresi var
+ * @deprecated game-core.js'deki addToGlobalPoints kullanılmalı
  */
-async function addToGlobalPoints(points, correctAnswers) {
-    console.log('💰 addToGlobalPoints çağrıldı:', {
-        points: points,
-        correctAnswers: correctAnswers,
-        totalPointsBefore: totalPoints
-    });
-    
-    const oldLevel = calculateLevel(totalPoints);
-    totalPoints += points;
-    
-    console.log('💰 addToGlobalPoints: totalPoints güncellendi:', {
-        totalPointsAfter: totalPoints,
-        addedPoints: points
-    });
-    
-    // Rozetleri güncelle (eğer calculateBadges fonksiyonu varsa)
-    if (typeof calculateBadges === 'function' && typeof badges !== 'undefined') {
-        badges = calculateBadges(totalPoints);
-    }
-    
-    // Günlük XP ekle
-    addDailyXP(points);
-    
-    // Yeni seviye kontrolü
-    const newLevel = calculateLevel(totalPoints);
-    if (newLevel > oldLevel) {
-        if (typeof showLevelUpModal === 'function') {
-            showLevelUpModal(newLevel);
-        }
-    }
-    
-    // UI'ı güncelle (HEMEN GÖRÜNSÜN)
-    if (typeof updateStatsBar === 'function') {
-        updateStatsBar(); // Hasene, Yıldız, Mertebe güncellenir
-    }
-    
-    if (typeof updateDailyGoalDisplay === 'function') {
-        updateDailyGoalDisplay(); // Günlük hedef progress bar güncellenir
-    }
-    
-    if (typeof updateStreakDisplay === 'function') {
-        updateStreakDisplay(); // Streak (Seri) güncellenir
-    }
-    
-    // Kaydet (ÖNEMLİ: await et - totalPoints güncellenmeden kayıt yapılmamalı)
-    if (typeof saveStatsImmediate === 'function') {
-        // ÖNEMLİ: await ekle - totalPoints güncellenmeden kayıt yapılmamalı
-        await saveStatsImmediate();
-        console.log('✅ addToGlobalPoints: saveStatsImmediate tamamlandı, totalPoints:', totalPoints);
-    }
-    
-    // Rozetleri kontrol et
-    if (typeof checkBadges === 'function') {
-        checkBadges();
-    }
-    
-    // Başarımları kontrol et
-    if (typeof checkAchievements === 'function') {
-        checkAchievements();
-    }
-    
-    // Streak güncelle
-    if (correctAnswers > 0 && typeof updateDailyProgress === 'function') {
-        updateDailyProgress(correctAnswers);
-        // Streak güncellendikten sonra tekrar göster
-        if (typeof updateStreakDisplay === 'function') {
-            updateStreakDisplay();
-        }
-        // Günlük hedef de güncellenebilir
-        if (typeof updateDailyGoalDisplay === 'function') {
-            updateDailyGoalDisplay();
-        }
-    }
-}
 
 // Export
 if (typeof window !== 'undefined') {
     window.addSessionPoints = addSessionPoints;
-    window.addDailyXP = addDailyXP;
+    // addDailyXP ve addToGlobalPoints game-core.js'de tanımlı, burada export etme
     window.calculateLevel = calculateLevel;
     window.getLevelName = getLevelName;
     window.calculateBadges = calculateBadges;
-    window.addToGlobalPoints = addToGlobalPoints;
 }
 

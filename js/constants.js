@@ -373,51 +373,7 @@ const DAILY_BONUS_TASKS_TEMPLATE = [
     }
 ];
 
-// Haftalık Görevler Template
-// Analiz: 15 dk/gün × 7 gün = ~14 oyun = ~105 doğru = ~2,100 puan
-// Hedef: Bir haftada tamamlanabilir görevler
-const WEEKLY_TASKS_TEMPLATE = [
-    {
-        id: 'weekly_150_correct',
-        name: '150 Doğru Cevap',
-        description: '✅ 150 sahih cevap ver',
-        target: 150,
-        type: 'correct',
-        reward: 0
-    },
-    {
-        id: 'weekly_2500_hasene',
-        name: '2500 Hasene',
-        description: '⭐ 2,500 Hasene kazan',
-        target: 2500,
-        type: 'hasene',
-        reward: 0
-    },
-    {
-        id: 'weekly_7_streak',
-        name: '7 Gün Seri',
-        description: '🔥 7 gün üst üste talebe et',
-        target: 7,
-        type: 'streak',
-        reward: 0
-    },
-    {
-        id: 'weekly_all_modes',
-        name: 'Tüm Oyun Modları',
-        description: '🎮 Tüm 6 oyun modunu oyna',
-        target: 6,
-        type: 'game_modes',
-        reward: 0
-    },
-    {
-        id: 'weekly_5_perfect',
-        name: 'Perfect Lesson',
-        description: '💎 Tüm soruları doğru cevaplayarak 3 ders tamamla',
-        target: 3,
-        type: 'perfect_lessons',
-        reward: 0
-    }
-];
+// Haftalık Görevler Template - KALDIRILDI (Haftalık görevler UI'dan kaldırıldı)
 
 // Rozet Renkleri
 const BADGE_COLORS = {
@@ -1085,7 +1041,6 @@ if (typeof window !== 'undefined') {
     window.ACHIEVEMENTS = ACHIEVEMENTS;
     window.DAILY_TASKS_TEMPLATE = DAILY_TASKS_TEMPLATE;
     window.DAILY_BONUS_TASKS_TEMPLATE = DAILY_BONUS_TASKS_TEMPLATE;
-    window.WEEKLY_TASKS_TEMPLATE = WEEKLY_TASKS_TEMPLATE;
     window.BADGE_COLORS = BADGE_COLORS;
     window.BADGE_DEFINITIONS = BADGE_DEFINITIONS;
 }
