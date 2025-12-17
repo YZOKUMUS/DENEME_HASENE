@@ -2218,6 +2218,9 @@ function checkBoslukAnswer(selectedIndex, isCorrect) {
         // Her soru cevaplandığında anında kaydet ve modal açıksa yenile
         // Combo bonusu her doğru cevapta olduğu için maxCombo değeri gönderiliyor
         saveDetailedStats(points, 1, 0, comboCount, 0);
+        // Backend'e kaydet (kelime çevir ve dinle bul oyunlarında updateWordStats çağrılıyor,
+        // ama boşluk doldur oyununda kelime ID'si olmadığı için updateWordStats çağrılamıyor)
+        debouncedSaveStats();
         if (typeof refreshDetailedStatsIfOpen === 'function') {
             refreshDetailedStatsIfOpen();
         }
