@@ -704,6 +704,7 @@ async function saveUserStats(stats) {
             
             await firestoreSet('user_stats', user.id, {
                 user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
                 total_points: stats.total_points,
                 badges: stats.badges,
                 streak_data: stats.streak_data,
