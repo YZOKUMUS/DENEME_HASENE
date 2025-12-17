@@ -599,15 +599,54 @@ body {
     opacity: 0.9;
 }
 
-/* Game Modes - Grid Layout (3 üstte, 3 altta) */
+/* Game Modes - iPhone Tarzı 2 Satır Yatay Scroll */
+.game-modes-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.game-modes-row {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Scrollbar gizle (Chrome, Safari) */
+.game-modes-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* İlk satır için padding (iPhone tarzı) */
+.game-modes-row:first-child {
+    padding-left: var(--spacing-md);
+}
+
+/* Her satırın sonuna padding ekle (scroll için) */
+.game-modes-row::after {
+    content: '';
+    flex: 0 0 var(--spacing-md);
+}
+
+/* Eski grid class'ı (geriye dönük uyumluluk için) */
 .game-modes-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
 }
 
 .game-card {
+    flex: 0 0 auto;
+    width: 160px;
+    min-width: 160px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -620,6 +659,7 @@ body {
     text-align: center;
     position: relative;
     overflow: hidden;
+    scroll-snap-align: start;
 }
 
 /* Kelime Çevir - Mavi tonları */
@@ -1254,25 +1294,9 @@ body {
     cursor: not-allowed;
 }
 
-.lives-display {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--accent-error);
-}
+/* .lives-display - KALDIRILDI (Can sistemi kaldırıldı) */
 
-.combo-display {
-    text-align: center;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-radius: var(--radius-sm);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--accent-warning);
-    margin-bottom: var(--spacing-sm);
-}
+/* .combo-display - KALDIRILDI (Combo gösterimi kaldırıldı, performans için) */
 
 .play-audio-btn {
     padding: var(--spacing-sm) var(--spacing-md);
@@ -4178,14 +4202,28 @@ body {
         font-size: 0.6rem;
     }
 
-    /* Oyun Kartları - Mobil Grid (2 sütun) */
-    .game-modes-grid {
-        grid-template-columns: repeat(2, 1fr);
+    /* Oyun Kartları - Mobil (Yatay Scroll) */
+    .game-modes-container {
         gap: var(--spacing-sm);
         margin-bottom: var(--spacing-sm);
     }
 
+    .game-modes-row {
+        gap: var(--spacing-sm);
+        padding: 8px 0;
+    }
+
+    .game-modes-row:first-child {
+        padding-left: var(--spacing-sm);
+    }
+
+    .game-modes-row::after {
+        flex: 0 0 var(--spacing-sm);
+    }
+
     .game-card {
+        width: 140px;
+        min-width: 140px;
         padding: var(--spacing-sm);
     }
 
@@ -4923,14 +4961,28 @@ body {
         font-size: 0.8rem;
     }
 
-    /* Oyun Kartları - Çok küçük ekranlar için (2 sütun) */
-    .game-modes-grid {
-        grid-template-columns: repeat(2, 1fr);
+    /* Oyun Kartları - Çok küçük ekranlar için (Yatay Scroll) */
+    .game-modes-container {
         gap: var(--spacing-xs);
         margin-bottom: var(--spacing-sm);
     }
 
+    .game-modes-row {
+        gap: var(--spacing-xs);
+        padding: 6px 0;
+    }
+
+    .game-modes-row:first-child {
+        padding-left: var(--spacing-xs);
+    }
+
+    .game-modes-row::after {
+        flex: 0 0 var(--spacing-xs);
+    }
+
     .game-card {
+        width: 130px;
+        min-width: 130px;
         padding: var(--spacing-xs);
     }
 
@@ -5118,19 +5170,27 @@ body {
     }
 }
 
-/* Tablet için 3 sütun grid */
+/* Tablet için (Yatay Scroll - Daha geniş kartlar) */
 @media (min-width: 601px) and (max-width: 900px) {
-    .game-modes-grid {
-        grid-template-columns: repeat(3, 1fr);
+    .game-modes-row {
         gap: var(--spacing-md);
+    }
+
+    .game-card {
+        width: 180px;
+        min-width: 180px;
     }
 }
 
-/* Desktop için 3 sütun grid (aynı kalır) */
+/* Desktop için (Yatay Scroll - Daha geniş kartlar) */
 @media (min-width: 901px) {
-    .game-modes-grid {
-        grid-template-columns: repeat(3, 1fr);
+    .game-modes-row {
         gap: var(--spacing-lg);
+    }
+
+    .game-card {
+        width: 200px;
+        min-width: 200px;
     }
 }
 

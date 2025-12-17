@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oyun Modları - Yatay Scroll Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #a8b5ff 0%, #b8a5e8 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* iPhone Tarzı 2 Satır Yatay Scroll */
+        .game-modes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .game-modes-row {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 10px 0;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+
+        /* Scrollbar gizle (Chrome, Safari) */
+        .game-modes-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .game-card {
+            flex: 0 0 auto;
+            width: 160px;
+            min-width: 160px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            scroll-snap-align: start;
+        }
+
+        .game-card:active {
+            transform: scale(0.95);
+        }
+
+        /* Kelime Çevir - Mavi */
+        .game-card[data-game="kelime-cevir"] {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        /* Dinle Bul - Yeşil */
+        .game-card[data-game="dinle-bul"] {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 163, 74, 0.35) 100%);
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+
+        /* Boşluk Doldur - Turuncu */
+        .game-card[data-game="bosluk-doldur"] {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.25) 0%, rgba(234, 88, 12, 0.35) 100%);
+            border-color: rgba(249, 115, 22, 0.5);
+        }
+
+        /* Ayet Oku - Mor */
+        .game-card[data-game="ayet-oku"] {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(147, 51, 234, 0.35) 100%);
+            border-color: rgba(168, 85, 247, 0.5);
+        }
+
+        /* Dua Et - Altın */
+        .game-card[data-game="dua-et"] {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.35) 100%);
+            border-color: rgba(251, 191, 36, 0.5);
+        }
+
+        /* Hadis Oku - Pembe */
+        .game-card[data-game="hadis-oku"] {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.25) 0%, rgba(219, 39, 119, 0.35) 100%);
+            border-color: rgba(236, 72, 153, 0.5);
+        }
+
+        /* Elif Ba - Mavi */
+        .game-card[data-game="elif-ba"] {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+        }
+
+        .game-icon img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .game-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-card p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* Scroll İndikatörü (Opsiyonel) */
+        .scroll-hint {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* İlk satır için padding (iPhone tarzı) */
+        .game-modes-row:first-child {
+            padding-left: 20px;
+        }
+
+        .game-modes-row:last-child {
+            padding-right: 20px;
+        }
+
+        /* Her satırın sonuna padding ekle (scroll için) */
+        .game-modes-row::after {
+            content: '';
+            flex: 0 0 20px;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .game-card {
+                width: 180px;
+                min-width: 180px;
+            }
+        }
+
+        /* Test bilgisi */
+        .test-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-info h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .test-info p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Oyun Modları - Yatay Scroll Test</h1>
+
+        <div class="test-info">
+            <h2>📱 iPhone Tarzı 2 Satır Yatay Scroll</h2>
+            <p>Her satırda oyun kartları yatay olarak kaydırılabilir. Sağa sola kaydırarak tüm kartları görebilirsiniz.</p>
+        </div>
+
+        <div class="game-modes-container">
+            <!-- İlk Satır -->
+            <div class="game-modes-row">
+                <div class="game-card" data-game="kelime-cevir">
+                    <div class="game-icon">
+                        <span>📚</span>
+                    </div>
+                    <h3>Kelime Çevir</h3>
+                    <p>Arapça kelimelerin Türkçe meâl karşılığını bul</p>
+                </div>
+
+                <div class="game-card" data-game="dinle-bul">
+                    <div class="game-icon">
+                        <span>🎧</span>
+                    </div>
+                    <h3>Dinle Bul</h3>
+                    <p>Kuran'da geçen Arapça kelimeyi dinle ve bul</p>
+                </div>
+
+                <div class="game-card" data-game="bosluk-doldur">
+                    <div class="game-icon">
+                        <span>✍️</span>
+                    </div>
+                    <h3>Boşluk Doldur</h3>
+                    <p>Ayetteki eksik kelimeyi tamamla</p>
+                </div>
+
+                <div class="game-card" data-game="ayet-oku">
+                    <div class="game-icon">
+                        <span>📖</span>
+                    </div>
+                    <h3>Ayet Oku</h3>
+                    <p>Ayetin Arapça'sını oku, dinle ve meâli idrak et</p>
+                </div>
+            </div>
+
+            <!-- İkinci Satır -->
+            <div class="game-modes-row">
+                <div class="game-card" data-game="dua-et">
+                    <div class="game-icon">
+                        <span>🤲</span>
+                    </div>
+                    <h3>Dua Et</h3>
+                    <p>Kuran'da geçen duaları dinle ve öğren</p>
+                </div>
+
+                <div class="game-card" data-game="hadis-oku">
+                    <div class="game-icon">
+                        <span>📜</span>
+                    </div>
+                    <h3>Hadis Oku</h3>
+                    <p>Hadis-i şerifleri oku ve istifade et</p>
+                </div>
+
+                <div class="game-card" data-game="elif-ba">
+                    <div class="game-icon">
+                        <span>📘</span>
+                    </div>
+                    <h3>Elif Ba Cüzü</h3>
+                    <p>Arapça harfleri ve üç harfli kelimeleri öğren</p>
+                </div>
+
+                <!-- Ekstra kartlar (scroll testi için) -->
+                <div class="game-card" data-game="kelime-cevir" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);">
+                    <div class="game-icon">
+                        <span>⭐</span>
+                    </div>
+                    <h3>Ekstra Kart 1</h3>
+                    <p>Scroll testi için ekstra kart</p>
+                </div>
+
+                <div class="game-card" data-game="dinle-bul" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 163, 74, 0.35) 100%);">
+                    <div class="game-icon">
+                        <span>🔥</span>
+                    </div>
+                    <h3>Ekstra Kart 2</h3>
+                    <p>Scroll testi için ekstra kart</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-hint">
+            👈 👉 Sağa sola kaydırın
+        </div>
+    </div>
+
+    <script>
+        // Kartlara tıklama efekti
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const gameName = this.getAttribute('data-game');
+                alert(`Oyun başlatılıyor: ${this.querySelector('h3').textContent}`);
+            });
+        });
+
+        // Scroll animasyonu (opsiyonel)
+        const rows = document.querySelectorAll('.game-modes-row');
+        rows.forEach(row => {
+            let isScrolling = false;
+            row.addEventListener('scroll', () => {
+                if (!isScrolling) {
+                    isScrolling = true;
+                    setTimeout(() => {
+                        isScrolling = false;
+                    }, 150);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
