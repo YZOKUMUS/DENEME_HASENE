@@ -712,20 +712,24 @@ async function loadStats() {
                             });
                             
                             // ÖNEMLİ: Görevler yoksa oluştur (checkDailyTasks çağrılmalı)
-                            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
-                                console.log('⚠️ Backend\'den görevler yüklenmedi, checkDailyTasks çağrılıyor...');
+                            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                                console.log('⚠️ Backend\'den görevler yüklenmedi veya eksik, checkDailyTasks çağrılıyor...');
                                 await checkDailyTasks();
+                                console.log('✅ checkDailyTasks tamamlandı, görev sayısı:', {
+                                    tasks: dailyTasks.tasks?.length || 0,
+                                    bonusTasks: dailyTasks.bonusTasks?.length || 0
+                                });
                             }
                             
-                            // Görev progress'lerini güncelle
-                            if (dailyTasks.tasks || dailyTasks.bonusTasks) {
+                            // ÖNEMLİ: Progress değerlerini güncelle (görevler oluşturulduktan sonra)
+                            if (dailyTasks.tasks && dailyTasks.tasks.length > 0) {
                                 updateTaskProgressFromStats();
                                 console.log('✅ updateTaskProgressFromStats çağrıldı, görev sayısı:', {
                                     tasks: dailyTasks.tasks?.length || 0,
                                     bonusTasks: dailyTasks.bonusTasks?.length || 0
                                 });
                             } else {
-                                console.warn('⚠️ dailyTasks.tasks ve dailyTasks.bonusTasks yok!');
+                                console.warn('⚠️ dailyTasks.tasks hala yok veya boş!');
                             }
                         }
                         
@@ -739,15 +743,16 @@ async function loadStats() {
                             dailyDataPoints: safeGetItem(dailyKey, {}).points
                         });
                         
-                        // ÖNEMLİ: Görevler yoksa oluştur ve bekle
-                        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
-                            console.log('⚠️ Görevler yok, checkDailyTasks çağrılıyor...');
+                        // ÖNEMLİ: Görevler yoksa oluştur ve bekle (yukarıda zaten kontrol edildi, ama tekrar kontrol ediyoruz)
+                        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                            console.log('⚠️ UI güncelleme öncesi: Görevler eksik, checkDailyTasks çağrılıyor...');
                             await checkDailyTasks();
                         }
                         
-                        // Görev progress'lerini tekrar güncelle (görevler oluşturulduktan sonra)
-                        if (dailyTasks.tasks || dailyTasks.bonusTasks) {
+                        // ÖNEMLİ: Progress değerlerini tekrar güncelle (görevler oluşturulduktan ve todayStats güncellendikten sonra)
+                        if (dailyTasks.tasks && dailyTasks.tasks.length > 0) {
                             updateTaskProgressFromStats();
+                            console.log('✅ UI güncelleme öncesi: updateTaskProgressFromStats çağrıldı');
                         }
                         
                         if (typeof updateDailyGoalDisplay === 'function') {
@@ -4678,15 +4683,12 @@ function updateTaskProgressFromStats() {
         return;
     }
     
-    // ÖNEMLİ: Görevler yoksa oluştur
+    // ÖNEMLİ: Görevler yoksa oluştur (ama async bekleme yapmıyoruz, sadece uyarı veriyoruz)
     if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
-        console.log('⚠️ updateTaskProgressFromStats: Görevler yok, checkDailyTasks çağrılıyor...');
-        checkDailyTasks();
-        // checkDailyTasks async, ama görevler oluşturulana kadar bekle
-        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
-            console.warn('⚠️ updateTaskProgressFromStats: Görevler hala yok!');
-            return;
-        }
+        console.warn('⚠️ updateTaskProgressFromStats: Görevler yok! checkDailyTasks çağrılmalı.');
+        // checkDailyTasks() async, bu yüzden burada await edemeyiz
+        // Ancak görevler yoksa progress güncellemesi yapılamaz
+        return;
     }
     
     console.log('🔄 updateTaskProgressFromStats çağrıldı:', {
