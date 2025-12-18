@@ -529,9 +529,14 @@ async function getCurrentUser() {
     console.log('🔍 getCurrentUser() çağrıldı');
     
     // ÖNCE localStorage'da hasene_user_id var mı kontrol et (çıkış yapınca korunur)
-    const savedUserId = localStorage.getItem('hasene_user_id');
-    const savedUsername = localStorage.getItem('hasene_username');
-    const savedEmail = localStorage.getItem('hasene_user_email');
+    let savedUserId = localStorage.getItem('hasene_user_id');
+    let savedUsername = localStorage.getItem('hasene_username');
+    let savedEmail = localStorage.getItem('hasene_user_email');
+    
+    // 'null' string'ini temizle (localStorage bazen 'null' string'i kaydeder)
+    if (savedEmail === 'null' || savedEmail === null) savedEmail = null;
+    if (savedUsername === 'null' || savedUsername === null) savedUsername = null;
+    if (savedUserId === 'null' || savedUserId === null) savedUserId = null;
     
     console.log('🔍 localStorage durumu:', {
         hasene_user_id: savedUserId,
@@ -547,8 +552,8 @@ async function getCurrentUser() {
         
         // Firestore kontrolü yapmadan direkt döndür (daha hızlı ve güvenilir)
         // localStorage'da UID varsa, o UID'yi kullan (Firestore'da veriler o UID'de)
-        const username = savedUsername || savedEmail?.split('@')[0] || 'Kullanıcı';
-        const email = savedEmail || username + '@local';
+        const username = savedUsername || (savedEmail && savedEmail !== 'null' ? savedEmail.split('@')[0] : 'Kullanıcı');
+        const email = savedEmail && savedEmail !== 'null' ? savedEmail : username + '@local';
         
         // localStorage'ı güncelle (tutarlılık için)
         localStorage.setItem('hasene_user_email', email);
@@ -581,15 +586,23 @@ async function getCurrentUser() {
                         firebaseUID: currentUser.uid,
                         localStorageUID: localUserId
                     });
-                    const localUsername = localStorage.getItem('hasene_username') || 'Kullanıcı';
-                    const localEmail = localStorage.getItem('hasene_user_email') || localUsername + '@local';
-                    return { id: localUserId, email: localEmail, username: localUsername };
+                    let localUsername = localStorage.getItem('hasene_username');
+                    let localEmail = localStorage.getItem('hasene_user_email');
+                    // 'null' string'ini temizle
+                    if (localEmail === 'null' || localEmail === null) localEmail = null;
+                    if (localUsername === 'null' || localUsername === null) localUsername = null;
+                    const finalUsername = localUsername || 'Kullanıcı';
+                    const finalEmail = localEmail || finalUsername + '@local';
+                    return { id: localUserId, email: finalEmail, username: finalUsername };
                 }
                 
                 // Normal durum: Firebase auth'dan UID kullan
                 // ÖNEMLİ: Önce localStorage'dan username al (kullanıcı YZOKUMUS ile giriş yaptıysa burada olmalı)
-                const localUsername = localStorage.getItem('hasene_username');
-                const localEmail = localStorage.getItem('hasene_user_email');
+                let localUsername = localStorage.getItem('hasene_username');
+                let localEmail = localStorage.getItem('hasene_user_email');
+                // 'null' string'ini temizle
+                if (localEmail === 'null' || localEmail === null) localEmail = null;
+                if (localUsername === 'null' || localUsername === null) localUsername = null;
                 
                 let userData = null;
                 try {
@@ -626,16 +639,20 @@ async function getCurrentUser() {
             
             // Firebase'de kullanıcı yok, onAuthStateChanged ile bekle
             const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-            return new Promise((resolve) => {
+            const promiseResult = await new Promise((resolve) => {
                 // Timeout ekle - eğer 1 saniye içinde cevap gelmezse localStorage'a bak
                 const timeout = setTimeout(() => {
                     console.log('⏰ Firebase auth timeout, localStorage\'a bakılıyor...');
-                    const localEmail = localStorage.getItem('hasene_user_email');
-                    const localUsername = localStorage.getItem('hasene_username');
-                    const localId = localStorage.getItem('hasene_user_id');
+                    let localEmail = localStorage.getItem('hasene_user_email');
+                    let localUsername = localStorage.getItem('hasene_username');
+                    let localId = localStorage.getItem('hasene_user_id');
+                    // 'null' string'ini temizle
+                    if (localEmail === 'null' || localEmail === null) localEmail = null;
+                    if (localUsername === 'null' || localUsername === null) localUsername = null;
+                    if (localId === 'null' || localId === null) localId = null;
                     if (localEmail || localUsername || localId) {
                         const finalEmail = localEmail || (localUsername ? localUsername + '@local' : 'user@local');
-                        const finalUsername = localUsername || (localEmail ? localEmail.split('@')[0] : 'Kullanıcı');
+                        const finalUsername = localUsername || (localEmail && localEmail !== 'null' ? localEmail.split('@')[0] : 'Kullanıcı');
                         const finalId = localId || 'local-' + Date.now();
                         resolve({ id: finalId, email: finalEmail, username: finalUsername });
                     } else {
@@ -649,8 +666,13 @@ async function getCurrentUser() {
                     if (user) {
                         // Kullanıcı profilini Firestore'dan yükle
                         const userData = await firestoreGet('users', user.uid);
-                        const username = userData?.username || user.displayName || localStorage.getItem('hasene_username') || 'Kullanıcı';
-                        const email = user.email || userData?.email || localStorage.getItem('hasene_user_email') || username + '@local';
+                        let localUsername = localStorage.getItem('hasene_username');
+                        let localEmail = localStorage.getItem('hasene_user_email');
+                        // 'null' string'ini temizle
+                        if (localEmail === 'null' || localEmail === null) localEmail = null;
+                        if (localUsername === 'null' || localUsername === null) localUsername = null;
+                        const username = userData?.username || user.displayName || localUsername || 'Kullanıcı';
+                        const email = user.email || userData?.email || localEmail || username + '@local';
                         
                         localStorage.setItem('hasene_user_email', email);
                         localStorage.setItem('hasene_username', username);
@@ -659,12 +681,16 @@ async function getCurrentUser() {
                         resolve({ id: user.uid, email, username });
                     } else {
                         // Firebase'de kullanıcı yok, localStorage'a bak
-                        const localEmail = localStorage.getItem('hasene_user_email');
-                        const localUsername = localStorage.getItem('hasene_username');
-                        const localId = localStorage.getItem('hasene_user_id');
+                        let localEmail = localStorage.getItem('hasene_user_email');
+                        let localUsername = localStorage.getItem('hasene_username');
+                        let localId = localStorage.getItem('hasene_user_id');
+                        // 'null' string'ini temizle
+                        if (localEmail === 'null' || localEmail === null) localEmail = null;
+                        if (localUsername === 'null' || localUsername === null) localUsername = null;
+                        if (localId === 'null' || localId === null) localId = null;
                         if (localEmail || localUsername || localId) {
                             const finalEmail = localEmail || (localUsername ? localUsername + '@local' : 'user@local');
-                            const finalUsername = localUsername || (localEmail ? localEmail.split('@')[0] : 'Kullanıcı');
+                            const finalUsername = localUsername || (localEmail && localEmail !== 'null' ? localEmail.split('@')[0] : 'Kullanıcı');
                             const finalId = localId || 'local-' + Date.now();
                             resolve({ id: finalId, email: finalEmail, username: finalUsername });
                         } else {
@@ -673,15 +699,26 @@ async function getCurrentUser() {
                     }
                 });
             });
+            
+            // Promise sonucunu döndür
+            if (promiseResult) {
+                return promiseResult;
+            }
         } catch (error) {
             console.warn('Firebase getCurrentUser error:', error);
+            // Hata olsa bile fallback'e devam et
         }
     }
     
     // Fallback: localStorage
-    const email = localStorage.getItem('hasene_user_email');
-    const username = localStorage.getItem('hasene_username');
-    const userId = localStorage.getItem('hasene_user_id');
+    let email = localStorage.getItem('hasene_user_email');
+    let username = localStorage.getItem('hasene_username');
+    let userId = localStorage.getItem('hasene_user_id');
+    
+    // 'null' string'ini temizle (localStorage bazen 'null' string'i kaydeder)
+    if (email === 'null' || email === null) email = null;
+    if (username === 'null' || username === null) username = null;
+    if (userId === 'null' || userId === null) userId = null;
     
     console.log('🔍 getCurrentUser fallback kontrolü:', {
         email: email,
@@ -692,7 +729,7 @@ async function getCurrentUser() {
     if (email || username || userId) {
         // Email yoksa username'den oluştur
         const finalEmail = email || (username ? username + '@local' : 'user@local');
-        const finalUsername = username || (email ? email.split('@')[0] : 'Kullanıcı');
+        const finalUsername = username || (email && email !== 'null' ? email.split('@')[0] : 'Kullanıcı');
         const finalUserId = userId || 'local-' + Date.now();
         
         console.log('✅ getCurrentUser: localStorage\'dan kullanıcı bulundu (fallback):', {

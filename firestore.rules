@@ -1,18 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function: Kullanıcının dokümana erişim hakkı var mı?
-    function isOwner(userId) {
-      return request.auth != null && (
-        // Eski sistem: userId direkt Firebase UID ise
-        request.auth.uid == userId ||
-        // Yeni sistem: userId username ise, doküman içindeki firebase_uid kontrolü (write için)
-        (request.resource != null && request.resource.data.firebase_uid == request.auth.uid) ||
-        // Mevcut doküman kontrolü (read için)
-        (resource != null && resource.data.firebase_uid == request.auth.uid)
-      );
-    }
-    
     // Kullanıcı profilleri
     // NOT: Bu oyun uygulamasında hassas veri yok, bu nedenle
     // authenticated olan HER kullanıcı kendi /users/{username} dokümanını
