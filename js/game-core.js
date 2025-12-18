@@ -368,7 +368,24 @@ async function loadStats() {
             if (userStats) {
                 backendDataLoaded = true;
                 
-                totalPoints = parseInt(userStats.total_points) || 0;
+                // ÖNEMLİ: Firebase'den gelen değer ile localStorage'daki değeri karşılaştır
+                // Eğer localStorage'daki değer daha büyükse, onu kullan (Firebase senkronizasyon sorunu olabilir)
+                const firebasePoints = parseInt(userStats.total_points) || 0;
+                const localStoragePoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+                
+                if (localStoragePoints > firebasePoints) {
+                    // localStorage'daki değer daha büyük, onu kullan (Firebase senkronizasyon sorunu)
+                    totalPoints = localStoragePoints;
+                    console.log('⚠️ Firebase\'den gelen değer localStorage\'dan küçük, localStorage kullanılıyor:', {
+                        firebase: firebasePoints,
+                        localStorage: localStoragePoints,
+                        kullanilan: totalPoints
+                    });
+                } else {
+                    // Firebase'deki değer daha büyük veya eşit, onu kullan
+                    totalPoints = firebasePoints;
+                }
+                
                 if (isNaN(totalPoints) || totalPoints < 0) totalPoints = 0;
                 
                 badges = userStats.badges || badges;
@@ -430,6 +447,13 @@ async function loadStats() {
                 }
                 
                 // UI'ı hemen güncelle (backend'den gelen verilerle)
+                console.log('🔄 UI güncelleniyor (backend verileri ile):', {
+                    totalPoints: totalPoints,
+                    badges: badges,
+                    streak: streakData.currentStreak,
+                    gameStats: gameStats
+                });
+                
                 updateStatsBar();
                 updateStreakDisplay();
                 
@@ -440,6 +464,22 @@ async function loadStats() {
                 }
                 if (typeof updateTasksDisplay === 'function') {
                     updateTasksDisplay();
+                }
+                
+                // DOM elementlerini kontrol et ve logla
+                const totalPointsEl = document.getElementById('total-points');
+                const starPointsEl = document.getElementById('star-points');
+                const currentLevelEl = document.getElementById('current-level');
+                if (totalPointsEl) {
+                    console.log('✅ total-points elementi güncellendi:', totalPointsEl.textContent);
+                } else {
+                    console.warn('⚠️ total-points elementi bulunamadı!');
+                }
+                if (starPointsEl) {
+                    console.log('✅ star-points elementi güncellendi:', starPointsEl.textContent);
+                }
+                if (currentLevelEl) {
+                    console.log('✅ current-level elementi güncellendi:', currentLevelEl.textContent);
                 }
                 
                 console.log('✅ ÖNCELİK 1: Kritik veriler backend\'den yüklendi ve UI güncellendi');
@@ -993,10 +1033,17 @@ async function saveStats() {
         // ÖNEMLİ: totalPoints 0 ise localStorage'dan kontrol et (race condition önleme)
         let pointsToSave = totalPoints;
         const savedPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+        
+        // ÖNEMLİ: Eğer totalPoints 0 ise ama savedPoints > 0 ise, savedPoints kullan
+        // Ama eğer totalPoints > 0 ise, totalPoints kullan (en güncel değer)
         if (pointsToSave === 0 && savedPoints > 0) {
             console.warn('⚠️ saveStats: totalPoints 0, localStorage\'dan alınıyor:', savedPoints);
             pointsToSave = savedPoints;
             totalPoints = savedPoints; // totalPoints'i de güncelle
+        } else if (pointsToSave > 0) {
+            // totalPoints > 0 ise, onu kullan (en güncel değer)
+            pointsToSave = totalPoints;
+            console.log('✅ saveStats: totalPoints kullanılıyor (en güncel değer):', pointsToSave);
         }
         
         console.log('🟣 saveStats çağrıldı:', {
@@ -1247,8 +1294,13 @@ async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = fal
         eklenecek: points,
         eskiTotal: oldTotalPoints,
         yeniTotal: totalPoints,
-        fark: totalPoints - oldTotalPoints
+        fark: totalPoints - oldTotalPoints,
+        stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
     });
+    
+    // ÖNEMLİ: localStorage'a hemen kaydet (senkronizasyon için)
+    localStorage.setItem('hasene_totalPoints', totalPoints.toString());
+    console.log('✅ addToGlobalPoints: localStorage güncellendi:', totalPoints);
     
     // Rozetleri güncelle
     badges = calculateBadges(totalPoints);

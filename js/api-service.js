@@ -926,7 +926,20 @@ async function loadUserStats() {
                     total_points: stats.total_points
                 });
                 // Firestore'dan gelen veriyi localStorage'a da kaydet (senkronizasyon)
-                const totalPoints = parseInt(stats.total_points || 0);
+                const firebasePoints = parseInt(stats.total_points || 0);
+                const localStoragePoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+                
+                // ÖNEMLİ: Eğer localStorage'daki değer daha büyükse, onu kullan (Firebase senkronizasyon sorunu)
+                const totalPoints = localStoragePoints > firebasePoints ? localStoragePoints : firebasePoints;
+                
+                if (localStoragePoints > firebasePoints) {
+                    console.log('⚠️ Firebase\'den gelen değer localStorage\'dan küçük, localStorage kullanılıyor:', {
+                        firebase: firebasePoints,
+                        localStorage: localStoragePoints,
+                        kullanilan: totalPoints
+                    });
+                }
+                
                 const badgesData = stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 };
                 const streakData = stats.streak_data || { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 };
                 const gameStatsData = stats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} };
