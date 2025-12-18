@@ -144,6 +144,7 @@ async function createAllCollections() {
 
 if (typeof window !== 'undefined') {
     window.createAllCollections = createAllCollections;
-    console.log('✅ createAllCollections() fonksiyonu hazır!');
-    console.log('💡 Browser Console\'da şunu çalıştırın: createAllCollections()');
+    // NOT: Otomatik çalıştırma - sadece manuel çağrılmalı
+    // console.log('✅ createAllCollections() fonksiyonu hazır!');
+    // console.log('💡 Browser Console\'da şunu çalıştırın: createAllCollections()');
 }

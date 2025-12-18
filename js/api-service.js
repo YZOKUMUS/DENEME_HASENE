@@ -875,82 +875,6 @@ async function loadUserStats() {
                     perfectLessons: perfectLessons
                 });
                 
-                // Global değişkenleri güncelle (game-core.js'deki değişkenler)
-                if (typeof window !== 'undefined') {
-                    // totalPoints'i güncelle
-                    if (typeof window.totalPoints !== 'undefined') {
-                        window.totalPoints = totalPoints;
-                    }
-                    // badges'i güncelle
-                    if (typeof window.badges !== 'undefined') {
-                        window.badges = badgesData;
-                    }
-                    // streakData'yı güncelle
-                    if (typeof window.streakData !== 'undefined') {
-                        window.streakData = streakData;
-                    }
-                    // gameStats'i güncelle
-                    if (typeof window.gameStats !== 'undefined') {
-                        window.gameStats = gameStatsData;
-                    }
-                    // perfectLessonsCount'u güncelle
-                    if (typeof window.perfectLessonsCount !== 'undefined') {
-                        window.perfectLessonsCount = perfectLessons;
-                    }
-                }
-                
-                // UI'ı güncelle (localStorage'dan okuyacak, çünkü zaten kaydedildi)
-                // NOT: updateStatsBar() totalPoints, badges gibi global değişkenleri kullanıyor
-                // Bu değişkenler loadStats() içinde localStorage'dan yükleniyor
-                // Bu yüzden loadStats() çağrılmalı, ama sonsuz döngü olmaması için
-                // sadece localStorage'dan yükleme yapılmalı (Firebase'den yükleme yapılmamalı)
-                
-                // Event gönder (game-core.js'deki loadStats() dinleyebilir)
-                if (typeof window.dispatchEvent === 'function') {
-                    try {
-                        window.dispatchEvent(new CustomEvent('userStatsLoaded', {
-                            detail: {
-                                totalPoints: totalPoints,
-                                badges: badgesData,
-                                streakData: streakData,
-                                gameStats: gameStatsData,
-                                perfectLessons: perfectLessons
-                            }
-                        }));
-                        console.log('✅ userStatsLoaded event gönderildi');
-                    } catch (eventError) {
-                        console.warn('⚠️ Event gönderme hatası:', eventError);
-                    }
-                }
-                
-                // UI'ı güncelle (localStorage'dan okuyacak)
-                // setTimeout ile biraz bekle (loadStats() tamamlanması için)
-                setTimeout(() => {
-                    if (typeof window.updateStatsBar === 'function') {
-                        try {
-                            window.updateStatsBar();
-                            console.log('✅ UI güncellendi (updateStatsBar)');
-                        } catch (uiError) {
-                            console.warn('⚠️ UI güncelleme hatası:', uiError);
-                        }
-                    }
-                    if (typeof window.updateStreakDisplay === 'function') {
-                        try {
-                            window.updateStreakDisplay();
-                            console.log('✅ Streak UI güncellendi');
-                        } catch (uiError) {
-                            console.warn('⚠️ Streak UI güncelleme hatası:', uiError);
-                        }
-                    }
-                    if (typeof window.updateDailyGoalDisplay === 'function') {
-                        try {
-                            window.updateDailyGoalDisplay();
-                            console.log('✅ Daily Goal UI güncellendi');
-                        } catch (uiError) {
-                            console.warn('⚠️ Daily Goal UI güncelleme hatası:', uiError);
-                        }
-                    }
-                }, 100);
                 
                 // Muvaffakiyetleri (achievements) yükle
                 try {
@@ -1193,17 +1117,45 @@ async function saveUserStats(stats) {
 async function autoCreateCollections() {
     try {
         const user = await getCurrentUser();
+        
+        // ÖNEMLİ: Kullanıcı kontrolü - sadece gerçek Firebase kullanıcıları için çalış
         if (!user || !user.id || user.id.startsWith('local-')) {
-            // LocalStorage kullanıcısı, Firebase collection'ları oluşturma
+            console.log('ℹ️ autoCreateCollections: LocalStorage kullanıcısı, atlandı');
             return;
         }
         
-        const docId = (user.username && user.username !== 'Kullanıcı') 
-            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
-            : user.id;
+        // ÖNEMLİ: Username kontrolü - rastgele string'lerden kaçın
+        if (!user.username || user.username === 'Kullanıcı' || user.username.length < 2) {
+            console.log('ℹ️ autoCreateCollections: Geçersiz username, atlandı:', user.username);
+            return;
+        }
         
+        // ÖNEMLİ: Firebase auth kontrolü - gerçekten Firebase'de giriş yapılmış mı?
         const auth = getFirebaseAuth();
-        const firebaseUid = auth?.currentUser?.uid || null;
+        if (!auth || !auth.currentUser) {
+            console.log('ℹ️ autoCreateCollections: Firebase auth yok, atlandı');
+            return;
+        }
+        
+        const firebaseUid = auth.currentUser.uid;
+        if (!firebaseUid || firebaseUid.length < 10) {
+            console.log('ℹ️ autoCreateCollections: Geçersiz Firebase UID, atlandı');
+            return;
+        }
+        
+        const docId = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+        
+        // ÖNEMLİ: docId kontrolü - rastgele string'lerden kaçın
+        if (!docId || docId.length < 2 || docId === 'Kullanici' || docId === 'Kullanıcı') {
+            console.log('ℹ️ autoCreateCollections: Geçersiz docId, atlandı:', docId);
+            return;
+        }
+        
+        console.log('✅ autoCreateCollections: Geçerli kullanıcı bulundu:', {
+            username: user.username,
+            docId: docId,
+            firebaseUid: firebaseUid
+        });
         
         // Collection'ları kontrol et ve oluştur (sadece yoksa)
         const collections = [
@@ -1270,91 +1222,10 @@ async function autoCreateCollections() {
 }
 
 // ============================================
-// AUTO CREATE COLLECTIONS - Otomatik Collection Oluşturma
+// AUTO CREATE COLLECTIONS - Duplicate Removed
 // ============================================
-
-/**
- * Tüm gerekli collection'ları otomatik oluşturur (eğer yoksa)
- * Giriş yapıldığında veya sayfa yüklendiğinde çağrılır
- */
-async function autoCreateCollections() {
-    try {
-        const user = await getCurrentUser();
-        if (!user || !user.id || user.id.startsWith('local-')) {
-            // LocalStorage kullanıcısı, Firebase collection'ları oluşturma
-            return;
-        }
-        
-        const docId = (user.username && user.username !== 'Kullanıcı') 
-            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
-            : user.id;
-        
-        const auth = getFirebaseAuth();
-        const firebaseUid = auth?.currentUser?.uid || null;
-        
-        // Collection'ları kontrol et ve oluştur (sadece yoksa)
-        const collections = [
-            {
-                name: 'user_stats',
-                data: {
-                    user_id: user.id,
-                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
-                    firebase_uid: firebaseUid,
-                    total_points: 0,
-                    badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
-                    streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
-                    game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
-                    perfect_lessons_count: 0
-                }
-            },
-            {
-                name: 'user_reports',
-                data: {
-                    user_id: user.id,
-                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
-                    firebase_uid: firebaseUid,
-                    toplam_hasene: 0,
-                    yildiz: 0,
-                    mertebe: 1,
-                    mertebe_adi: 'Başlangıç',
-                    seri: 0,
-                    updated_at: new Date().toISOString()
-                }
-            },
-            {
-                name: 'user_achievements',
-                data: {
-                    user_id: user.id,
-                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
-                    firebase_uid: firebaseUid,
-                    unlocked_badges: [],
-                    updated_at: new Date().toISOString()
-                }
-            }
-        ];
-        
-        // Her collection'ı kontrol et ve yoksa oluştur
-        for (const collection of collections) {
-            try {
-                // Önce kontrol et (varsa oluşturma)
-                const existing = await firestoreGet(collection.name, docId);
-                if (!existing) {
-                    // Yoksa oluştur
-                    const result = await firestoreSet(collection.name, docId, collection.data);
-                    if (result) {
-                        console.log(`✅ ${collection.name} collection'ı otomatik oluşturuldu`);
-                    }
-                }
-            } catch (error) {
-                // Hata olsa bile devam et (collection zaten var olabilir)
-                console.log(`ℹ️ ${collection.name} kontrol edilemedi (normal olabilir):`, error.message);
-            }
-        }
-    } catch (error) {
-        // Sessizce devam et - hata olsa bile uygulama çalışmaya devam etmeli
-        console.log('ℹ️ Otomatik collection oluşturma atlandı:', error.message);
-    }
-}
+// NOT: autoCreateCollections() fonksiyonu yukarıda zaten tanımlı (satır 1117)
+// Bu duplicate tanım kaldırıldı
 
 // ============================================
 // TASKS API

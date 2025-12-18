@@ -1668,14 +1668,9 @@
             });
         }
         
-        // Otomatik collection oluşturma (sayfa yüklendiğinde)
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (typeof window.autoCreateCollections === 'function') {
-                    window.autoCreateCollections().catch(() => {});
-                }
-            }, 2000); // 2 saniye bekle (Firebase ve kullanıcı yüklenmesi için)
-        });
+        // Otomatik collection oluşturma (sadece kullanıcı giriş yaptıktan sonra)
+        // NOT: Sayfa yüklendiğinde değil, sadece giriş yapıldığında çağrılmalı
+        // Bu yüzden burada çağırmıyoruz - handleDirectLogin içinde çağrılacak
     </script>
     
 </body>

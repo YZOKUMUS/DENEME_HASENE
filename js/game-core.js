@@ -144,34 +144,6 @@ const elements = {
  * Tüm istatistikleri yükler
  */
 async function loadStats() {
-    // userStatsLoaded event'ini dinle (loadUserStats() Firebase'den veri yüklediğinde)
-    // NOT: Bu event listener sadece bir kez eklenmeli, bu yüzden kontrol et
-    if (typeof window.addEventListener === 'function' && !window.userStatsLoadedListenerAdded) {
-        window.userStatsLoadedListenerAdded = true;
-        window.addEventListener('userStatsLoaded', (event) => {
-            const { totalPoints: fbTotalPoints, badges: fbBadges, streakData: fbStreakData, gameStats: fbGameStats, perfectLessons: fbPerfectLessons } = event.detail;
-            
-            // Global değişkenleri güncelle
-            totalPoints = parseInt(fbTotalPoints || 0);
-            badges = fbBadges || badges;
-            streakData = fbStreakData || streakData;
-            gameStats = fbGameStats || gameStats;
-            perfectLessonsCount = parseInt(fbPerfectLessons || 0);
-            
-            // UI'ı güncelle
-            updateStatsBar();
-            updateStreakDisplay();
-            if (typeof updateDailyGoalDisplay === 'function') {
-                updateDailyGoalDisplay();
-            }
-            
-            console.log('✅ userStatsLoaded event işlendi, global değişkenler ve UI güncellendi:', {
-                totalPoints: totalPoints,
-                badges: badges,
-                streak: streakData
-            });
-        }, { once: false }); // Birden fazla kez dinle
-    }
     if (typeof debugLog === 'function') {
         debugLog('loadStats() çağrıldı');
     }
@@ -1276,20 +1248,6 @@ function updateStatsBar() {
         elements.totalPointsEl = document.getElementById('total-points');
         elements.starPointsEl = document.getElementById('star-points');
         elements.currentLevelEl = document.getElementById('current-level');
-    }
-    
-    // ÖNEMLİ: Global değişkenleri localStorage'dan senkronize et
-    // Firebase'den yüklenen veriler localStorage'a kaydedildi ama global değişkenler güncellenmemiş olabilir
-    const localTotalPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
-    if (localTotalPoints !== totalPoints) {
-        totalPoints = localTotalPoints;
-        console.log('🔄 updateStatsBar: totalPoints localStorage\'dan senkronize edildi:', totalPoints);
-    }
-    
-    const localBadges = safeGetItem('hasene_badges', badges);
-    if (JSON.stringify(localBadges) !== JSON.stringify(badges)) {
-        badges = localBadges;
-        console.log('🔄 updateStatsBar: badges localStorage\'dan senkronize edildi');
     }
     
     if (elements.totalPointsEl) {
