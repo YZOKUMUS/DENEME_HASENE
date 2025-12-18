@@ -711,8 +711,21 @@ async function loadStats() {
                                 toplamYanlis: dailyTasks.todayStats.toplamYanlis
                             });
                             
+                            // ÖNEMLİ: Görevler yoksa oluştur (checkDailyTasks çağrılmalı)
+                            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
+                                console.log('⚠️ Backend\'den görevler yüklenmedi, checkDailyTasks çağrılıyor...');
+                                await checkDailyTasks();
+                            }
+                            
+                            // Görev progress'lerini güncelle
                             if (dailyTasks.tasks || dailyTasks.bonusTasks) {
                                 updateTaskProgressFromStats();
+                                console.log('✅ updateTaskProgressFromStats çağrıldı, görev sayısı:', {
+                                    tasks: dailyTasks.tasks?.length || 0,
+                                    bonusTasks: dailyTasks.bonusTasks?.length || 0
+                                });
+                            } else {
+                                console.warn('⚠️ dailyTasks.tasks ve dailyTasks.bonusTasks yok!');
                             }
                         }
                         
@@ -725,6 +738,17 @@ async function loadStats() {
                             dailyKey: dailyKey,
                             dailyDataPoints: safeGetItem(dailyKey, {}).points
                         });
+                        
+                        // ÖNEMLİ: Görevler yoksa oluştur ve bekle
+                        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
+                            console.log('⚠️ Görevler yok, checkDailyTasks çağrılıyor...');
+                            await checkDailyTasks();
+                        }
+                        
+                        // Görev progress'lerini tekrar güncelle (görevler oluşturulduktan sonra)
+                        if (dailyTasks.tasks || dailyTasks.bonusTasks) {
+                            updateTaskProgressFromStats();
+                        }
                         
                         if (typeof updateDailyGoalDisplay === 'function') {
                             updateDailyGoalDisplay();
@@ -4649,7 +4673,34 @@ function updateTaskProgress(gameType, data) {
  * (updateTaskProgress çağrılmadan, sadece progress güncellemesi için)
  */
 function updateTaskProgressFromStats() {
-    if (!dailyTasks.todayStats) return;
+    if (!dailyTasks.todayStats) {
+        console.warn('⚠️ updateTaskProgressFromStats: dailyTasks.todayStats yok!');
+        return;
+    }
+    
+    // ÖNEMLİ: Görevler yoksa oluştur
+    if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
+        console.log('⚠️ updateTaskProgressFromStats: Görevler yok, checkDailyTasks çağrılıyor...');
+        checkDailyTasks();
+        // checkDailyTasks async, ama görevler oluşturulana kadar bekle
+        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
+            console.warn('⚠️ updateTaskProgressFromStats: Görevler hala yok!');
+            return;
+        }
+    }
+    
+    console.log('🔄 updateTaskProgressFromStats çağrıldı:', {
+        todayStats: {
+            toplamPuan: dailyTasks.todayStats.toplamPuan,
+            toplamDogru: dailyTasks.todayStats.toplamDogru,
+            ayetOku: dailyTasks.todayStats.ayetOku,
+            duaEt: dailyTasks.todayStats.duaEt,
+            hadisOku: dailyTasks.todayStats.hadisOku,
+            allGameModesSize: dailyTasks.todayStats.allGameModes?.size || 0
+        },
+        tasksCount: dailyTasks.tasks?.length || 0,
+        bonusTasksCount: dailyTasks.bonusTasks?.length || 0
+    });
     
     // Günlük görevler
     if (dailyTasks.tasks && Array.isArray(dailyTasks.tasks)) {
@@ -4677,7 +4728,11 @@ function updateTaskProgressFromStats() {
                 progress = dailyTasks.todayStats.hadisOku || 0;
             }
             
+            const oldProgress = task.progress || 0;
             task.progress = progress;
+            
+            console.log(`📋 Görev güncellendi: ${task.id} (${task.type}): ${oldProgress} → ${progress}/${task.target}`);
+            
             if (progress >= task.target) {
                 task.completed = true;
                 if (!dailyTasks.completedTasks.includes(task.id)) {
@@ -4685,6 +4740,8 @@ function updateTaskProgressFromStats() {
                 }
             }
         });
+    } else {
+        console.warn('⚠️ updateTaskProgressFromStats: dailyTasks.tasks yok veya array değil!');
     }
     
     // Fazilet vazifeleri
