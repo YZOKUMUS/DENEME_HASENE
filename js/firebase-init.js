@@ -50,7 +50,15 @@ function initFirebaseApp() {
         window.firebaseAuth = auth;
         window.firebaseDb = db;
         
-        console.log('✅ Firebase başlatıldı:', firebaseConfig.projectId);
+        // Proje kontrolü - karışıklığı önlemek için
+        const expectedProjectId = 'hasene-arapca-dersi';
+        if (firebaseConfig.projectId !== expectedProjectId) {
+            console.error('❌ YANLIŞ PROJE! Beklenen:', expectedProjectId, 'Bulunan:', firebaseConfig.projectId);
+            console.error('❌ Lütfen js/firebase-config.js dosyasında projectId\'yi kontrol edin!');
+        } else {
+            console.log('✅ Firebase başlatıldı:', firebaseConfig.projectId);
+            console.log('✅ Proje doğrulandı: hasene-arapca-dersi');
+        }
         
         // firebase-config.js'deki initFirebase fonksiyonunu çağır
         if (typeof window.initFirebase === 'function') {

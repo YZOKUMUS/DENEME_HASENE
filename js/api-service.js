@@ -970,14 +970,27 @@ async function saveUserStats(stats) {
             
             // Basit rapor collection'ına kaydet
             try {
+                console.log('📊 Basit rapor kaydediliyor...', {
+                    docId: docId,
+                    total_points: stats.total_points,
+                    badges: stats.badges,
+                    streak_data: stats.streak_data
+                });
+                
                 // Level (mertebe) hesapla
                 let level = 1;
                 let levelName = 'Başlangıç';
                 if (typeof window.calculateLevel === 'function') {
                     level = window.calculateLevel(stats.total_points);
+                    console.log('📊 Level hesaplandı:', level);
+                } else {
+                    console.warn('⚠️ window.calculateLevel fonksiyonu bulunamadı');
                 }
                 if (typeof window.getLevelName === 'function') {
                     levelName = window.getLevelName(level);
+                    console.log('📊 Level adı:', levelName);
+                } else {
+                    console.warn('⚠️ window.getLevelName fonksiyonu bulunamadı');
                 }
                 
                 // Yıldız sayısı (badges.stars)
@@ -986,7 +999,7 @@ async function saveUserStats(stats) {
                 // Seri (streak)
                 const streak = stats.streak_data?.currentStreak || 0;
                 
-                await firestoreSet('user_reports', docId, {
+                const reportData = {
                     user_id: user.id,
                     username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
                     firebase_uid: firebaseUid,
@@ -996,17 +1009,33 @@ async function saveUserStats(stats) {
                     mertebe_adi: levelName,
                     seri: streak,
                     updated_at: new Date().toISOString()
-                });
-                console.log('✅ Basit rapor Firebase\'e kaydedildi:', {
-                    docId: docId,
-                    username: user.username,
-                    toplam_hasene: stats.total_points,
-                    yildiz: stars,
-                    mertebe: level,
-                    seri: streak
-                });
+                };
+                
+                console.log('📊 Rapor verisi hazırlandı:', reportData);
+                
+                const result = await firestoreSet('user_reports', docId, reportData);
+                
+                if (result) {
+                    console.log('✅ Basit rapor Firebase\'e başarıyla kaydedildi:', {
+                        collection: 'user_reports',
+                        docId: docId,
+                        username: user.username,
+                        toplam_hasene: stats.total_points,
+                        yildiz: stars,
+                        mertebe: level,
+                        mertebe_adi: levelName,
+                        seri: streak
+                    });
+                } else {
+                    console.error('❌ Basit rapor Firebase\'e kaydedilemedi - firestoreSet false döndü');
+                }
             } catch (reportError) {
-                console.warn('⚠️ Basit rapor kaydedilemedi (normal olabilir):', reportError);
+                console.error('❌ Basit rapor kaydetme hatası:', reportError);
+                console.error('❌ Hata detayı:', {
+                    message: reportError.message,
+                    stack: reportError.stack,
+                    name: reportError.name
+                });
             }
             
             // Muvaffakiyetler (achievements) için ayrı collection'a kaydet

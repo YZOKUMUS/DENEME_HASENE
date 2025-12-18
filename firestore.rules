@@ -29,6 +29,36 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     
+    // Haftalık görevler
+    match /weekly_tasks/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Kullanıcı muvaffakiyetleri (rozetler)
+    match /user_achievements/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Basit rapor (kullanıcı özeti)
+    match /user_reports/{userId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Günlük istatistikler
+    match /daily_stats/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Haftalık istatistikler
+    match /weekly_stats/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Aylık istatistikler
+    match /monthly_stats/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    
     // Kelime istatistikleri - anonymous kullanıcılar da erişebilir
     // Query yaparken user_id field'ına göre filtreleme yapıldığı için,
     // Rules'da query'ler için authenticated kullanıcılara erişim ver
