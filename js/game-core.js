@@ -457,14 +457,13 @@ async function loadStats() {
                 updateStatsBar();
                 updateStreakDisplay();
                 
-                // ÖNEMLİ: Daily goal ve tasks display'i de güncelle (backend'den veri yüklendikten sonra)
+                // ÖNEMLİ: Daily goal display'i güncelle (backend'den veri yüklendikten sonra)
                 // Çünkü dailyTasks verisi backend'den yüklenmiş olabilir
                 if (typeof updateDailyGoalDisplay === 'function') {
                     updateDailyGoalDisplay();
                 }
-                if (typeof updateTasksDisplay === 'function') {
-                    updateTasksDisplay();
-                }
+                // ÖNEMLİ: updateTasksDisplay() burada çağrılmıyor çünkü görevler henüz oluşturulmamış olabilir
+                // updateTasksDisplay() sadece checkDailyTasks() çağrıldıktan SONRA çağrılmalı
                 
                 // DOM elementlerini kontrol et ve logla
                 const totalPointsEl = document.getElementById('total-points');
@@ -594,6 +593,10 @@ async function loadStats() {
                 dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
                 dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
             }
+            // ÖNEMLİ: Görevler yoksa oluştur
+            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                await checkDailyTasks();
+            }
             updateDailyGoalDisplay();
             updateTasksDisplay();
             console.log('✅ ÖNCELİK 2: DailyTasks cache\'den yüklendi ve UI güncellendi');
@@ -604,6 +607,10 @@ async function loadStats() {
                 dailyTasks.todayStats.allGameModes = new Set(dailyTasks.todayStats.allGameModes || []);
                 dailyTasks.todayStats.farklıZorluk = new Set(dailyTasks.todayStats.farklıZorluk || []);
                 dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
+            }
+            // ÖNEMLİ: Görevler yoksa oluştur
+            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                await checkDailyTasks();
             }
             updateDailyGoalDisplay();
             updateTasksDisplay();
@@ -1051,11 +1058,23 @@ async function loadStats() {
             }
         }
 
-        // Görevleri kontrol et
-        checkDailyTasks();
+        // ÖNEMLİ: Görevleri kontrol et ve oluştur (await edilmeli)
+        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+            await checkDailyTasks();
+            console.log('✅ checkDailyTasks tamamlandı (loadStats içinde), görev sayısı:', {
+                tasks: dailyTasks.tasks?.length || 0,
+                bonusTasks: dailyTasks.bonusTasks?.length || 0
+            });
+        }
         // checkWeeklyTasks(); // Haftalık görevler UI'dan kaldırıldı
 
-        // UI'ı güncelle - ÖNEMLİ: Backend verileri yüklendikten SONRA güncelle
+        // ÖNEMLİ: Görevler oluşturulduktan SONRA progress değerlerini güncelle
+        if (dailyTasks.tasks && dailyTasks.tasks.length > 0) {
+            updateTaskProgressFromStats();
+            console.log('✅ updateTaskProgressFromStats çağrıldı (loadStats içinde, checkDailyTasks sonrası)');
+        }
+
+        // UI'ı güncelle - ÖNEMLİ: Backend verileri yüklendikten ve görevler oluşturulduktan SONRA güncelle
         // DOM hazır olana kadar bekle
         function updateUIAfterLoad() {
             console.log('🔄 UI güncelleniyor...', {
@@ -1078,6 +1097,7 @@ async function loadStats() {
             updateStatsBar();
             updateDailyGoalDisplay();
             updateStreakDisplay(); // Streak'i de güncelle
+            // ÖNEMLİ: updateTasksDisplay() burada çağrılıyor çünkü görevler artık oluşturulmuş
             updateTasksDisplay(); // Görev sayacını güncelle
             
             console.log('✅ UI güncellendi');
@@ -4798,14 +4818,17 @@ function updateTasksDisplay() {
     if (dailyTasksList) {
         dailyTasksList.innerHTML = '';
         
-        // Görevler yoksa kontrol et
-        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
-            checkDailyTasks();
+        // ÖNEMLİ: Progress değerlerini güncelle (görevler oluşturulduktan sonra)
+        // Bu, UI'da doğru progress değerlerinin görünmesini sağlar
+        if (dailyTasks.tasks && dailyTasks.tasks.length > 0) {
+            updateTaskProgressFromStats();
         }
         
-        // Bonus görevler yoksa kontrol et
-        if (!dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
-            checkDailyTasks();
+        // Görevler yoksa kontrol et (ama async bekleme yapmıyoruz, sadece uyarı)
+        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+            console.warn('⚠️ updateTasksDisplay: Görevler yok! checkDailyTasks çağrılmalı (async, bu yüzden burada await edilemez)');
+            // checkDailyTasks() async, bu yüzden burada await edemeyiz
+            // Ancak görevler yoksa UI'da "Görevler yükleniyor..." gösterilecek
         }
         
         const allDailyTasks = [...(dailyTasks.tasks || []), ...(dailyTasks.bonusTasks || [])];
@@ -4817,6 +4840,10 @@ function updateTasksDisplay() {
             const progressPercent = task.target > 0 ? Math.min(100, Math.round((task.progress / task.target) * 100)) : 0;
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+            
+            // DEBUG: Progress değerlerini logla
+            console.log(`📋 Görev UI'da gösteriliyor: ${task.id} (${task.type}): ${task.progress}/${task.target} (${progressPercent}%)`);
+            
             taskItem.innerHTML = `
                 <div class="task-info">
                     <div class="task-name-row">
