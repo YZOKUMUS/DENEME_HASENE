@@ -4592,6 +4592,26 @@ function updateTaskProgress(gameType, data) {
     // Haftalık görevler kaldırıldı - güncelleme kodları devre dışı
     // (Haftalık görevler UI'dan kaldırıldı)
     
+    // ÖNEMLİ: Oyun modlarında (kelime-cevir, dinle-bul, bosluk-doldur) dailyTasks.todayStats.toplamPuan
+    // saveDetailedStats() tarafından zaten güncellenmiş olmalı, ama senkronizasyon için hasene_daily_${today}.points ile kontrol et
+    if (isGameMode && dailyTasks.todayStats) {
+        const today = getLocalDateString();
+        const dailyKey = `hasene_daily_${today}`;
+        const dailyData = safeGetItem(dailyKey, { points: 0, correct: 0, wrong: 0 });
+        
+        // ÖNEMLİ: hasene_daily_${today}.points ANA KAYNAK - eğer daha büyükse onu kullan
+        if (dailyData.points > (dailyTasks.todayStats.toplamPuan || 0)) {
+            dailyTasks.todayStats.toplamPuan = dailyData.points;
+            dailyTasks.todayStats.toplamDogru = dailyData.correct;
+            dailyTasks.todayStats.toplamYanlis = dailyData.wrong;
+            console.log('🔄 updateTaskProgress - dailyTasks.todayStats senkronize edildi:', {
+                eskiToplamPuan: dailyTasks.todayStats.toplamPuan,
+                yeniToplamPuan: dailyData.points,
+                dailyKey
+            });
+        }
+    }
+    
     updateTasksDisplay();
     
     // Görevler güncellendi, backend'e hemen kaydet (özellikle ayet-oku, hadis-oku, dua-et için önemli)
@@ -4600,6 +4620,9 @@ function updateTaskProgress(gameType, data) {
     console.log('💾 updateTaskProgress - saveDailyTasks çağrılıyor:', {
         gameType,
         todayStats: {
+            toplamPuan: dailyTasks.todayStats?.toplamPuan,
+            toplamDogru: dailyTasks.todayStats?.toplamDogru,
+            toplamYanlis: dailyTasks.todayStats?.toplamYanlis,
             ayetOku: dailyTasks.todayStats?.ayetOku,
             duaEt: dailyTasks.todayStats?.duaEt,
             hadisOku: dailyTasks.todayStats?.hadisOku
