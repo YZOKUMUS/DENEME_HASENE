@@ -2228,8 +2228,7 @@ async function updateWeeklyXP(points) {
                 weekly_xp: finalXP,
                 points: points,
                 existingXP: existingXP,
-                localStorageXP: localStorageXP,
-                totalHasene: totalHasene
+                localStorageXP: localStorageXP
             });
         } catch (error) {
             console.error('❌ updateWeeklyXP - Firebase kaydetme hatası:', error);
