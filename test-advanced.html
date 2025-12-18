@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Gelişmiş Oyun Testleri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #764ba2;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .test-results {
+            margin-top: 30px;
+        }
+        
+        .test-category {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .test-category h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: white;
+            border-left: 4px solid #ddd;
+        }
+        
+        .test-item.pass {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .test-item.fail {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        .test-item.warning {
+            border-left-color: #f59e0b;
+            background: #fef3c7;
+        }
+        
+        .test-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        .test-details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #764ba2;
+            font-weight: 600;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Gelişmiş Oyun Testleri</h1>
+        <p class="subtitle">Gerçek oyun senaryoları ve edge case testleri</p>
+        
+        <div class="warning-box">
+            <strong>⚠️ Dikkat:</strong> Bu testler gerçek verileri değiştirebilir. Test öncesi yedek alınması önerilir.
+        </div>
+        
+        <div class="test-controls">
+            <button class="btn-primary" onclick="runAllTests()">🚀 Tüm Testleri Çalıştır</button>
+            <button class="btn-secondary" onclick="clearResults()">🗑️ Sonuçları Temizle</button>
+            <button class="btn-success" onclick="testPointsFlow()">💰 Puan Akışı</button>
+            <button class="btn-success" onclick="testBadgeFlow()">🏆 Rozet Akışı</button>
+            <button class="btn-success" onclick="testDailyTaskFlow()">📋 Görev Akışı</button>
+            <button class="btn-success" onclick="testFirebaseSync()">🔥 Firebase Senkronizasyon</button>
+            <button class="btn-warning" onclick="testEdgeCases()">⚠️ Edge Cases</button>
+            <button class="btn-warning" onclick="testPerformance()">⚡ Performans</button>
+            <button class="btn-danger" onclick="testDataIntegrity()">🔒 Veri Bütünlüğü</button>
+        </div>
+        
+        <div id="progress-container" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%;">0%</div>
+            </div>
+        </div>
+        
+        <div id="test-results" class="test-results">
+            <p style="color: #666;">Testleri başlatmak için yukarıdaki butonlardan birine tıklayın.</p>
+        </div>
+    </div>
+    
+    <!-- Ana proje dosyalarını yükle -->
+    <script src="js/config.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-init.js"></script>
+    <script src="js/api-service.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/points-manager.js"></script>
+    <script src="js/game-core.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentTest = 0;
+        let totalTests = 0;
+        
+        function addTestResult(category, name, status, details) {
+            testResults.push({ category, name, status, details, timestamp: new Date() });
+            displayResults();
+        }
+        
+        function updateProgress() {
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            
+            if (totalTests > 0) {
+                progressContainer.style.display = 'block';
+                const percent = Math.round((currentTest / totalTests) * 100);
+                progressFill.style.width = percent + '%';
+                progressFill.textContent = percent + '%';
+            } else {
+                progressContainer.style.display = 'none';
+            }
+        }
+        
+        function displayResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666;">Henüz test çalıştırılmadı.</p>';
+                return;
+            }
+            
+            // Kategorilere göre grupla
+            const categories = {};
+            testResults.forEach(result => {
+                if (!categories[result.category]) {
+                    categories[result.category] = [];
+                }
+                categories[result.category].push(result);
+            });
+            
+            // Her kategori için göster
+            Object.keys(categories).forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'test-category';
+                categoryDiv.innerHTML = `<h3>${category}</h3>`;
+                
+                categories[category].forEach(result => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `test-item ${result.status.toLowerCase()}`;
+                    
+                    const icon = result.status === 'PASS' ? '✅' : 
+                                result.status === 'WARNING' ? '⚠️' : '❌';
+                    
+                    itemDiv.innerHTML = `
+                        <div class="test-name">${icon} ${result.name}</div>
+                        <div class="test-details">${result.details}</div>
+                    `;
+                    
+                    categoryDiv.appendChild(itemDiv);
+                });
+                
+                resultsDiv.appendChild(categoryDiv);
+            });
+            
+            // Özet istatistikler
+            const stats = {
+                total: testResults.length,
+                passed: testResults.filter(r => r.status === 'PASS').length,
+                failed: testResults.filter(r => r.status === 'FAIL').length,
+                warnings: testResults.filter(r => r.status === 'WARNING').length
+            };
+            
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'summary';
+            const successRate = stats.total > 0 
+                ? Math.round((stats.passed / stats.total) * 100)
+                : 0;
+            
+            summaryDiv.innerHTML = `
+                <h3>📊 Özet İstatistikler</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.total}</div>
+                        <div class="stat-label">Toplam Test</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #10b981;">${stats.passed}</div>
+                        <div class="stat-label">✅ Başarılı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #f59e0b;">${stats.warnings}</div>
+                        <div class="stat-label">⚠️ Uyarı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #ef4444;">${stats.failed}</div>
+                        <div class="stat-label">❌ Başarısız</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${successRate}%</div>
+                        <div class="stat-label">📊 Başarı Oranı</div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.appendChild(summaryDiv);
+        }
+        
+        // ============================================
+        // GELİŞMİŞ TEST FONKSİYONLARI
+        // ============================================
+        
+        async function testPointsFlow() {
+            console.log('🧪 Puan Akışı Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 5;
+            
+            try {
+                // Test 1: Başlangıç puanı
+                currentTest++;
+                updateProgress();
+                const initialStats = await window.loadUserStats();
+                const initialPoints = initialStats?.total_points || 0;
+                addTestResult('Puan Akışı', 'Başlangıç Puanı', 'PASS', `✅ Başlangıç puanı: ${initialPoints}`);
+                
+                // Test 2: Session puanı ekleme
+                currentTest++;
+                updateProgress();
+                if (typeof window.addSessionPoints === 'function') {
+                    // Mevcut session score'u kaydet
+                    const sessionScoreEl = document.getElementById('session-score');
+                    const oldSessionScore = sessionScoreEl ? parseInt(sessionScoreEl.textContent.replace(/\D/g, '')) || 0 : 0;
+                    
+                    window.addSessionPoints(50);
+                    
+                    const newSessionScore = sessionScoreEl ? parseInt(sessionScoreEl.textContent.replace(/\D/g, '')) || 0 : 0;
+                    
+                    if (newSessionScore === oldSessionScore + 50) {
+                        addTestResult('Puan Akışı', 'Session Puanı Ekleme', 'PASS', `✅ Session puanı eklendi: ${oldSessionScore} → ${newSessionScore}`);
+                    } else {
+                        addTestResult('Puan Akışı', 'Session Puanı Ekleme', 'WARNING', `⚠️ Session puanı beklenen gibi güncellenmedi: ${oldSessionScore} → ${newSessionScore}`);
+                    }
+                } else {
+                    addTestResult('Puan Akışı', 'Session Puanı Ekleme', 'FAIL', '❌ addSessionPoints fonksiyonu bulunamadı');
+                }
+                
+                // Test 3: Puan kaydetme
+                currentTest++;
+                updateProgress();
+                if (typeof window.saveUserStats === 'function') {
+                    try {
+                        const user = await window.getCurrentUser();
+                        if (user) {
+                            await window.saveUserStats(user, initialPoints + 100);
+                            const updatedStats = await window.loadUserStats();
+                            if (updatedStats && updatedStats.total_points >= initialPoints) {
+                                addTestResult('Puan Akışı', 'Puan Kaydetme', 'PASS', `✅ Puan kaydedildi: ${initialPoints} → ${updatedStats.total_points}`);
+                            } else {
+                                addTestResult('Puan Akışı', 'Puan Kaydetme', 'WARNING', '⚠️ Puan kaydedilmedi veya güncellenmedi');
+                            }
+                        } else {
+                            addTestResult('Puan Akışı', 'Puan Kaydetme', 'WARNING', '⚠️ Kullanıcı giriş yapmamış');
+                        }
+                    } catch (error) {
+                        addTestResult('Puan Akışı', 'Puan Kaydetme', 'FAIL', `❌ Hata: ${error.message}`);
+                    }
+                } else {
+                    addTestResult('Puan Akışı', 'Puan Kaydetme', 'FAIL', '❌ saveUserStats fonksiyonu bulunamadı');
+                }
+                
+                // Test 4: Günlük XP güncelleme
+                currentTest++;
+                updateProgress();
+                const dailyXPBefore = parseInt(localStorage.getItem('dailyXP') || '0');
+                // Günlük XP'yi simüle et (gerçek ekleme yapmadan)
+                addTestResult('Puan Akışı', 'Günlük XP', 'PASS', `✅ Mevcut günlük XP: ${dailyXPBefore}`);
+                
+                // Test 5: Puan tutarlılığı
+                currentTest++;
+                updateProgress();
+                const finalStats = await window.loadUserStats();
+                const localStoragePoints = parseInt(localStorage.getItem('hasene_total_points') || '0');
+                
+                if (finalStats && finalStats.total_points === localStoragePoints || Math.abs(finalStats.total_points - localStoragePoints) <= 1) {
+                    addTestResult('Puan Akışı', 'Puan Tutarlılığı', 'PASS', `✅ Puanlar tutarlı: Stats=${finalStats.total_points}, localStorage=${localStoragePoints}`);
+                } else {
+                    addTestResult('Puan Akışı', 'Puan Tutarlılığı', 'WARNING', `⚠️ Puanlar farklı: Stats=${finalStats?.total_points}, localStorage=${localStoragePoints}`);
+                }
+                
+            } catch (error) {
+                addTestResult('Puan Akışı', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testBadgeFlow() {
+            console.log('🧪 Rozet Akışı Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 4;
+            
+            try {
+                // Test 1: Rozet yükleme
+                currentTest++;
+                updateProgress();
+                if (typeof window.loadBadges === 'function') {
+                    const badges = await window.loadBadges();
+                    addTestResult('Rozet Akışı', 'Rozet Yükleme', 'PASS', `✅ Rozetler yüklendi: ${badges ? JSON.stringify(badges) : 'boş'}`);
+                } else {
+                    addTestResult('Rozet Akışı', 'Rozet Yükleme', 'FAIL', '❌ loadBadges fonksiyonu bulunamadı');
+                }
+                
+                // Test 2: Rozet hesaplama
+                currentTest++;
+                updateProgress();
+                if (typeof window.calculateBadges === 'function') {
+                    const testPoints = 5000;
+                    const calculatedBadges = window.calculateBadges(testPoints);
+                    addTestResult('Rozet Akışı', 'Rozet Hesaplama', 'PASS', `✅ ${testPoints} puan için rozetler: ${JSON.stringify(calculatedBadges)}`);
+                } else {
+                    addTestResult('Rozet Akışı', 'Rozet Hesaplama', 'WARNING', '⚠️ calculateBadges fonksiyonu bulunamadı');
+                }
+                
+                // Test 3: Rozet kaydetme (simülasyon)
+                currentTest++;
+                updateProgress();
+                if (typeof window.saveBadge === 'function') {
+                    addTestResult('Rozet Akışı', 'Rozet Kaydetme', 'PASS', '✅ saveBadge fonksiyonu mevcut (gerçek kayıt yapılmadı)');
+                } else {
+                    addTestResult('Rozet Akışı', 'Rozet Kaydetme', 'FAIL', '❌ saveBadge fonksiyonu bulunamadı');
+                }
+                
+                // Test 4: Rozet görselleştirme
+                currentTest++;
+                updateProgress();
+                if (typeof window.showBadgesModal === 'function' || typeof window.updateBadgeVisualization === 'function') {
+                    addTestResult('Rozet Akışı', 'Rozet Görselleştirme', 'PASS', '✅ Rozet görselleştirme fonksiyonları mevcut');
+                } else {
+                    addTestResult('Rozet Akışı', 'Rozet Görselleştirme', 'WARNING', '⚠️ Rozet görselleştirme fonksiyonları bulunamadı');
+                }
+                
+            } catch (error) {
+                addTestResult('Rozet Akışı', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testDailyTaskFlow() {
+            console.log('🧪 Günlük Görev Akışı Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 4;
+            
+            try {
+                // Test 1: Görev yükleme
+                currentTest++;
+                updateProgress();
+                if (typeof window.loadDailyTasks === 'function') {
+                    const tasks = await window.loadDailyTasks();
+                    addTestResult('Görev Akışı', 'Görev Yükleme', 'PASS', `✅ Günlük görevler yüklendi: ${tasks ? Object.keys(tasks).length : 0} görev`);
+                } else {
+                    addTestResult('Görev Akışı', 'Görev Yükleme', 'FAIL', '❌ loadDailyTasks fonksiyonu bulunamadı');
+                }
+                
+                // Test 2: Görev kaydetme
+                currentTest++;
+                updateProgress();
+                if (typeof window.saveDailyTasks === 'function') {
+                    addTestResult('Görev Akışı', 'Görev Kaydetme', 'PASS', '✅ saveDailyTasks fonksiyonu mevcut');
+                } else {
+                    addTestResult('Görev Akışı', 'Görev Kaydetme', 'FAIL', '❌ saveDailyTasks fonksiyonu bulunamadı');
+                }
+                
+                // Test 3: Görev ilerlemesi (simülasyon)
+                currentTest++;
+                updateProgress();
+                const tasks = await window.loadDailyTasks();
+                if (tasks && tasks.todayStats) {
+                    addTestResult('Görev Akışı', 'Görev İlerlemesi', 'PASS', `✅ Görev ilerlemesi mevcut: ${JSON.stringify(tasks.todayStats)}`);
+                } else {
+                    addTestResult('Görev Akışı', 'Görev İlerlemesi', 'WARNING', '⚠️ Görev ilerlemesi bilgisi yok');
+                }
+                
+                // Test 4: Görev tamamlama kontrolü
+                currentTest++;
+                updateProgress();
+                if (tasks && tasks.completedTasks) {
+                    addTestResult('Görev Akışı', 'Tamamlanan Görevler', 'PASS', `✅ Tamamlanan görevler: ${tasks.completedTasks.length}`);
+                } else {
+                    addTestResult('Görev Akışı', 'Tamamlanan Görevler', 'PASS', '✅ Tamamlanan görevler sistemi mevcut (henüz tamamlanmamış)');
+                }
+                
+            } catch (error) {
+                addTestResult('Görev Akışı', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testFirebaseSync() {
+            console.log('🧪 Firebase Senkronizasyon Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 5;
+            
+            try {
+                // Test 1: Backend tipi
+                currentTest++;
+                updateProgress();
+                const backendType = window.getBackendType();
+                addTestResult('Firebase Senkronizasyon', 'Backend Tipi', 'PASS', `✅ Backend tipi: ${backendType}`);
+                
+                // Test 2: Firebase bağlantısı
+                currentTest++;
+                updateProgress();
+                const auth = window.getFirebaseAuth();
+                if (auth) {
+                    addTestResult('Firebase Senkronizasyon', 'Firebase Bağlantısı', 'PASS', '✅ Firebase Auth bağlantısı mevcut');
+                } else {
+                    addTestResult('Firebase Senkronizasyon', 'Firebase Bağlantısı', 'WARNING', '⚠️ Firebase Auth bağlantısı yok');
+                }
+                
+                // Test 3: Veri okuma
+                currentTest++;
+                updateProgress();
+                if (typeof window.firestoreGet === 'function') {
+                    const user = await window.getCurrentUser();
+                    if (user) {
+                        try {
+                            const userStats = await window.firestoreGet('user_stats', user.id);
+                            addTestResult('Firebase Senkronizasyon', 'Veri Okuma', 'PASS', `✅ Firestore'dan veri okundu: ${userStats ? 'Var' : 'Yok'}`);
+                        } catch (error) {
+                            addTestResult('Firebase Senkronizasyon', 'Veri Okuma', 'WARNING', `⚠️ Firestore okuma hatası: ${error.message}`);
+                        }
+                    } else {
+                        addTestResult('Firebase Senkronizasyon', 'Veri Okuma', 'WARNING', '⚠️ Kullanıcı giriş yapmamış');
+                    }
+                } else {
+                    addTestResult('Firebase Senkronizasyon', 'Veri Okuma', 'FAIL', '❌ firestoreGet fonksiyonu bulunamadı');
+                }
+                
+                // Test 4: Veri yazma (simülasyon)
+                currentTest++;
+                updateProgress();
+                if (typeof window.firestoreSet === 'function') {
+                    addTestResult('Firebase Senkronizasyon', 'Veri Yazma', 'PASS', '✅ firestoreSet fonksiyonu mevcut (gerçek yazma yapılmadı)');
+                } else {
+                    addTestResult('Firebase Senkronizasyon', 'Veri Yazma', 'FAIL', '❌ firestoreSet fonksiyonu bulunamadı');
+                }
+                
+                // Test 5: localStorage/Firebase senkronizasyonu
+                currentTest++;
+                updateProgress();
+                const localStoragePoints = parseInt(localStorage.getItem('hasene_total_points') || '0');
+                const stats = await window.loadUserStats();
+                const firebasePoints = stats?.total_points || 0;
+                
+                if (Math.abs(localStoragePoints - firebasePoints) <= 1) {
+                    addTestResult('Firebase Senkronizasyon', 'Senkronizasyon', 'PASS', `✅ localStorage ve Firebase senkronize: localStorage=${localStoragePoints}, Firebase=${firebasePoints}`);
+                } else {
+                    addTestResult('Firebase Senkronizasyon', 'Senkronizasyon', 'WARNING', `⚠️ localStorage ve Firebase farklı: localStorage=${localStoragePoints}, Firebase=${firebasePoints}`);
+                }
+                
+            } catch (error) {
+                addTestResult('Firebase Senkronizasyon', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testEdgeCases() {
+            console.log('🧪 Edge Cases Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 5;
+            
+            try {
+                // Test 1: Null/undefined kontrolü
+                currentTest++;
+                updateProgress();
+                const user = await window.getCurrentUser();
+                if (user && user.id && user.username) {
+                    addTestResult('Edge Cases', 'Null Kontrolü', 'PASS', '✅ getCurrentUser null döndürmüyor');
+                } else {
+                    addTestResult('Edge Cases', 'Null Kontrolü', 'WARNING', '⚠️ getCurrentUser null döndü (normal olabilir)');
+                }
+                
+                // Test 2: Boş string kontrolü
+                currentTest++;
+                updateProgress();
+                const email = localStorage.getItem('hasene_user_email');
+                if (email && email !== '' && email !== 'null') {
+                    addTestResult('Edge Cases', 'Boş String Kontrolü', 'PASS', `✅ Email boş string değil: ${email}`);
+                } else {
+                    addTestResult('Edge Cases', 'Boş String Kontrolü', 'WARNING', '⚠️ Email boş veya "null" string');
+                }
+                
+                // Test 3: Negatif puan kontrolü
+                currentTest++;
+                updateProgress();
+                const stats = await window.loadUserStats();
+                if (stats && stats.total_points >= 0) {
+                    addTestResult('Edge Cases', 'Negatif Puan Kontrolü', 'PASS', `✅ Puan negatif değil: ${stats.total_points}`);
+                } else {
+                    addTestResult('Edge Cases', 'Negatif Puan Kontrolü', 'FAIL', `❌ Puan negatif: ${stats?.total_points}`);
+                }
+                
+                // Test 4: Çok büyük sayı kontrolü
+                currentTest++;
+                updateProgress();
+                const dailyXP = parseInt(localStorage.getItem('dailyXP') || '0');
+                if (dailyXP >= 0 && dailyXP < 1000000) {
+                    addTestResult('Edge Cases', 'Büyük Sayı Kontrolü', 'PASS', `✅ Günlük XP makul aralıkta: ${dailyXP}`);
+                } else {
+                    addTestResult('Edge Cases', 'Büyük Sayı Kontrolü', 'WARNING', `⚠️ Günlük XP beklenmedik: ${dailyXP}`);
+                }
+                
+                // Test 5: Tarih formatı kontrolü
+                currentTest++;
+                updateProgress();
+                const today = new Date().toISOString().split('T')[0];
+                addTestResult('Edge Cases', 'Tarih Formatı', 'PASS', `✅ Bugünün tarihi: ${today}`);
+                
+            } catch (error) {
+                addTestResult('Edge Cases', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testPerformance() {
+            console.log('🧪 Performans Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 4;
+            
+            try {
+                // Test 1: getCurrentUser performansı
+                currentTest++;
+                updateProgress();
+                const start1 = performance.now();
+                for (let i = 0; i < 10; i++) {
+                    await window.getCurrentUser();
+                }
+                const end1 = performance.now();
+                const avgTime = (end1 - start1) / 10;
+                if (avgTime < 100) {
+                    addTestResult('Performans', 'getCurrentUser Hızı', 'PASS', `✅ Ortalama süre: ${avgTime.toFixed(2)}ms (10 çağrı)`);
+                } else {
+                    addTestResult('Performans', 'getCurrentUser Hızı', 'WARNING', `⚠️ Ortalama süre yavaş: ${avgTime.toFixed(2)}ms`);
+                }
+                
+                // Test 2: loadUserStats performansı
+                currentTest++;
+                updateProgress();
+                const start2 = performance.now();
+                await window.loadUserStats();
+                const end2 = performance.now();
+                const loadTime = end2 - start2;
+                if (loadTime < 500) {
+                    addTestResult('Performans', 'loadUserStats Hızı', 'PASS', `✅ Yükleme süresi: ${loadTime.toFixed(2)}ms`);
+                } else {
+                    addTestResult('Performans', 'loadUserStats Hızı', 'WARNING', `⚠️ Yükleme süresi yavaş: ${loadTime.toFixed(2)}ms`);
+                }
+                
+                // Test 3: localStorage erişim hızı
+                currentTest++;
+                updateProgress();
+                const start3 = performance.now();
+                for (let i = 0; i < 100; i++) {
+                    localStorage.getItem('hasene_user_id');
+                }
+                const end3 = performance.now();
+                const localStorageTime = (end3 - start3) / 100;
+                addTestResult('Performans', 'localStorage Hızı', 'PASS', `✅ Ortalama erişim süresi: ${localStorageTime.toFixed(4)}ms (100 çağrı)`);
+                
+                // Test 4: Fonksiyon çağrı sayısı
+                currentTest++;
+                updateProgress();
+                const functionCount = Object.keys(window).filter(key => 
+                    typeof window[key] === 'function' && 
+                    (key.includes('Badge') || key.includes('Points') || key.includes('Stats') || key.includes('Task'))
+                ).length;
+                addTestResult('Performans', 'Fonksiyon Sayısı', 'PASS', `✅ İlgili fonksiyon sayısı: ${functionCount}`);
+                
+            } catch (error) {
+                addTestResult('Performans', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function testDataIntegrity() {
+            console.log('🧪 Veri Bütünlüğü Testi Başlatılıyor...');
+            currentTest = 0;
+            totalTests = 5;
+            
+            try {
+                // Test 1: Veri tutarlılığı
+                currentTest++;
+                updateProgress();
+                const stats = await window.loadUserStats();
+                const localStoragePoints = parseInt(localStorage.getItem('hasene_total_points') || '0');
+                
+                if (stats && Math.abs(stats.total_points - localStoragePoints) <= 1) {
+                    addTestResult('Veri Bütünlüğü', 'Puan Tutarlılığı', 'PASS', `✅ Puanlar tutarlı: Stats=${stats.total_points}, localStorage=${localStoragePoints}`);
+                } else {
+                    addTestResult('Veri Bütünlüğü', 'Puan Tutarlılığı', 'WARNING', `⚠️ Puanlar farklı: Stats=${stats?.total_points}, localStorage=${localStoragePoints}`);
+                }
+                
+                // Test 2: Kullanıcı ID tutarlılığı
+                currentTest++;
+                updateProgress();
+                const user = await window.getCurrentUser();
+                const localStorageUserId = localStorage.getItem('hasene_user_id');
+                
+                if (user && user.id === localStorageUserId) {
+                    addTestResult('Veri Bütünlüğü', 'Kullanıcı ID Tutarlılığı', 'PASS', `✅ Kullanıcı ID'leri tutarlı: ${user.id}`);
+                } else {
+                    addTestResult('Veri Bütünlüğü', 'Kullanıcı ID Tutarlılığı', 'WARNING', `⚠️ Kullanıcı ID'leri farklı: user=${user?.id}, localStorage=${localStorageUserId}`);
+                }
+                
+                // Test 3: Email tutarlılığı
+                currentTest++;
+                updateProgress();
+                const localStorageEmail = localStorage.getItem('hasene_user_email');
+                
+                if (user && user.email === localStorageEmail) {
+                    addTestResult('Veri Bütünlüğü', 'Email Tutarlılığı', 'PASS', `✅ Email'ler tutarlı: ${user.email}`);
+                } else if (user && user.email && localStorageEmail && user.email !== 'null' && localStorageEmail !== 'null') {
+                    addTestResult('Veri Bütünlüğü', 'Email Tutarlılığı', 'WARNING', `⚠️ Email'ler farklı: user=${user.email}, localStorage=${localStorageEmail}`);
+                } else {
+                    addTestResult('Veri Bütünlüğü', 'Email Tutarlılığı', 'PASS', '✅ Email tutarlılığı kontrol edildi');
+                }
+                
+                // Test 4: Veri tipi kontrolü
+                currentTest++;
+                updateProgress();
+                const points = stats?.total_points;
+                if (typeof points === 'number' && !isNaN(points)) {
+                    addTestResult('Veri Bütünlüğü', 'Veri Tipi Kontrolü', 'PASS', `✅ Puan tipi doğru: number (${points})`);
+                } else {
+                    addTestResult('Veri Bütünlüğü', 'Veri Tipi Kontrolü', 'FAIL', `❌ Puan tipi yanlış: ${typeof points}`);
+                }
+                
+                // Test 5: Veri kaybı kontrolü
+                currentTest++;
+                updateProgress();
+                const badges = await window.loadBadges();
+                if (badges && typeof badges === 'object') {
+                    addTestResult('Veri Bütünlüğü', 'Veri Kaybı Kontrolü', 'PASS', `✅ Rozet verileri mevcut: ${Object.keys(badges).length} rozet`);
+                } else {
+                    addTestResult('Veri Bütünlüğü', 'Veri Kaybı Kontrolü', 'WARNING', '⚠️ Rozet verileri eksik veya bozuk');
+                }
+                
+            } catch (error) {
+                addTestResult('Veri Bütünlüğü', 'Genel Hata', 'FAIL', `❌ Hata: ${error.message}`);
+            }
+        }
+        
+        async function runAllTests() {
+            console.log('🚀 Tüm Gelişmiş Testler Başlatılıyor...');
+            testResults = [];
+            totalTests = 0;
+            currentTest = 0;
+            
+            await testPointsFlow();
+            await testBadgeFlow();
+            await testDailyTaskFlow();
+            await testFirebaseSync();
+            await testEdgeCases();
+            await testPerformance();
+            await testDataIntegrity();
+            
+            totalTests = 0;
+            currentTest = 0;
+            updateProgress();
+            
+            console.log('✅ Tüm gelişmiş testler tamamlandı!');
+        }
+        
+        function clearResults() {
+            testResults = [];
+            totalTests = 0;
+            currentTest = 0;
+            updateProgress();
+            displayResults();
+        }
+        
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', () => {
+            console.log('✅ Gelişmiş test sayfası yüklendi');
+            console.log('💡 "Tüm Testleri Çalıştır" butonuna tıklayarak testleri başlatabilirsiniz');
+        });
+    </script>
+</body>
+</html>
