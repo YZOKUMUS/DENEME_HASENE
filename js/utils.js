@@ -176,6 +176,14 @@ function goToMainMenu(saveProgress = false) {
     if (mainMenuBtn) {
         mainMenuBtn.classList.add('active');
     }
+    
+    // Günlük vird ve görevleri güncelle (puanların anında yansıması için)
+    if (typeof window.updateDailyGoalDisplay === 'function') {
+        window.updateDailyGoalDisplay();
+    }
+    if (typeof window.updateTasksDisplay === 'function') {
+        window.updateTasksDisplay();
+    }
 }
 
 /**

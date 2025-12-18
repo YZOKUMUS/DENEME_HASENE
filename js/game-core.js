@@ -3758,6 +3758,10 @@ async function saveCurrentGameProgress() {
     // debouncedSaveStats() ve saveStats() çağrıları kaldırıldı - çift kayıt önleme
     // saveStatsImmediate() hem localStorage hem backend'e kaydediyor
     
+    // Günlük vird ve görevleri güncelle (puanların anında yansıması için)
+    updateDailyGoalDisplay();
+    updateTasksDisplay();
+    
     infoLog('Oyun ilerlemesi kaydedildi');
     
     // Rozetleri ve başarımları kontrol et (addToGlobalPoints içinde zaten çağrılıyor)

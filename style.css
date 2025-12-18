@@ -607,6 +607,8 @@ body {
     flex-direction: column;
     gap: var(--spacing-md);
     margin: 0;
+    /* Kartların tam yüksekliği kaplaması için */
+    align-items: stretch;
 }
 
 .game-modes-row {
@@ -619,6 +621,7 @@ body {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
+    align-items: stretch; /* Kartların aynı yükseklikte olması için */
 }
 
 /* Scrollbar gizle (Chrome, Safari) */
@@ -650,11 +653,14 @@ body {
     overflow: hidden;
     scroll-snap-align: start;
     /* Responsive yükseklik - ekran boyutuna göre ayarlanır */
-    min-height: clamp(140px, 25vh, 220px);
-    height: auto;
+    min-height: clamp(180px, 35vh, 280px);
+    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
+    align-items: center;
+    /* İçeriğin düzgün dağılması için */
+    gap: var(--spacing-xs);
 }
 
 /* İlk satır: 4 kart - ekrana göre büyük boyut (her zaman scroll için biraz daha büyük) */
@@ -821,6 +827,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    width: 100%;
+    margin: 0;
+    /* Alt boşluğu kaldırmak için */
+    margin-top: auto;
 }
 
 /* ============================================
@@ -836,7 +847,8 @@ body {
     align-items: center;
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    /* Koyu border - hem mor hem beyaz arka plan üzerinde görünür */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     position: relative;
 }
 
@@ -846,8 +858,10 @@ body {
     transform: translateX(-50%);
     margin: 0;
     text-align: center;
-    color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    /* Koyu renk - hem mor hem beyaz arka plan üzerinde görünür */
+    color: var(--text-primary);
+    text-shadow: none;
+    font-weight: 700;
 }
 
 .back-btn {
@@ -874,9 +888,10 @@ body {
     display: flex;
     gap: var(--spacing-md);
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
+    /* Koyu renk - hem mor hem beyaz arka plan üzerinde görünür */
+    color: var(--text-primary);
     font-size: 0.9rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: none;
 }
 
 .game-info-btn {
@@ -906,13 +921,19 @@ body {
 .submode-selection {
     text-align: center;
     padding: var(--spacing-md);
+    /* Arka plan ekle - hem mor hem beyaz arka plan üzerinde görünür olması için */
+    background: rgba(168, 181, 255, 0.1);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-sm) 0;
 }
 
 .submode-selection h3 {
     margin-bottom: var(--spacing-md);
-    color: #fff;
+    /* Koyu renk - hem mor hem beyaz arka plan üzerinde görünür */
+    color: var(--text-primary);
     font-size: 1rem;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    font-weight: 700;
+    text-shadow: none;
 }
 
 .submode-buttons {
@@ -923,10 +944,11 @@ body {
 
 .submode-btn {
     padding: var(--spacing-md);
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* Daha opak arka plan - hem mor hem beyaz arka plan üzerinde görünür */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(157, 138, 255, 0.3);
     border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 600;
@@ -937,15 +959,18 @@ body {
     text-align: center;
     line-height: 1.4;
     box-shadow: var(--shadow-sm);
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    /* Koyu renk - hem mor hem beyaz arka plan üzerinde görünür */
+    color: var(--text-primary);
+    text-shadow: none;
 }
 
 .submode-btn:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.95);
+    /* Hover'da daha belirgin border */
+    border-width: 2px;
 }
 
 /* Game Content */
@@ -1539,18 +1564,26 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    min-height: 88px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top: 0.5px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 -0.5px 0 rgba(0, 0, 0, 0.1), 0 -4px 20px rgba(0, 0, 0, 0.08);
+    min-height: clamp(70px, 10vh, 90px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+    /* iPhone tarzı glassmorphism - daha güçlü blur */
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(200%) blur(30px);
+    -webkit-backdrop-filter: saturate(200%) blur(30px);
+    /* iPhone tarzı ince border */
+    border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+    /* iPhone tarzı shadow - daha yumuşak ve derin */
+    box-shadow: 
+        0 -0.5px 0 rgba(0, 0, 0, 0.1),
+        0 -2px 8px rgba(0, 0, 0, 0.04),
+        0 -8px 24px rgba(0, 0, 0, 0.06);
     display: flex;
     justify-content: space-around;
-    align-items: flex-start;
+    align-items: center;
     z-index: 1000;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)) 0;
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom, 8px)) 0;
+    /* iPhone tarzı yumuşak geçiş */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bottom-nav .nav-btn {
@@ -1558,86 +1591,126 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: clamp(3px, 0.5vh, 5px);
     background: none;
     border: none;
     cursor: pointer;
-    padding: 6px 12px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: clamp(8px, 1.2vh, 12px) clamp(8px, 2vw, 16px);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    min-width: 64px;
+    min-width: clamp(60px, 15vw, 80px);
     flex: 1;
-    opacity: 0.6;
+    opacity: 0.65;
     transform: scale(1);
+    border-radius: 12px;
+    /* iPhone tarzı hafif hover efekti */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .bottom-nav .nav-btn span:first-child {
-    font-size: 1.75rem;
+    font-size: clamp(1.5rem, 4vw, 1.85rem);
     line-height: 1;
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .bottom-nav .nav-btn span:nth-child(2) {
-    font-size: 0.7rem;
+    font-size: clamp(0.65rem, 1.8vw, 0.75rem);
     font-weight: 500;
-    color: #000;
-    letter-spacing: -0.01em;
-    transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: rgba(0, 0, 0, 0.7);
+    letter-spacing: -0.02em;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 2px;
 }
 
 .bottom-nav .nav-btn:active {
-    transform: scale(0.95);
-    opacity: 0.8;
+    transform: scale(0.92);
+    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav .nav-btn:hover {
+    opacity: 0.85;
+    background: rgba(0, 0, 0, 0.02);
 }
 
 .bottom-nav .nav-btn.active {
     opacity: 1;
     color: #007AFF;
+    background: rgba(0, 122, 255, 0.08);
 }
 
 .bottom-nav .nav-btn.active span:first-child {
-    transform: scale(1.05);
+    transform: scale(1.08);
+    filter: drop-shadow(0 2px 4px rgba(0, 122, 255, 0.3));
 }
 
 .bottom-nav .nav-btn.active span:nth-child(2) {
     color: #007AFF;
     font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .badge-notification {
     position: absolute;
-    top: 2px;
-    right: 8px;
+    top: clamp(4px, 0.5vh, 6px);
+    right: clamp(6px, 2vw, 10px);
     background: #FF3B30;
     color: #fff;
     border-radius: 10px;
-    width: 18px;
-    height: 18px;
+    width: clamp(18px, 4.5vw, 22px);
+    height: clamp(18px, 4.5vw, 22px);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
+    font-size: clamp(0.6rem, 1.5vw, 0.7rem);
     font-weight: 700;
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* iPhone tarzı badge - daha belirgin ve şık */
+    box-shadow: 
+        0 2px 6px rgba(255, 59, 48, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    /* iPhone tarzı animasyon */
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 
+            0 2px 6px rgba(255, 59, 48, 0.4),
+            0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 
+            0 3px 8px rgba(255, 59, 48, 0.5),
+            0 2px 4px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .tasks-counter {
     position: absolute;
-    top: 0;
-    right: 4px;
+    top: clamp(2px, 0.3vh, 4px);
+    right: clamp(4px, 1.5vw, 8px);
     background: #007AFF;
     color: #fff;
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 0.65rem;
+    border-radius: 12px;
+    padding: clamp(3px, 0.5vh, 4px) clamp(6px, 1.5vw, 8px);
+    font-size: clamp(0.6rem, 1.5vw, 0.7rem);
     font-weight: 600;
-    min-width: 24px;
-    border: 1.5px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    min-width: clamp(22px, 5vw, 28px);
+    /* iPhone tarzı counter - daha şık */
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 
+        0 2px 6px rgba(0, 122, 255, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.15);
     text-align: center;
     display: none;
     z-index: 10;
+    letter-spacing: -0.01em;
+    /* iPhone tarzı yumuşak geçiş */
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ============================================
@@ -4063,35 +4136,55 @@ body {
     }
 
     .bottom-nav {
-        min-height: 70px;
-        padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)) 0;
+        min-height: clamp(65px, 9vh, 80px);
+        padding: clamp(8px, 1.2vh, 10px) 0 max(clamp(8px, 1.2vh, 10px), env(safe-area-inset-bottom, 8px)) 0;
+        /* Mobil için daha güçlü blur */
+        backdrop-filter: saturate(220%) blur(35px);
+        -webkit-backdrop-filter: saturate(220%) blur(35px);
     }
 
     .bottom-nav .nav-btn {
-        padding: 4px 8px;
-        min-width: 50px;
-        gap: 3px;
+        padding: clamp(6px, 1vh, 10px) clamp(6px, 1.5vw, 12px);
+        min-width: clamp(55px, 14vw, 70px);
+        gap: clamp(2px, 0.4vh, 4px);
     }
 
     .bottom-nav .nav-btn span:first-child {
-        font-size: 1.5rem;
+        font-size: clamp(1.4rem, 3.8vw, 1.7rem);
     }
 
     .bottom-nav .nav-btn span:nth-child(2) {
-        font-size: 0.65rem;
-        line-height: 1.1;
+        font-size: clamp(0.6rem, 1.6vw, 0.7rem);
+        line-height: 1.2;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 100%;
     }
+    
+    /* Mobil için badge ve counter responsive */
+    .badge-notification {
+        width: clamp(16px, 4vw, 20px);
+        height: clamp(16px, 4vw, 20px);
+        font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+        top: clamp(3px, 0.4vh, 5px);
+        right: clamp(4px, 1.5vw, 8px);
+    }
+    
+    .tasks-counter {
+        font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+        padding: clamp(2px, 0.4vh, 3px) clamp(5px, 1.3vw, 7px);
+        min-width: clamp(20px, 4.5vw, 26px);
+        top: clamp(1px, 0.2vh, 3px);
+        right: clamp(3px, 1.2vw, 6px);
+    }
 
     .tasks-counter {
-        font-size: 0.6rem;
-        padding: 1px 4px;
-        min-width: 28px;
-        top: -1px;
-        right: -1px;
+        font-size: clamp(0.55rem, 1.4vw, 0.65rem);
+        padding: clamp(2px, 0.4vh, 3px) clamp(5px, 1.3vw, 7px);
+        min-width: clamp(20px, 4.5vw, 26px);
+        top: clamp(1px, 0.2vh, 3px);
+        right: clamp(3px, 1.2vw, 6px);
     }
 
     /* Container */
@@ -4240,8 +4333,9 @@ body {
         width: calc((100vw - (var(--spacing-sm) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-sm) * 6)) / 3.5);
         padding: var(--spacing-sm);
-        /* Mobil için responsive yükseklik */
-        min-height: clamp(160px, 28vh, 240px);
+        /* Mobil için responsive yükseklik - daha yüksek */
+        min-height: clamp(180px, 35vh, 280px);
+        height: 100%;
     }
 
     /* İkinci satır: 3 kart - mobil ekrana göre büyük (her zaman scroll için) */
@@ -4249,8 +4343,9 @@ body {
         width: calc((100vw - (var(--spacing-sm) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-sm) * 5)) / 2.5);
         padding: var(--spacing-sm);
-        /* Mobil için responsive yükseklik */
-        min-height: clamp(160px, 28vh, 240px);
+        /* Mobil için responsive yükseklik - daha yüksek */
+        min-height: clamp(180px, 35vh, 280px);
+        height: 100%;
     }
 
     .game-icon {
@@ -4877,12 +4972,12 @@ body {
     }
 
     .bottom-nav .nav-btn span:first-child {
-        font-size: 1.3rem;
+        font-size: clamp(1.3rem, 3.5vw, 1.6rem);
     }
 
     .bottom-nav .nav-btn span:nth-child(2) {
-        font-size: 0.6rem;
-        line-height: 1;
+        font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+        line-height: 1.2;
     }
 
     .container {
@@ -5006,8 +5101,9 @@ body {
         width: calc((100vw - (var(--spacing-xs) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-xs) * 6)) / 3.5);
         padding: var(--spacing-xs);
-        /* Çok küçük ekranlar için responsive yükseklik */
-        min-height: clamp(150px, 30vh, 220px);
+        /* Çok küçük ekranlar için responsive yükseklik - daha yüksek */
+        min-height: clamp(170px, 38vh, 260px);
+        height: 100%;
     }
 
     /* İkinci satır: 3 kart - küçük mobil ekrana göre büyük (her zaman scroll için) */
@@ -5015,8 +5111,9 @@ body {
         width: calc((100vw - (var(--spacing-xs) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-xs) * 5)) / 2.5);
         padding: var(--spacing-xs);
-        /* Çok küçük ekranlar için responsive yükseklik */
-        min-height: clamp(150px, 30vh, 220px);
+        /* Çok küçük ekranlar için responsive yükseklik - daha yüksek */
+        min-height: clamp(170px, 38vh, 260px);
+        height: 100%;
     }
 
     .game-icon {
@@ -5214,16 +5311,18 @@ body {
     .game-modes-row:first-child .game-card {
         width: calc((100vw - (var(--spacing-md) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-md) * 6)) / 3.5);
-        /* Tablet için responsive yükseklik */
-        min-height: clamp(180px, 22vh, 260px);
+        /* Tablet için responsive yükseklik - daha yüksek */
+        min-height: clamp(200px, 25vh, 300px);
+        height: 100%;
     }
 
     /* İkinci satır: 3 kart - tablet ekrana göre büyük (her zaman scroll için) */
     .game-modes-row:last-child .game-card {
         width: calc((100vw - (var(--spacing-md) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-md) * 5)) / 2.5);
-        /* Tablet için responsive yükseklik */
-        min-height: clamp(180px, 22vh, 260px);
+        /* Tablet için responsive yükseklik - daha yüksek */
+        min-height: clamp(200px, 25vh, 300px);
+        height: 100%;
     }
 }
 
@@ -5238,16 +5337,18 @@ body {
     .game-modes-row:first-child .game-card {
         width: calc((100vw - (var(--spacing-lg) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-lg) * 6)) / 3.5);
-        /* Desktop için responsive yükseklik */
-        min-height: clamp(200px, 20vh, 280px);
+        /* Desktop için responsive yükseklik - daha yüksek */
+        min-height: clamp(220px, 22vh, 320px);
+        height: 100%;
     }
 
     /* İkinci satır: 3 kart - desktop ekrana göre büyük (her zaman scroll için) */
     .game-modes-row:last-child .game-card {
         width: calc((100vw - (var(--spacing-lg) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-lg) * 5)) / 2.5);
-        /* Desktop için responsive yükseklik */
-        min-height: clamp(200px, 20vh, 280px);
+        /* Desktop için responsive yükseklik - daha yüksek */
+        min-height: clamp(220px, 22vh, 320px);
+        height: 100%;
     }
 }
 
