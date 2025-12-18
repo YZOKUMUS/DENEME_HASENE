@@ -334,11 +334,23 @@ async function handleDirectLogin() {
                 }
                 
                 // Firebase Anonymous Authentication yap (Firebase Auth için gerekli - query yapabilmek için)
-                const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                // ÖNEMLİ: Eğer zaten bir kullanıcı giriş yapmışsa, yeni anonymous kullanıcı oluşturma
+                const { signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
                 showAuthMessage('Giriş yapılıyor...', 'info');
                 
-                const userCredential = await signInAnonymously(auth);
-                firebaseUser = userCredential.user;
+                // Mevcut Firebase Auth kullanıcısını kontrol et
+                let currentAuthUser = auth.currentUser;
+                
+                // Eğer mevcut kullanıcı yoksa veya anonymous değilse, yeni anonymous kullanıcı oluştur
+                if (!currentAuthUser || !currentAuthUser.isAnonymous) {
+                    const userCredential = await signInAnonymously(auth);
+                    firebaseUser = userCredential.user;
+                    console.log('✅ Yeni anonymous kullanıcı oluşturuldu:', firebaseUser.uid);
+                } else {
+                    // Mevcut anonymous kullanıcıyı kullan
+                    firebaseUser = currentAuthUser;
+                    console.log('✅ Mevcut anonymous kullanıcı kullanılıyor:', firebaseUser.uid);
+                }
                 
                 // Eğer localStorage'da UID yoksa, Firestore'da username'e göre ara (doküman ID'si olarak)
                 if (!useExistingUid) {
