@@ -767,10 +767,19 @@ async function loadStats() {
                     if (backendBadges && backendBadges.length > 0) {
                         unlockedBadges = backendBadges;
                         safeSetItem('unlockedBadges', unlockedBadges);
+                        // window'a export et
+                        if (typeof window !== 'undefined') {
+                            window.unlockedBadges = unlockedBadges;
+                        }
                         console.log('✅ Badges backend\'den yüklendi');
                     }
                 }).catch(err => console.warn('Badges yükleme hatası:', err))
             );
+        } else {
+            // window'a export et (localStorage'dan yüklenen)
+            if (typeof window !== 'undefined') {
+                window.unlockedBadges = unlockedBadges;
+            }
         }
         
         // Tüm detaylı veriler paralel yüklensin (await etme, arka planda)
@@ -1006,6 +1015,11 @@ async function saveStats() {
         safeSetItem('unlockedBadges', unlockedBadges);
         safeSetItem('perfectLessonsCount', perfectLessonsCount);
         safeSetItem('gameStats', gameStats);
+        
+        // unlockedBadges'i window'a export et (saveUserStats için)
+        if (typeof window !== 'undefined') {
+            window.unlockedBadges = unlockedBadges;
+        }
         
         // NOT: Kelime istatistikleri artık updateWordStats() içinde batch queue'ya ekleniyor
         // Burada tüm wordStats'ı kaydetmek gereksiz ve performans sorununa yol açıyor
@@ -5322,6 +5336,12 @@ function unlockBadge(badge) {
         id: badge.id,
         unlockedAt: Date.now()
     });
+    
+    // window'a export et (saveUserStats için)
+    if (typeof window !== 'undefined') {
+        window.unlockedBadges = unlockedBadges;
+    }
+    
     showBadgeUnlock(badge);
     
     // Backend'e kaydet
@@ -5331,7 +5351,30 @@ function unlockBadge(badge) {
         });
     }
     
+    // Firebase'e muvaffakiyetleri kaydet (saveUserStats çağrılacak)
     saveStats();
+    
+    // Muvaffakiyetleri Firebase'e anında kaydet
+    if (typeof window.saveUserStats === 'function' && typeof window.getCurrentUser === 'function') {
+        window.getCurrentUser().then(user => {
+            if (user && user.id && !user.id.startsWith('local-')) {
+                // saveUserStats'ı çağırarak muvaffakiyetleri de kaydet
+                // (saveUserStats içinde unlockedBadges kontrolü var)
+                const currentStats = {
+                    total_points: totalPoints,
+                    badges: badges,
+                    streak_data: streakData,
+                    game_stats: gameStats,
+                    perfect_lessons_count: perfectLessonsCount
+                };
+                window.saveUserStats(currentStats).catch(err => {
+                    console.warn('Muvaffakiyetler Firebase\'e kaydedilemedi:', err);
+                });
+            }
+        }).catch(err => {
+            console.warn('Kullanıcı bilgisi alınamadı, muvaffakiyetler kaydedilemedi:', err);
+        });
+    }
 }
 
 /**
@@ -6990,6 +7033,7 @@ if (typeof window !== 'undefined') {
     window.resetAllData = resetAllData; // TEST: Tüm verileri sıfırla (hem local hem backend)
     window.clearUserLocalStorage = clearUserLocalStorage;
     window.loadStats = loadStats; // Auth.js'den çağrılabilmesi için
+    window.unlockedBadges = unlockedBadges; // Muvaffakiyetler için export (saveUserStats'ta kullanılacak)
     window.showDetailedStats = () => {
         if (typeof showDetailedStatsModal === 'function') {
             showDetailedStatsModal();

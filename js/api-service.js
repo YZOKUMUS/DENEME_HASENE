@@ -848,6 +848,28 @@ async function loadUserStats() {
                 localStorage.setItem('hasene_gameStats', JSON.stringify(stats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} }));
                 localStorage.setItem('perfectLessonsCount', (stats.perfect_lessons_count || 0).toString());
                 
+                // Muvaffakiyetleri (achievements) yükle
+                try {
+                    const cleanUsername = user.username && user.username !== 'Kullanıcı'
+                        ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500)
+                        : docId;
+                    const achievements = await firestoreGet('user_achievements', cleanUsername);
+                    if (achievements && achievements.unlocked_badges) {
+                        // unlockedBadges'i localStorage'a kaydet
+                        localStorage.setItem('unlockedBadges', JSON.stringify(achievements.unlocked_badges));
+                        // window'a da export et (game-core.js'de kullanılabilmesi için)
+                        if (typeof window !== 'undefined') {
+                            window.unlockedBadges = achievements.unlocked_badges;
+                        }
+                        console.log('✅ Muvaffakiyetler Firebase\'den yüklendi:', {
+                            docId: cleanUsername,
+                            badge_count: achievements.unlocked_badges.length
+                        });
+                    }
+                } catch (achievementError) {
+                    console.warn('⚠️ Muvaffakiyetler yüklenemedi (normal olabilir):', achievementError);
+                }
+                
                 return {
                     total_points: parseInt(stats.total_points || 0),
                     badges: stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
@@ -925,6 +947,30 @@ async function saveUserStats(stats) {
                 game_stats: stats.game_stats,
                 perfect_lessons_count: stats.perfect_lessons_count
             });
+            
+            // Muvaffakiyetler (achievements) için ayrı collection'a kaydet
+            // Eğer unlockedBadges varsa kaydet
+            if (typeof window.unlockedBadges !== 'undefined' && Array.isArray(window.unlockedBadges) && window.unlockedBadges.length > 0) {
+                try {
+                    await firestoreSet('user_achievements', docId, {
+                        user_id: user.id,
+                        username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                        firebase_uid: firebaseUid,
+                        unlocked_badges: window.unlockedBadges.map(badge => ({
+                            id: typeof badge === 'string' ? badge : badge.id,
+                            unlocked_at: typeof badge === 'object' && badge.unlockedAt ? badge.unlockedAt : Date.now(),
+                            badge_type: typeof badge === 'object' && badge.badge_type ? badge.badge_type : null
+                        })),
+                        updated_at: new Date().toISOString()
+                    });
+                    console.log('✅ Muvaffakiyetler Firebase\'e kaydedildi:', {
+                        docId: docId,
+                        badge_count: window.unlockedBadges.length
+                    });
+                } catch (achievementError) {
+                    console.warn('⚠️ Muvaffakiyetler kaydedilemedi:', achievementError);
+                }
+            }
             
             console.log('✅ Firebase\'e başarıyla kaydedildi:', {
                 docId: docId,
@@ -1079,6 +1125,32 @@ async function saveDailyTasks(tasks) {
  * Haftalık görevleri yükle
  */
 async function loadWeeklyTasks() {
+    const user = await getCurrentUser();
+    
+    // Firebase'den yükle
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            const weeklyTasks = await firestoreGet('weekly_tasks', docId);
+            if (weeklyTasks) {
+                // Set'leri dönüştür
+                if (weeklyTasks.weekStats) {
+                    weeklyTasks.weekStats.allModesPlayed = new Set(weeklyTasks.weekStats.allModesPlayed || []);
+                }
+                // Firebase'den yüklenen veriyi localStorage'a da kaydet (senkronizasyon)
+                localStorage.setItem('hasene_weeklyTasks', JSON.stringify(weeklyTasks));
+                return weeklyTasks;
+            }
+        } catch (error) {
+            console.warn('Firebase loadWeeklyTasks error:', error);
+        }
+    }
+    
+    // Fallback: localStorage
     const saved = localStorage.getItem('hasene_weeklyTasks');
     if (saved) {
         const data = JSON.parse(saved);
@@ -1094,6 +1166,7 @@ async function loadWeeklyTasks() {
  * Haftalık görevleri kaydet
  */
 async function saveWeeklyTasks(tasks) {
+    const user = await getCurrentUser();
     const toSave = {
         ...tasks,
         weekStats: {
@@ -1101,7 +1174,39 @@ async function saveWeeklyTasks(tasks) {
             allModesPlayed: Array.from(tasks.weekStats.allModesPlayed || [])
         }
     };
+    
+    // Her durumda localStorage'a kaydet
     localStorage.setItem('hasene_weeklyTasks', JSON.stringify(toSave));
+    
+    // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan (ama "Kullanıcı" default değerini atla)
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            console.log('🔥 saveWeeklyTasks - Firebase\'e kaydediliyor:', {
+                docId: docId,
+                username: user.username,
+                collection: 'weekly_tasks'
+            });
+            
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            await firestoreSet('weekly_tasks', docId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                ...toSave
+            });
+            console.log('✅ saveWeeklyTasks - Firebase\'e başarıyla kaydedildi (docId:', docId + ')');
+        } catch (error) {
+            console.error('❌ saveWeeklyTasks - Firebase kaydetme hatası:', error);
+        }
+    }
 }
 
 // ============================================
@@ -1291,27 +1396,141 @@ async function removeFavorite(wordId) {
  * Günlük istatistikleri kaydet
  */
 async function saveDailyStat(date, stats) {
+    const user = await getCurrentUser();
+    
+    // Her durumda localStorage'a kaydet
     localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(stats));
+    
+    // Firebase'e de kaydet
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            // Daily stats için subcollection kullan (user_daily_stats/{date})
+            // Veya document ID olarak {username}_{date} kullan
+            const dailyDocId = `${docId}_${date}`;
+            
+            await firestoreSet('daily_stats', dailyDocId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                date: date,
+                ...stats
+            });
+        } catch (error) {
+            console.warn('⚠️ saveDailyStat - Firebase kaydetme hatası (normal olabilir):', error);
+        }
+    }
 }
 
 /**
  * Haftalık istatistikleri kaydet
  */
 async function saveWeeklyStat(weekStart, stats) {
+    const user = await getCurrentUser();
+    
+    // Her durumda localStorage'a kaydet
     localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(stats));
+    
+    // Firebase'e de kaydet
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            // Weekly stats için document ID olarak {username}_{weekStart} kullan
+            const weeklyDocId = `${docId}_${weekStart}`;
+            
+            await firestoreSet('weekly_stats', weeklyDocId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                week_start: weekStart,
+                ...stats
+            });
+        } catch (error) {
+            console.warn('⚠️ saveWeeklyStat - Firebase kaydetme hatası (normal olabilir):', error);
+        }
+    }
 }
 
 /**
  * Aylık istatistikleri kaydet
  */
 async function saveMonthlyStat(month, stats) {
+    const user = await getCurrentUser();
+    
+    // Her durumda localStorage'a kaydet
     localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(stats));
+    
+    // Firebase'e de kaydet
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            // Monthly stats için document ID olarak {username}_{month} kullan
+            const monthlyDocId = `${docId}_${month}`;
+            
+            await firestoreSet('monthly_stats', monthlyDocId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                month: month,
+                ...stats
+            });
+        } catch (error) {
+            console.warn('⚠️ saveMonthlyStat - Firebase kaydetme hatası (normal olabilir):', error);
+        }
+    }
 }
 
 /**
  * Günlük istatistikleri yükle
  */
 async function loadDailyStat(date) {
+    const user = await getCurrentUser();
+    
+    // Firebase'den yükle
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            const dailyDocId = `${docId}_${date}`;
+            const dailyStat = await firestoreGet('daily_stats', dailyDocId);
+            if (dailyStat) {
+                // Firebase'den yüklenen veriyi localStorage'a da kaydet (senkronizasyon)
+                localStorage.setItem(`hasene_daily_${date}`, JSON.stringify(dailyStat));
+                return dailyStat;
+            }
+        } catch (error) {
+            console.warn('Firebase loadDailyStat error:', error);
+        }
+    }
+    
+    // Fallback: localStorage
     const saved = localStorage.getItem(`hasene_daily_${date}`);
     return saved ? JSON.parse(saved) : null;
 }
@@ -1320,6 +1539,29 @@ async function loadDailyStat(date) {
  * Haftalık istatistikleri yükle
  */
 async function loadWeeklyStat(weekStart) {
+    const user = await getCurrentUser();
+    
+    // Firebase'den yükle
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            const weeklyDocId = `${docId}_${weekStart}`;
+            const weeklyStat = await firestoreGet('weekly_stats', weeklyDocId);
+            if (weeklyStat) {
+                // Firebase'den yüklenen veriyi localStorage'a da kaydet (senkronizasyon)
+                localStorage.setItem(`hasene_weekly_${weekStart}`, JSON.stringify(weeklyStat));
+                return weeklyStat;
+            }
+        } catch (error) {
+            console.warn('Firebase loadWeeklyStat error:', error);
+        }
+    }
+    
+    // Fallback: localStorage
     const saved = localStorage.getItem(`hasene_weekly_${weekStart}`);
     return saved ? JSON.parse(saved) : null;
 }
@@ -1328,6 +1570,29 @@ async function loadWeeklyStat(weekStart) {
  * Aylık istatistikleri yükle
  */
 async function loadMonthlyStat(month) {
+    const user = await getCurrentUser();
+    
+    // Firebase'den yükle
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            // Username'i doküman ID'si olarak kullan
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            const monthlyDocId = `${docId}_${month}`;
+            const monthlyStat = await firestoreGet('monthly_stats', monthlyDocId);
+            if (monthlyStat) {
+                // Firebase'den yüklenen veriyi localStorage'a da kaydet (senkronizasyon)
+                localStorage.setItem(`hasene_monthly_${month}`, JSON.stringify(monthlyStat));
+                return monthlyStat;
+            }
+        } catch (error) {
+            console.warn('Firebase loadMonthlyStat error:', error);
+        }
+    }
+    
+    // Fallback: localStorage
     const saved = localStorage.getItem(`hasene_monthly_${month}`);
     return saved ? JSON.parse(saved) : null;
 }
