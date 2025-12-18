@@ -144,6 +144,34 @@ const elements = {
  * Tüm istatistikleri yükler
  */
 async function loadStats() {
+    // userStatsLoaded event'ini dinle (loadUserStats() Firebase'den veri yüklediğinde)
+    // NOT: Bu event listener sadece bir kez eklenmeli, bu yüzden kontrol et
+    if (typeof window.addEventListener === 'function' && !window.userStatsLoadedListenerAdded) {
+        window.userStatsLoadedListenerAdded = true;
+        window.addEventListener('userStatsLoaded', (event) => {
+            const { totalPoints: fbTotalPoints, badges: fbBadges, streakData: fbStreakData, gameStats: fbGameStats, perfectLessons: fbPerfectLessons } = event.detail;
+            
+            // Global değişkenleri güncelle
+            totalPoints = parseInt(fbTotalPoints || 0);
+            badges = fbBadges || badges;
+            streakData = fbStreakData || streakData;
+            gameStats = fbGameStats || gameStats;
+            perfectLessonsCount = parseInt(fbPerfectLessons || 0);
+            
+            // UI'ı güncelle
+            updateStatsBar();
+            updateStreakDisplay();
+            if (typeof updateDailyGoalDisplay === 'function') {
+                updateDailyGoalDisplay();
+            }
+            
+            console.log('✅ userStatsLoaded event işlendi, global değişkenler ve UI güncellendi:', {
+                totalPoints: totalPoints,
+                badges: badges,
+                streak: streakData
+            });
+        }, { once: false }); // Birden fazla kez dinle
+    }
     if (typeof debugLog === 'function') {
         debugLog('loadStats() çağrıldı');
     }
@@ -1208,13 +1236,9 @@ async function addToGlobalPoints(points, correctAnswers, skipDetailedStats = fal
     }
     
     // Haftalık XP'yi güncelle (Leaderboard için)
-    if (typeof window.updateWeeklyXP === 'function') {
-        try {
-            await window.updateWeeklyXP(points);
-        } catch (error) {
-            console.warn('Weekly XP update failed:', error);
-        }
-    }
+    // NOT: Burada points parametresi sadece perfect bonus için geçerli
+    // Gerçek sessionScore'u endGame() içinde güncellemeliyiz
+    // Bu yüzden burada çağırmıyoruz - endGame() içinde sessionScore ile çağrılacak
 }
 
 /**
@@ -1252,6 +1276,20 @@ function updateStatsBar() {
         elements.totalPointsEl = document.getElementById('total-points');
         elements.starPointsEl = document.getElementById('star-points');
         elements.currentLevelEl = document.getElementById('current-level');
+    }
+    
+    // ÖNEMLİ: Global değişkenleri localStorage'dan senkronize et
+    // Firebase'den yüklenen veriler localStorage'a kaydedildi ama global değişkenler güncellenmemiş olabilir
+    const localTotalPoints = parseInt(localStorage.getItem('hasene_totalPoints') || '0');
+    if (localTotalPoints !== totalPoints) {
+        totalPoints = localTotalPoints;
+        console.log('🔄 updateStatsBar: totalPoints localStorage\'dan senkronize edildi:', totalPoints);
+    }
+    
+    const localBadges = safeGetItem('hasene_badges', badges);
+    if (JSON.stringify(localBadges) !== JSON.stringify(badges)) {
+        badges = localBadges;
+        console.log('🔄 updateStatsBar: badges localStorage\'dan senkronize edildi');
     }
     
     if (elements.totalPointsEl) {
@@ -3986,6 +4024,16 @@ async function endGame() {
     // NOT: Perfect bonus zaten saveDetailedStats ile eklendi, burada tekrar eklemiyoruz
     monthlyData.gamesPlayed = (monthlyData.gamesPlayed || 0) + 1;
     safeSetItem(monthlyKey, monthlyData);
+    
+    // Haftalık XP'yi güncelle (Leaderboard için) - endGame içinde sessionScore ile
+    if (typeof window.updateWeeklyXP === 'function' && sessionScore > 0) {
+        try {
+            await window.updateWeeklyXP(sessionScore);
+            console.log('✅ Haftalık XP güncellendi (endGame):', sessionScore);
+        } catch (error) {
+            console.warn('⚠️ Weekly XP update failed (endGame):', error);
+        }
+    }
     
     // Modal açıksa yenile
     if (typeof refreshDetailedStatsIfOpen === 'function') {

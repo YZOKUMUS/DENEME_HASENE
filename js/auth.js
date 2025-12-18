@@ -453,6 +453,13 @@ async function handleDirectLogin() {
                             firebase_uid: firebaseUser.uid // Firebase UID'yi de sakla (gerekirse)
                         });
                         console.log('✅ Kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', documentId + ', Username:', username + ')');
+                        
+                        // Otomatik collection'ları oluştur (arka planda, hata olsa bile devam et)
+                        setTimeout(() => {
+                            if (typeof window.autoCreateCollections === 'function') {
+                                window.autoCreateCollections().catch(() => {});
+                            }
+                        }, 1000);
                     } catch (err) {
                         console.warn('⚠️ Firestore kullanıcı kayıt hatası (normal olabilir):', err);
                     }

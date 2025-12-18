@@ -105,13 +105,6 @@ async function firestoreSet(collection, docId, data) {
 }
 
 async function firestoreGetCollection(collection, userId, username = null) {
-    // Eğer kullanıcı Firebase'de giriş yapmamışsa, Firebase kullanma (en önce kontrol et)
-    // NOT: Firebase Anonymous Authentication kullanıcıları için userId Firebase UID olacak
-    if (!userId || String(userId).startsWith('local-')) {
-        // LocalStorage kullanıcısı, Firebase kullanma
-        return [];
-    }
-    
     const db = getFirebaseDb();
     if (!db || getBackendType() !== 'firebase') return [];
     
@@ -132,6 +125,18 @@ async function firestoreGetCollection(collection, userId, username = null) {
     
     try {
         const { getDocs, collection: col, query, where, or } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        
+        // Eğer userId null ise, tüm collection'ı getir (leaderboard için)
+        if (!userId) {
+            const q = query(col(db, collection));
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+        
+        // Eğer kullanıcı local- ile başlıyorsa, Firebase kullanma
+        if (String(userId).startsWith('local-')) {
+            return [];
+        }
         
         // Hem user_id hem de username field'larına göre sorgula (geriye dönük uyumluluk)
         let q;
@@ -829,11 +834,19 @@ async function loadUserStats() {
             if (user.username && user.username !== 'Kullanıcı') {
                 const cleanUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
                 stats = await firestoreGet('user_stats', cleanUsername);
+                console.log('🔍 Username ile arama:', { cleanUsername, found: !!stats });
             }
             
             // Username ile bulunamadıysa, eski UID ile kontrol et (geriye dönük uyumluluk)
             if (!stats && user.id && !user.id.startsWith('local-')) {
                 stats = await firestoreGet('user_stats', user.id);
+                console.log('🔍 UID ile arama:', { userId: user.id, found: !!stats });
+            }
+            
+            // Eğer hala bulunamadıysa, docId ile dene
+            if (!stats && docId && docId !== user.id && docId !== (user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : null)) {
+                stats = await firestoreGet('user_stats', docId);
+                console.log('🔍 docId ile arama:', { docId, found: !!stats });
             }
             if (stats) {
                 console.log('✅ Firebase\'den veri yüklendi:', {
@@ -842,11 +855,102 @@ async function loadUserStats() {
                     total_points: stats.total_points
                 });
                 // Firestore'dan gelen veriyi localStorage'a da kaydet (senkronizasyon)
-                localStorage.setItem('hasene_totalPoints', (stats.total_points || 0).toString());
-                localStorage.setItem('hasene_badges', JSON.stringify(stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 }));
-                localStorage.setItem('hasene_streakData', JSON.stringify(stats.streak_data || { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 }));
-                localStorage.setItem('hasene_gameStats', JSON.stringify(stats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} }));
-                localStorage.setItem('perfectLessonsCount', (stats.perfect_lessons_count || 0).toString());
+                const totalPoints = parseInt(stats.total_points || 0);
+                const badgesData = stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 };
+                const streakData = stats.streak_data || { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 };
+                const gameStatsData = stats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} };
+                const perfectLessons = parseInt(stats.perfect_lessons_count || 0);
+                
+                localStorage.setItem('hasene_totalPoints', totalPoints.toString());
+                localStorage.setItem('hasene_badges', JSON.stringify(badgesData));
+                localStorage.setItem('hasene_streakData', JSON.stringify(streakData));
+                localStorage.setItem('hasene_gameStats', JSON.stringify(gameStatsData));
+                localStorage.setItem('perfectLessonsCount', perfectLessons.toString());
+                
+                console.log('✅ Firebase\'den localStorage\'a kaydedildi:', {
+                    totalPoints: totalPoints,
+                    badges: badgesData,
+                    streak: streakData,
+                    gameStats: gameStatsData,
+                    perfectLessons: perfectLessons
+                });
+                
+                // Global değişkenleri güncelle (game-core.js'deki değişkenler)
+                if (typeof window !== 'undefined') {
+                    // totalPoints'i güncelle
+                    if (typeof window.totalPoints !== 'undefined') {
+                        window.totalPoints = totalPoints;
+                    }
+                    // badges'i güncelle
+                    if (typeof window.badges !== 'undefined') {
+                        window.badges = badgesData;
+                    }
+                    // streakData'yı güncelle
+                    if (typeof window.streakData !== 'undefined') {
+                        window.streakData = streakData;
+                    }
+                    // gameStats'i güncelle
+                    if (typeof window.gameStats !== 'undefined') {
+                        window.gameStats = gameStatsData;
+                    }
+                    // perfectLessonsCount'u güncelle
+                    if (typeof window.perfectLessonsCount !== 'undefined') {
+                        window.perfectLessonsCount = perfectLessons;
+                    }
+                }
+                
+                // UI'ı güncelle (localStorage'dan okuyacak, çünkü zaten kaydedildi)
+                // NOT: updateStatsBar() totalPoints, badges gibi global değişkenleri kullanıyor
+                // Bu değişkenler loadStats() içinde localStorage'dan yükleniyor
+                // Bu yüzden loadStats() çağrılmalı, ama sonsuz döngü olmaması için
+                // sadece localStorage'dan yükleme yapılmalı (Firebase'den yükleme yapılmamalı)
+                
+                // Event gönder (game-core.js'deki loadStats() dinleyebilir)
+                if (typeof window.dispatchEvent === 'function') {
+                    try {
+                        window.dispatchEvent(new CustomEvent('userStatsLoaded', {
+                            detail: {
+                                totalPoints: totalPoints,
+                                badges: badgesData,
+                                streakData: streakData,
+                                gameStats: gameStatsData,
+                                perfectLessons: perfectLessons
+                            }
+                        }));
+                        console.log('✅ userStatsLoaded event gönderildi');
+                    } catch (eventError) {
+                        console.warn('⚠️ Event gönderme hatası:', eventError);
+                    }
+                }
+                
+                // UI'ı güncelle (localStorage'dan okuyacak)
+                // setTimeout ile biraz bekle (loadStats() tamamlanması için)
+                setTimeout(() => {
+                    if (typeof window.updateStatsBar === 'function') {
+                        try {
+                            window.updateStatsBar();
+                            console.log('✅ UI güncellendi (updateStatsBar)');
+                        } catch (uiError) {
+                            console.warn('⚠️ UI güncelleme hatası:', uiError);
+                        }
+                    }
+                    if (typeof window.updateStreakDisplay === 'function') {
+                        try {
+                            window.updateStreakDisplay();
+                            console.log('✅ Streak UI güncellendi');
+                        } catch (uiError) {
+                            console.warn('⚠️ Streak UI güncelleme hatası:', uiError);
+                        }
+                    }
+                    if (typeof window.updateDailyGoalDisplay === 'function') {
+                        try {
+                            window.updateDailyGoalDisplay();
+                            console.log('✅ Daily Goal UI güncellendi');
+                        } catch (uiError) {
+                            console.warn('⚠️ Daily Goal UI güncelleme hatası:', uiError);
+                        }
+                    }
+                }, 100);
                 
                 // Muvaffakiyetleri (achievements) yükle
                 try {
@@ -1075,6 +1179,180 @@ async function saveUserStats(stats) {
             backendType: getBackendType(),
             user: user ? { id: user.id, isLocal: user.id.startsWith('local-') } : null
         });
+    }
+}
+
+// ============================================
+// AUTO CREATE COLLECTIONS - Otomatik Collection Oluşturma
+// ============================================
+
+/**
+ * Tüm gerekli collection'ları otomatik oluşturur (eğer yoksa)
+ * Giriş yapıldığında veya sayfa yüklendiğinde çağrılır
+ */
+async function autoCreateCollections() {
+    try {
+        const user = await getCurrentUser();
+        if (!user || !user.id || user.id.startsWith('local-')) {
+            // LocalStorage kullanıcısı, Firebase collection'ları oluşturma
+            return;
+        }
+        
+        const docId = (user.username && user.username !== 'Kullanıcı') 
+            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+            : user.id;
+        
+        const auth = getFirebaseAuth();
+        const firebaseUid = auth?.currentUser?.uid || null;
+        
+        // Collection'ları kontrol et ve oluştur (sadece yoksa)
+        const collections = [
+            {
+                name: 'user_stats',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    total_points: 0,
+                    badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                    streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                    game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                    perfect_lessons_count: 0
+                }
+            },
+            {
+                name: 'user_reports',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    toplam_hasene: 0,
+                    yildiz: 0,
+                    mertebe: 1,
+                    mertebe_adi: 'Başlangıç',
+                    seri: 0,
+                    updated_at: new Date().toISOString()
+                }
+            },
+            {
+                name: 'user_achievements',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    unlocked_badges: [],
+                    updated_at: new Date().toISOString()
+                }
+            }
+        ];
+        
+        // Her collection'ı kontrol et ve yoksa oluştur
+        for (const collection of collections) {
+            try {
+                // Önce kontrol et (varsa oluşturma)
+                const existing = await firestoreGet(collection.name, docId);
+                if (!existing) {
+                    // Yoksa oluştur
+                    const result = await firestoreSet(collection.name, docId, collection.data);
+                    if (result) {
+                        console.log(`✅ ${collection.name} collection'ı otomatik oluşturuldu`);
+                    }
+                }
+            } catch (error) {
+                // Hata olsa bile devam et (collection zaten var olabilir)
+                console.log(`ℹ️ ${collection.name} kontrol edilemedi (normal olabilir):`, error.message);
+            }
+        }
+    } catch (error) {
+        // Sessizce devam et - hata olsa bile uygulama çalışmaya devam etmeli
+        console.log('ℹ️ Otomatik collection oluşturma atlandı:', error.message);
+    }
+}
+
+// ============================================
+// AUTO CREATE COLLECTIONS - Otomatik Collection Oluşturma
+// ============================================
+
+/**
+ * Tüm gerekli collection'ları otomatik oluşturur (eğer yoksa)
+ * Giriş yapıldığında veya sayfa yüklendiğinde çağrılır
+ */
+async function autoCreateCollections() {
+    try {
+        const user = await getCurrentUser();
+        if (!user || !user.id || user.id.startsWith('local-')) {
+            // LocalStorage kullanıcısı, Firebase collection'ları oluşturma
+            return;
+        }
+        
+        const docId = (user.username && user.username !== 'Kullanıcı') 
+            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+            : user.id;
+        
+        const auth = getFirebaseAuth();
+        const firebaseUid = auth?.currentUser?.uid || null;
+        
+        // Collection'ları kontrol et ve oluştur (sadece yoksa)
+        const collections = [
+            {
+                name: 'user_stats',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    total_points: 0,
+                    badges: { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
+                    streak_data: { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 },
+                    game_stats: { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} },
+                    perfect_lessons_count: 0
+                }
+            },
+            {
+                name: 'user_reports',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    toplam_hasene: 0,
+                    yildiz: 0,
+                    mertebe: 1,
+                    mertebe_adi: 'Başlangıç',
+                    seri: 0,
+                    updated_at: new Date().toISOString()
+                }
+            },
+            {
+                name: 'user_achievements',
+                data: {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    unlocked_badges: [],
+                    updated_at: new Date().toISOString()
+                }
+            }
+        ];
+        
+        // Her collection'ı kontrol et ve yoksa oluştur
+        for (const collection of collections) {
+            try {
+                // Önce kontrol et (varsa oluşturma)
+                const existing = await firestoreGet(collection.name, docId);
+                if (!existing) {
+                    // Yoksa oluştur
+                    const result = await firestoreSet(collection.name, docId, collection.data);
+                    if (result) {
+                        console.log(`✅ ${collection.name} collection'ı otomatik oluşturuldu`);
+                    }
+                }
+            } catch (error) {
+                // Hata olsa bile devam et (collection zaten var olabilir)
+                console.log(`ℹ️ ${collection.name} kontrol edilemedi (normal olabilir):`, error.message);
+            }
+        }
+    } catch (error) {
+        // Sessizce devam et - hata olsa bile uygulama çalışmaya devam etmeli
+        console.log('ℹ️ Otomatik collection oluşturma atlandı:', error.message);
     }
 }
 
@@ -1879,12 +2157,56 @@ function getWeekEnd(weekStart) {
  * Haftalık XP güncelle
  */
 async function updateWeeklyXP(points) {
-    // localStorage only - no backend
     const weekStart = getWeekStart();
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const key = `hasene_weekly_xp_${weekStartStr}`;
     const currentXP = parseInt(localStorage.getItem(key) || '0');
-    localStorage.setItem(key, (currentXP + points).toString());
+    const newXP = currentXP + points;
+    localStorage.setItem(key, newXP.toString());
+    
+    // Firebase'e de kaydet
+    const user = await getCurrentUser();
+    if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
+        try {
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            // Weekly leaderboard için document ID: {username}_{weekStart}
+            const leaderboardDocId = `${docId}_${weekStartStr}`;
+            
+            // Mevcut veriyi al (varsa)
+            const existing = await firestoreGet('weekly_leaderboard', leaderboardDocId);
+            const existingXP = existing?.weekly_xp || 0;
+            const finalXP = existingXP + points;
+            
+            await firestoreSet('weekly_leaderboard', leaderboardDocId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                week_start: weekStartStr,
+                weekly_xp: finalXP,
+                updated_at: new Date().toISOString()
+            });
+            
+            console.log('✅ Haftalık XP Firebase\'e kaydedildi:', {
+                docId: leaderboardDocId,
+                weekly_xp: finalXP,
+                points: points,
+                existingXP: existingXP
+            });
+        } catch (error) {
+            console.error('❌ updateWeeklyXP - Firebase kaydetme hatası:', error);
+            console.error('❌ Hata detayı:', {
+                message: error.message,
+                code: error.code,
+                stack: error.stack
+            });
+        }
+    }
 }
 
 /**
@@ -1898,14 +2220,155 @@ async function getLeagueInfo(userId = null) {
  * Ligdeki sıralamayı getir
  */
 async function getLeagueRankings(leagueName, limit = 50) {
-    return [];
+    try {
+        const weekStart = getWeekStart();
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        
+        // Tüm kullanıcıların haftalık XP'lerini al
+        const allUsers = await firestoreGetCollection('weekly_leaderboard', null, null);
+        const weekUsers = allUsers.filter(u => u.week_start === weekStartStr);
+        
+        // Her kullanıcının lig seviyesini hesapla ve filtrele
+        const leagueUsers = weekUsers
+            .map(u => {
+                const uXP = u.weekly_xp || 0;
+                let uLeague = 'mubtedi';
+                if (uXP >= 10000) uLeague = 'ulama';
+                else if (uXP >= 8000) uLeague = 'imam';
+                else if (uXP >= 6000) uLeague = 'faqih';
+                else if (uXP >= 4000) uLeague = 'muhaddis';
+                else if (uXP >= 3000) uLeague = 'mujtahid';
+                else if (uXP >= 2000) uLeague = 'alim';
+                else if (uXP >= 1500) uLeague = 'kurra';
+                else if (uXP >= 1000) uLeague = 'hafiz';
+                else if (uXP >= 500) uLeague = 'mutebahhir';
+                else if (uXP >= 250) uLeague = 'mutavassit';
+                else if (uXP >= 100) uLeague = 'talib';
+                
+                return { ...u, calculated_league: uLeague };
+            })
+            .filter(u => u.calculated_league === leagueName);
+        
+        // XP'ye göre sırala (yüksekten düşüğe)
+        leagueUsers.sort((a, b) => (b.weekly_xp || 0) - (a.weekly_xp || 0));
+        
+        // Limit'e göre kes ve pozisyon ekle
+        return leagueUsers.slice(0, limit).map((u, index) => ({
+            position: index + 1,
+            user_id: u.user_id,
+            username: u.username,
+            weekly_xp: u.weekly_xp || 0,
+            profiles: { username: u.username }
+        }));
+    } catch (error) {
+        console.error('getLeagueRankings error:', error);
+        return [];
+    }
 }
 
 /**
  * Kullanıcının lig pozisyonu
  */
 async function getUserLeaguePosition(userId = null) {
-    return null;
+    try {
+        const user = userId ? { id: userId } : await getCurrentUser();
+        if (!user || !user.id || user.id.startsWith('local-')) {
+            console.log('⚠️ getUserLeaguePosition: Kullanıcı yok veya local kullanıcı');
+            return null;
+        }
+        
+        const weekStart = getWeekStart();
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        const docId = (user.username && user.username !== 'Kullanıcı') 
+            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+            : user.id;
+        
+        console.log('🔍 getUserLeaguePosition:', {
+            userId: user.id,
+            username: user.username,
+            docId: docId,
+            weekStart: weekStartStr
+        });
+        
+        // Firebase'den haftalık XP'yi al - önce username ile dene
+        let leaderboardDocId = `${docId}_${weekStartStr}`;
+        let leaderboardData = await firestoreGet('weekly_leaderboard', leaderboardDocId);
+        
+        // Eğer username ile bulunamadıysa, user_id ile dene
+        if (!leaderboardData && user.id !== docId) {
+            leaderboardDocId = `${user.id}_${weekStartStr}`;
+            leaderboardData = await firestoreGet('weekly_leaderboard', leaderboardDocId);
+        }
+        
+        console.log('🔍 Leaderboard data:', {
+            docId: leaderboardDocId,
+            found: !!leaderboardData,
+            weekly_xp: leaderboardData?.weekly_xp
+        });
+        
+        if (!leaderboardData || !leaderboardData.weekly_xp) {
+            console.log('⚠️ getUserLeaguePosition: Bu hafta oyun oynamamış veya veri yok');
+            return null; // Bu hafta oyun oynamamış
+        }
+        
+        // Tüm kullanıcıların haftalık XP'lerini al ve sırala
+        const allUsers = await firestoreGetCollection('weekly_leaderboard', null, null);
+        const weekUsers = allUsers.filter(u => u.week_start === weekStartStr);
+        
+        // XP'ye göre sırala (yüksekten düşüğe)
+        weekUsers.sort((a, b) => (b.weekly_xp || 0) - (a.weekly_xp || 0));
+        
+        // Kullanıcının pozisyonunu bul
+        const userPosition = weekUsers.findIndex(u => u.user_id === user.id || u.username === user.username) + 1;
+        
+        if (userPosition === 0) {
+            return null; // Kullanıcı listede yok
+        }
+        
+        // Lig seviyesini hesapla (XP'ye göre)
+        const weeklyXP = leaderboardData.weekly_xp;
+        let league = 'mubtedi';
+        if (weeklyXP >= 10000) league = 'ulama';
+        else if (weeklyXP >= 8000) league = 'imam';
+        else if (weeklyXP >= 6000) league = 'faqih';
+        else if (weeklyXP >= 4000) league = 'muhaddis';
+        else if (weeklyXP >= 3000) league = 'mujtahid';
+        else if (weeklyXP >= 2000) league = 'alim';
+        else if (weeklyXP >= 1500) league = 'kurra';
+        else if (weeklyXP >= 1000) league = 'hafiz';
+        else if (weeklyXP >= 500) league = 'mutebahhir';
+        else if (weeklyXP >= 250) league = 'mutavassit';
+        else if (weeklyXP >= 100) league = 'talib';
+        
+        // Aynı ligdeki toplam kullanıcı sayısını bul
+        const leagueUsers = weekUsers.filter(u => {
+            const uXP = u.weekly_xp || 0;
+            let uLeague = 'mubtedi';
+            if (uXP >= 10000) uLeague = 'ulama';
+            else if (uXP >= 8000) uLeague = 'imam';
+            else if (uXP >= 6000) uLeague = 'faqih';
+            else if (uXP >= 4000) uLeague = 'muhaddis';
+            else if (uXP >= 3000) uLeague = 'mujtahid';
+            else if (uXP >= 2000) uLeague = 'alim';
+            else if (uXP >= 1500) uLeague = 'kurra';
+            else if (uXP >= 1000) uLeague = 'hafiz';
+            else if (uXP >= 500) uLeague = 'mutebahhir';
+            else if (uXP >= 250) uLeague = 'mutavassit';
+            else if (uXP >= 100) uLeague = 'talib';
+            return uLeague === league;
+        });
+        
+        return {
+            league: league,
+            position: userPosition,
+            weekly_xp: weeklyXP,
+            total_in_league: leagueUsers.length,
+            week_start: weekStartStr
+        };
+    } catch (error) {
+        console.error('getUserLeaguePosition error:', error);
+        return null;
+    }
 }
 
 /**
@@ -1953,6 +2416,7 @@ if (typeof window !== 'undefined') {
     window.loginWithGitHub = loginWithGitHub;
     window.logoutUser = logoutUser;
     window.getCurrentUser = getCurrentUser;
+    window.autoCreateCollections = autoCreateCollections;
     
     // Debug: Export kontrolü
     console.log('✅ api-service.js: Fonksiyonlar export edildi:', {

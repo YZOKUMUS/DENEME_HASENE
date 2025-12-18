@@ -59,6 +59,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     
+    // Haftalık liderlik tablosu
+    match /weekly_leaderboard/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    
     // Kelime istatistikleri - anonymous kullanıcılar da erişebilir
     // Query yaparken user_id field'ına göre filtreleme yapıldığı için,
     // Rules'da query'ler için authenticated kullanıcılara erişim ver
