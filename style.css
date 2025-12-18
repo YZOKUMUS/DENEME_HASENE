@@ -649,6 +649,12 @@ body {
     position: relative;
     overflow: hidden;
     scroll-snap-align: start;
+    /* Responsive yükseklik - ekran boyutuna göre ayarlanır */
+    min-height: clamp(140px, 25vh, 220px);
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* İlk satır: 4 kart - ekrana göre büyük boyut (her zaman scroll için biraz daha büyük) */
@@ -774,11 +780,14 @@ body {
     margin-bottom: var(--spacing-sm);
     position: relative;
     z-index: 1;
+    flex-shrink: 0;
+    /* Responsive icon boyutu */
+    font-size: clamp(2rem, 4vw, 2.5rem);
 }
 
 .game-icon img {
-    width: 56px;
-    height: 56px;
+    width: clamp(48px, 8vw, 56px);
+    height: clamp(48px, 8vw, 56px);
     object-fit: contain;
     filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.3)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
     transition: transform var(--transition-normal);
@@ -789,7 +798,7 @@ body {
 }
 
 .game-card h3 {
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     margin-bottom: var(--spacing-xs);
     color: #fff;
     font-weight: 700;
@@ -797,16 +806,21 @@ body {
     z-index: 1;
     letter-spacing: -0.01em;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
 }
 
 .game-card p {
-    font-size: 0.8rem;
+    font-size: clamp(0.75rem, 1.8vw, 0.8rem);
     color: rgba(255, 255, 255, 1);
     line-height: 1.4;
     position: relative;
     z-index: 1;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
     font-weight: 500;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ============================================
@@ -4226,6 +4240,8 @@ body {
         width: calc((100vw - (var(--spacing-sm) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-sm) * 6)) / 3.5);
         padding: var(--spacing-sm);
+        /* Mobil için responsive yükseklik */
+        min-height: clamp(160px, 28vh, 240px);
     }
 
     /* İkinci satır: 3 kart - mobil ekrana göre büyük (her zaman scroll için) */
@@ -4233,6 +4249,8 @@ body {
         width: calc((100vw - (var(--spacing-sm) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-sm) * 5)) / 2.5);
         padding: var(--spacing-sm);
+        /* Mobil için responsive yükseklik */
+        min-height: clamp(160px, 28vh, 240px);
     }
 
     .game-icon {
@@ -4988,6 +5006,8 @@ body {
         width: calc((100vw - (var(--spacing-xs) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-xs) * 6)) / 3.5);
         padding: var(--spacing-xs);
+        /* Çok küçük ekranlar için responsive yükseklik */
+        min-height: clamp(150px, 30vh, 220px);
     }
 
     /* İkinci satır: 3 kart - küçük mobil ekrana göre büyük (her zaman scroll için) */
@@ -4995,6 +5015,8 @@ body {
         width: calc((100vw - (var(--spacing-xs) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-xs) * 5)) / 2.5);
         padding: var(--spacing-xs);
+        /* Çok küçük ekranlar için responsive yükseklik */
+        min-height: clamp(150px, 30vh, 220px);
     }
 
     .game-icon {
@@ -5192,12 +5214,16 @@ body {
     .game-modes-row:first-child .game-card {
         width: calc((100vw - (var(--spacing-md) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-md) * 6)) / 3.5);
+        /* Tablet için responsive yükseklik */
+        min-height: clamp(180px, 22vh, 260px);
     }
 
     /* İkinci satır: 3 kart - tablet ekrana göre büyük (her zaman scroll için) */
     .game-modes-row:last-child .game-card {
         width: calc((100vw - (var(--spacing-md) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-md) * 5)) / 2.5);
+        /* Tablet için responsive yükseklik */
+        min-height: clamp(180px, 22vh, 260px);
     }
 }
 
@@ -5212,12 +5238,16 @@ body {
     .game-modes-row:first-child .game-card {
         width: calc((100vw - (var(--spacing-lg) * 6)) / 3.5);
         min-width: calc((100vw - (var(--spacing-lg) * 6)) / 3.5);
+        /* Desktop için responsive yükseklik */
+        min-height: clamp(200px, 20vh, 280px);
     }
 
     /* İkinci satır: 3 kart - desktop ekrana göre büyük (her zaman scroll için) */
     .game-modes-row:last-child .game-card {
         width: calc((100vw - (var(--spacing-lg) * 5)) / 2.5);
         min-width: calc((100vw - (var(--spacing-lg) * 5)) / 2.5);
+        /* Desktop için responsive yükseklik */
+        min-height: clamp(200px, 20vh, 280px);
     }
 }
 
