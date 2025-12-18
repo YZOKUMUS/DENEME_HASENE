@@ -870,6 +870,26 @@ async function loadUserStats() {
                     console.warn('⚠️ Muvaffakiyetler yüklenemedi (normal olabilir):', achievementError);
                 }
                 
+                // Basit raporu yükle (opsiyonel - sadece rapor için)
+                try {
+                    const cleanUsername = user.username && user.username !== 'Kullanıcı'
+                        ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500)
+                        : docId;
+                    const report = await firestoreGet('user_reports', cleanUsername);
+                    if (report) {
+                        console.log('✅ Basit rapor Firebase\'den yüklendi:', {
+                            docId: cleanUsername,
+                            username: report.username,
+                            toplam_hasene: report.toplam_hasene,
+                            yildiz: report.yildiz,
+                            mertebe: report.mertebe,
+                            seri: report.seri
+                        });
+                    }
+                } catch (reportError) {
+                    console.warn('⚠️ Basit rapor yüklenemedi (normal olabilir):', reportError);
+                }
+                
                 return {
                     total_points: parseInt(stats.total_points || 0),
                     badges: stats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 },
@@ -947,6 +967,47 @@ async function saveUserStats(stats) {
                 game_stats: stats.game_stats,
                 perfect_lessons_count: stats.perfect_lessons_count
             });
+            
+            // Basit rapor collection'ına kaydet
+            try {
+                // Level (mertebe) hesapla
+                let level = 1;
+                let levelName = 'Başlangıç';
+                if (typeof window.calculateLevel === 'function') {
+                    level = window.calculateLevel(stats.total_points);
+                }
+                if (typeof window.getLevelName === 'function') {
+                    levelName = window.getLevelName(level);
+                }
+                
+                // Yıldız sayısı (badges.stars)
+                const stars = stats.badges?.stars || 0;
+                
+                // Seri (streak)
+                const streak = stats.streak_data?.currentStreak || 0;
+                
+                await firestoreSet('user_reports', docId, {
+                    user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                    firebase_uid: firebaseUid,
+                    toplam_hasene: stats.total_points,
+                    yildiz: stars,
+                    mertebe: level,
+                    mertebe_adi: levelName,
+                    seri: streak,
+                    updated_at: new Date().toISOString()
+                });
+                console.log('✅ Basit rapor Firebase\'e kaydedildi:', {
+                    docId: docId,
+                    username: user.username,
+                    toplam_hasene: stats.total_points,
+                    yildiz: stars,
+                    mertebe: level,
+                    seri: streak
+                });
+            } catch (reportError) {
+                console.warn('⚠️ Basit rapor kaydedilemedi (normal olabilir):', reportError);
+            }
             
             // Muvaffakiyetler (achievements) için ayrı collection'a kaydet
             // Eğer unlockedBadges varsa kaydet
