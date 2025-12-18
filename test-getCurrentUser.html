@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>getCurrentUser() Test Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #764ba2;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .test-results {
+            margin-top: 30px;
+        }
+        
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #ddd;
+        }
+        
+        .test-item.pass {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .test-item.fail {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        .test-item.warning {
+            border-left-color: #f59e0b;
+            background: #fef3c7;
+        }
+        
+        .test-name {
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .test-details {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 getCurrentUser() Test Suite</h1>
+        <p class="subtitle">Kullanıcı bilgileri ve localStorage testleri</p>
+        
+        <div class="test-controls">
+            <button class="btn-primary" onclick="runAllTests()">🚀 Tüm Testleri Çalıştır</button>
+            <button class="btn-secondary" onclick="clearResults()">🗑️ Sonuçları Temizle</button>
+            <button class="btn-success" onclick="testGetCurrentUser()">👤 getCurrentUser() Testi</button>
+            <button class="btn-success" onclick="testLocalStorage()">💾 localStorage Testi</button>
+            <button class="btn-success" onclick="testEmailNull()">📧 Email 'null' Testi</button>
+        </div>
+        
+        <div id="test-results" class="test-results">
+            <p style="color: #666;">Testleri başlatmak için yukarıdaki butonlardan birine tıklayın.</p>
+        </div>
+    </div>
+    
+    <!-- Ana proje dosyalarını yükle -->
+    <script src="js/config.js"></script>
+    <script src="js/constants.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script type="module" src="js/firebase-init.js"></script>
+    <script src="js/api-service.js"></script>
+    
+    <script>
+        let testResults = [];
+        
+        function addTestResult(name, status, details) {
+            testResults.push({ name, status, details, timestamp: new Date() });
+            displayResults();
+        }
+        
+        function displayResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+            
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666;">Henüz test çalıştırılmadı.</p>';
+                return;
+            }
+            
+            testResults.forEach(result => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `test-item ${result.status.toLowerCase()}`;
+                
+                const icon = result.status === 'PASS' ? '✅' : 
+                            result.status === 'WARNING' ? '⚠️' : '❌';
+                
+                itemDiv.innerHTML = `
+                    <div class="test-name">${icon} ${result.name}</div>
+                    <div class="test-details">${result.details}</div>
+                `;
+                
+                resultsDiv.appendChild(itemDiv);
+            });
+            
+            // Özet istatistikler
+            const stats = {
+                total: testResults.length,
+                passed: testResults.filter(r => r.status === 'PASS').length,
+                failed: testResults.filter(r => r.status === 'FAIL').length,
+                warnings: testResults.filter(r => r.status === 'WARNING').length
+            };
+            
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'summary';
+            const successRate = stats.total > 0 
+                ? Math.round((stats.passed / stats.total) * 100)
+                : 0;
+            
+            summaryDiv.innerHTML = `
+                <h3>📊 Özet İstatistikler</h3>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.total}</div>
+                        <div class="stat-label">Toplam Test</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #10b981;">${stats.passed}</div>
+                        <div class="stat-label">✅ Başarılı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #f59e0b;">${stats.warnings}</div>
+                        <div class="stat-label">⚠️ Uyarı</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: #ef4444;">${stats.failed}</div>
+                        <div class="stat-label">❌ Başarısız</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${successRate}%</div>
+                        <div class="stat-label">📊 Başarı Oranı</div>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.appendChild(summaryDiv);
+        }
+        
+        async function testGetCurrentUser() {
+            console.log('🧪 getCurrentUser() Testi Başlatılıyor...');
+            
+            try {
+                // Test 1: Fonksiyon var mı?
+                if (typeof window.getCurrentUser !== 'function') {
+                    addTestResult(
+                        'getCurrentUser Fonksiyonu Kontrolü',
+                        'FAIL',
+                        '❌ window.getCurrentUser fonksiyonu bulunamadı!'
+                    );
+                    return;
+                }
+                
+                addTestResult(
+                    'getCurrentUser Fonksiyonu Kontrolü',
+                    'PASS',
+                    '✅ window.getCurrentUser fonksiyonu mevcut'
+                );
+                
+                // Test 2: Fonksiyon çağrısı
+                const user = await window.getCurrentUser();
+                
+                if (!user) {
+                    addTestResult(
+                        'getCurrentUser() Çağrısı',
+                        'WARNING',
+                        '⚠️ Fonksiyon null döndü (kullanıcı giriş yapmamış olabilir)'
+                    );
+                } else {
+                    const details = `✅ Kullanıcı bilgileri alındı:\n` +
+                        `   ID: ${user.id}\n` +
+                        `   Username: ${user.username}\n` +
+                        `   Email: ${user.email}`;
+                    
+                    addTestResult(
+                        'getCurrentUser() Çağrısı',
+                        'PASS',
+                        details
+                    );
+                    
+                    // Test 3: Email 'null' kontrolü
+                    if (user.email === 'null' || user.email === null) {
+                        addTestResult(
+                            'Email Değeri Kontrolü',
+                            'FAIL',
+                            `❌ Email hala 'null' veya null! Değer: ${user.email}`
+                        );
+                    } else if (user.email && user.email.includes('@')) {
+                        addTestResult(
+                            'Email Değeri Kontrolü',
+                            'PASS',
+                            `✅ Email düzgün: ${user.email}`
+                        );
+                    } else {
+                        addTestResult(
+                            'Email Değeri Kontrolü',
+                            'WARNING',
+                            `⚠️ Email formatı beklenmedik: ${user.email}`
+                        );
+                    }
+                    
+                    // Test 4: Tutarlılık testi (3 kez çağır)
+                    const results = [];
+                    for (let i = 0; i < 3; i++) {
+                        const u = await window.getCurrentUser();
+                        results.push(u);
+                    }
+                    
+                    const allSame = results.every(r => 
+                        r && r.id === user.id && 
+                        r.username === user.username && 
+                        r.email === user.email
+                    );
+                    
+                    if (allSame) {
+                        addTestResult(
+                            'Tutarlılık Testi (3 Çağrı)',
+                            'PASS',
+                            '✅ Tüm çağrılar aynı sonucu döndü'
+                        );
+                    } else {
+                        addTestResult(
+                            'Tutarlılık Testi (3 Çağrı)',
+                            'FAIL',
+                            `❌ Farklı sonuçlar döndü:\n${JSON.stringify(results, null, 2)}`
+                        );
+                    }
+                }
+                
+            } catch (error) {
+                addTestResult(
+                    'getCurrentUser() Hata Kontrolü',
+                    'FAIL',
+                    `❌ Hata oluştu: ${error.message}\n${error.stack}`
+                );
+            }
+        }
+        
+        async function testLocalStorage() {
+            console.log('🧪 localStorage Testi Başlatılıyor...');
+            
+            try {
+                const userId = localStorage.getItem('hasene_user_id');
+                const username = localStorage.getItem('hasene_username');
+                const email = localStorage.getItem('hasene_user_email');
+                
+                const details = `localStorage Değerleri:\n` +
+                    `   hasene_user_id: ${userId || '(yok)'}\n` +
+                    `   hasene_username: ${username || '(yok)'}\n` +
+                    `   hasene_user_email: ${email || '(yok)'}`;
+                
+                // Email 'null' string kontrolü
+                if (email === 'null') {
+                    addTestResult(
+                        'localStorage Email Kontrolü',
+                        'FAIL',
+                        `❌ Email 'null' string olarak kaydedilmiş!`
+                    );
+                } else if (email && email !== 'null') {
+                    addTestResult(
+                        'localStorage Email Kontrolü',
+                        'PASS',
+                        `✅ Email düzgün: ${email}`
+                    );
+                } else {
+                    addTestResult(
+                        'localStorage Email Kontrolü',
+                        'WARNING',
+                        `⚠️ Email localStorage'da yok`
+                    );
+                }
+                
+                addTestResult(
+                    'localStorage Değerleri',
+                    userId || username || email ? 'PASS' : 'WARNING',
+                    details
+                );
+                
+            } catch (error) {
+                addTestResult(
+                    'localStorage Testi',
+                    'FAIL',
+                    `❌ Hata: ${error.message}`
+                );
+            }
+        }
+        
+        async function testEmailNull() {
+            console.log('🧪 Email "null" Testi Başlatılıyor...');
+            
+            try {
+                // Test 1: localStorage'dan oku
+                let email = localStorage.getItem('hasene_user_email');
+                const originalEmail = email;
+                
+                // Test 2: 'null' string'ini kontrol et
+                if (email === 'null') {
+                    addTestResult(
+                        'localStorage "null" String Kontrolü',
+                        'FAIL',
+                        `❌ localStorage'da 'null' string'i var!`
+                    );
+                } else {
+                    addTestResult(
+                        'localStorage "null" String Kontrolü',
+                        'PASS',
+                        `✅ localStorage'da 'null' string'i yok: ${email || '(yok)'}`
+                    );
+                }
+                
+                // Test 3: getCurrentUser() ile karşılaştır
+                const user = await window.getCurrentUser();
+                if (user && user.email) {
+                    if (user.email === 'null') {
+                        addTestResult(
+                            'getCurrentUser() Email "null" Kontrolü',
+                            'FAIL',
+                            `❌ getCurrentUser() 'null' string döndürüyor!`
+                        );
+                    } else {
+                        addTestResult(
+                            'getCurrentUser() Email "null" Kontrolü',
+                            'PASS',
+                            `✅ getCurrentUser() düzgün email döndürüyor: ${user.email}`
+                        );
+                    }
+                }
+                
+            } catch (error) {
+                addTestResult(
+                    'Email "null" Testi',
+                    'FAIL',
+                    `❌ Hata: ${error.message}`
+                );
+            }
+        }
+        
+        async function runAllTests() {
+            console.log('🚀 Tüm Testler Başlatılıyor...');
+            testResults = [];
+            
+            await testGetCurrentUser();
+            await testLocalStorage();
+            await testEmailNull();
+            
+            console.log('✅ Tüm testler tamamlandı!');
+        }
+        
+        function clearResults() {
+            testResults = [];
+            displayResults();
+        }
+        
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', () => {
+            console.log('✅ Test sayfası yüklendi');
+            console.log('💡 "Tüm Testleri Çalıştır" butonuna tıklayarak testleri başlatabilirsiniz');
+        });
+    </script>
+</body>
+</html>
