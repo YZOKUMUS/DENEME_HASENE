@@ -638,16 +638,30 @@ async function loadStats() {
                             saveToIndexedDB('hasene_dailyTasks', dailyTasksToSave).catch(() => {});
                         }
                         
+                        // ÖNEMLİ: todayPuan, todayDogru, todayYanlis ve dailyKey değişkenlerini scope dışında tanımla
+                        let todayPuan = 0;
+                        let todayDogru = 0;
+                        let todayYanlis = 0;
+                        const today = getLocalDateString();
+                        const dailyKey = `hasene_daily_${today}`;
+                        
                         if (dailyTasks.todayStats) {
-                            const todayPuan = dailyTasks.todayStats.toplamPuan || 0;
-                            const todayDogru = dailyTasks.todayStats.toplamDogru || 0;
+                            todayPuan = dailyTasks.todayStats.toplamPuan || 0;
+                            todayDogru = dailyTasks.todayStats.toplamDogru || 0;
+                            todayYanlis = dailyTasks.todayStats.toplamYanlis || 0;
+                            
+                            console.log('📥 Backend\'den daily_tasks yüklendi:', {
+                                toplamPuan: todayPuan,
+                                toplamDogru: todayDogru,
+                                toplamYanlis: todayYanlis
+                            });
+                            
                             localStorage.setItem('dailyXP', todayPuan.toString());
                             localStorage.setItem('dailyCorrect', todayDogru.toString());
+                            localStorage.setItem('dailyWrong', todayYanlis.toString());
                             
                             // ÖNEMLİ: Backend'den gelen toplamPuan'ı hasene_daily_${today}.points'e de yaz
                             // Bu şekilde updateDailyGoalDisplay() doğru değeri gösterir
-                            const today = getLocalDateString();
-                            const dailyKey = `hasene_daily_${today}`;
                             const dailyData = safeGetItem(dailyKey, {
                                 correct: 0,
                                 wrong: 0,
@@ -658,15 +672,26 @@ async function loadStats() {
                                 gameModes: {}
                             });
                             
-                            // Backend'den gelen değer daha büyükse (senkronizasyon için)
-                            if (todayPuan > (dailyData.points || 0)) {
+                            // ÖNEMLİ: Backend'den gelen değer daha büyükse veya eşitse, onu kullan (senkronizasyon için)
+                            // Firebase'deki değer her zaman doğru kabul edilir
+                            if (todayPuan >= (dailyData.points || 0)) {
                                 dailyData.points = todayPuan;
                                 dailyData.correct = todayDogru || dailyData.correct;
+                                dailyData.wrong = todayYanlis || dailyData.wrong;
                                 safeSetItem(dailyKey, dailyData);
                                 console.log('🔄 Backend\'den gelen toplamPuan hasene_daily_points\'e yazıldı:', {
                                     backendToplamPuan: todayPuan,
+                                    backendToplamDogru: todayDogru,
+                                    backendToplamYanlis: todayYanlis,
                                     hasene_daily_points: dailyData.points,
+                                    hasene_daily_correct: dailyData.correct,
+                                    hasene_daily_wrong: dailyData.wrong,
                                     dailyKey
+                                });
+                            } else {
+                                console.log('ℹ️ localStorage\'daki değer daha büyük, korunuyor:', {
+                                    backendToplamPuan: todayPuan,
+                                    localStoragePoints: dailyData.points
                                 });
                             }
                             
@@ -677,11 +702,21 @@ async function loadStats() {
                         
                         // ÖNEMLİ: UI'ı güncelle (backend'den veri yüklendikten sonra)
                         // Bu, oyun ekranı ve vazifeler panelindeki rakamların güncellenmesini sağlar
+                        // ÖNEMLİ: hasene_daily_${today}.points güncellendikten SONRA çağır
+                        console.log('🔄 Vazifeler paneli UI güncelleniyor (backend verileri ile):', {
+                            todayPuan: todayPuan,
+                            todayDogru: todayDogru,
+                            dailyKey: dailyKey,
+                            dailyDataPoints: safeGetItem(dailyKey, {}).points
+                        });
+                        
                         if (typeof updateDailyGoalDisplay === 'function') {
                             updateDailyGoalDisplay();
+                            console.log('✅ updateDailyGoalDisplay() çağrıldı');
                         }
                         if (typeof updateTasksDisplay === 'function') {
                             updateTasksDisplay();
+                            console.log('✅ updateTasksDisplay() çağrıldı');
                         }
                         // Stats bar'ı da güncelle (totalPoints değişmiş olabilir)
                         if (typeof updateStatsBar === 'function') {
@@ -1409,6 +1444,14 @@ function updateDailyGoalDisplay() {
     
     // Tüm yerlerde aynı kaynağı kullan (getDailyHasene fonksiyonu)
     const dailyXPToUse = getDailyHasene();
+    
+    console.log('🔄 updateDailyGoalDisplay çağrıldı:', {
+        dailyXPToUse: dailyXPToUse,
+        dailyGoalHasene: dailyGoalHasene,
+        dailyXP: localStorage.getItem('dailyXP'),
+        dailyKey: `hasene_daily_${getLocalDateString()}`,
+        dailyDataPoints: safeGetItem(`hasene_daily_${getLocalDateString()}`, {}).points
+    });
     
     const percent = Math.min(100, Math.floor((dailyXPToUse / dailyGoalHasene) * 100));
     

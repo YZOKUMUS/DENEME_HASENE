@@ -1443,6 +1443,9 @@ async function loadDailyTasks() {
 async function saveDailyTasks(tasks) {
     console.log('💾 saveDailyTasks çağrıldı:', {
         todayStats: {
+            toplamPuan: tasks.todayStats?.toplamPuan,
+            toplamDogru: tasks.todayStats?.toplamDogru,
+            toplamYanlis: tasks.todayStats?.toplamYanlis,
             ayetOku: tasks.todayStats?.ayetOku,
             duaEt: tasks.todayStats?.duaEt,
             hadisOku: tasks.todayStats?.hadisOku,
@@ -1451,15 +1454,53 @@ async function saveDailyTasks(tasks) {
     });
     
     const user = await getCurrentUser();
+    
+    // ÖNEMLİ: todayStats.toplamPuan değerini kontrol et ve güncelle
+    // Eğer toplamPuan 0 ise ama hasene_daily_${today}.points > 0 ise, onu kullan
+    const today = typeof getLocalDateString === 'function' ? getLocalDateString() : new Date().toISOString().split('T')[0];
+    const dailyKey = `hasene_daily_${today}`;
+    const dailyData = typeof safeGetItem === 'function' ? safeGetItem(dailyKey, { points: 0, correct: 0, wrong: 0 }) : { points: 0, correct: 0, wrong: 0 };
+    
+    const currentToplamPuan = tasks.todayStats?.toplamPuan || 0;
+    const currentToplamDogru = tasks.todayStats?.toplamDogru || 0;
+    const currentToplamYanlis = tasks.todayStats?.toplamYanlis || 0;
+    
+    // ÖNEMLİ: hasene_daily_${today}.points ANA KAYNAK - eğer daha büyükse onu kullan
+    const finalToplamPuan = dailyData.points > currentToplamPuan ? dailyData.points : currentToplamPuan;
+    const finalToplamDogru = dailyData.correct > currentToplamDogru ? dailyData.correct : currentToplamDogru;
+    const finalToplamYanlis = dailyData.wrong > currentToplamYanlis ? dailyData.wrong : currentToplamYanlis;
+    
+    console.log('💾 saveDailyTasks - todayStats senkronizasyonu:', {
+        currentToplamPuan: currentToplamPuan,
+        currentToplamDogru: currentToplamDogru,
+        currentToplamYanlis: currentToplamYanlis,
+        dailyDataPoints: dailyData.points,
+        dailyDataCorrect: dailyData.correct,
+        dailyDataWrong: dailyData.wrong,
+        finalToplamPuan: finalToplamPuan,
+        finalToplamDogru: finalToplamDogru,
+        finalToplamYanlis: finalToplamYanlis
+    });
+    
     const toSave = {
         ...tasks,
         todayStats: {
             ...tasks.todayStats,
+            // ÖNEMLİ: hasene_daily_${today}.points ANA KAYNAK - eğer daha büyükse onu kullan
+            toplamPuan: finalToplamPuan,
+            toplamDogru: finalToplamDogru,
+            toplamYanlis: finalToplamYanlis,
             allGameModes: Array.from(tasks.todayStats.allGameModes || []),
             farklıZorluk: Array.from(tasks.todayStats.farklıZorluk || []),
             reviewWords: Array.from(tasks.todayStats.reviewWords || [])
         }
     };
+    
+    console.log('💾 saveDailyTasks - toSave kontrolü:', {
+        toplamPuan: toSave.todayStats.toplamPuan,
+        toplamDogru: toSave.todayStats.toplamDogru,
+        toplamYanlis: toSave.todayStats.toplamYanlis
+    });
     
     // Her durumda localStorage'a kaydet
     localStorage.setItem('hasene_dailyTasks', JSON.stringify(toSave));
