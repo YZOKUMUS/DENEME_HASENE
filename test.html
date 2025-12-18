@@ -59,8 +59,10 @@
 
         .game-card {
             flex: 0 0 auto;
-            width: 160px;
-            min-width: 160px;
+            width: clamp(160px, 40vw, 260px);
+            min-width: clamp(160px, 40vw, 260px);
+            /* Telefonlarda daha yüksek görünmesi için */
+            min-height: 200px;
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -181,14 +183,6 @@
             flex: 0 0 20px;
         }
 
-        /* Responsive */
-        @media (min-width: 768px) {
-            .game-card {
-                width: 180px;
-                min-width: 180px;
-            }
-        }
-
         /* Test bilgisi */
         .test-info {
             background: rgba(255, 255, 255, 0.1);
@@ -221,7 +215,7 @@
         </div>
 
         <div class="game-modes-container">
-            <!-- İlk Satır -->
+            <!-- Tek Satır -->
             <div class="game-modes-row">
                 <div class="game-card" data-game="kelime-cevir">
                     <div class="game-icon">
@@ -254,10 +248,7 @@
                     <h3>Ayet Oku</h3>
                     <p>Ayetin Arapça'sını oku, dinle ve meâli idrak et</p>
                 </div>
-            </div>
 
-            <!-- İkinci Satır -->
-            <div class="game-modes-row">
                 <div class="game-card" data-game="dua-et">
                     <div class="game-icon">
                         <span>🤲</span>

@@ -5221,6 +5221,13 @@ body {
     }
 }
 
+/* Tek satır yatay scroll için kart boyutları (test.html ile uyumlu) */
+.game-modes-row .game-card {
+    width: clamp(160px, 40vw, 260px);
+    min-width: clamp(160px, 40vw, 260px);
+    min-height: 200px;
+}
+
 /* ============================================
    UTILITY CLASSES
    ============================================ */
