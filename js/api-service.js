@@ -969,21 +969,56 @@ async function saveUserStats(stats) {
     // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            // ÖNEMLİ: Kullanıcı kontrolü - sadece geçerli kullanıcılar için çalış
+            if (!user.username || user.username === 'Kullanıcı' || user.username.length < 2) {
+                console.log('ℹ️ saveUserStats: Geçersiz username, Firebase\'e kaydedilmedi:', user.username);
+                return; // Geçersiz kullanıcı, Firebase'e kaydetme
+            }
+            
+            // ÖNEMLİ: Firebase auth kontrolü - gerçekten Firebase'de giriş yapılmış mı?
+            const auth = getFirebaseAuth();
+            if (!auth || !auth.currentUser) {
+                console.log('ℹ️ saveUserStats: Firebase auth yok, Firebase\'e kaydedilmedi');
+                return; // Firebase auth yok, kaydetme
+            }
+            
+            const firebaseUid = auth.currentUser.uid;
+            if (!firebaseUid || firebaseUid.length < 10) {
+                console.log('ℹ️ saveUserStats: Geçersiz Firebase UID, Firebase\'e kaydedilmedi');
+                return; // Geçersiz UID, kaydetme
+            }
+            
             // Username'i doküman ID'si olarak kullan (ama "Kullanıcı" default değerini atla)
-            const docId = (user.username && user.username !== 'Kullanıcı') 
-                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
-                : user.id;
+            const docId = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+            
+            // ÖNEMLİ: docId kontrolü - rastgele string'lerden kaçın
+            // 1. docId boş veya çok kısa olmamalı
+            // 2. "Kullanıcı" veya "Kullanici" olmamalı
+            // 3. Uzun Firebase UID'leri olmamalı (20+ karakter, sadece harf/rakam)
+            const isLongUid = docId.length >= 20 && /^[a-zA-Z0-9]{20,}$/.test(docId);
+            if (!docId || docId.length < 2 || docId === 'Kullanici' || docId === 'Kullanıcı' || isLongUid) {
+                console.log('ℹ️ saveUserStats: Geçersiz docId, Firebase\'e kaydedilmedi:', {
+                    docId: docId,
+                    length: docId?.length,
+                    isLongUid: isLongUid,
+                    username: user.username
+                });
+                return; // Geçersiz docId, kaydetme
+            }
+            
+            // ÖNEMLİ: user.id de uzun UID ise kaydetme (rastgele Firebase UID'leri)
+            if (user.id && user.id.length >= 20 && /^[a-zA-Z0-9]{20,}$/.test(user.id) && user.id !== firebaseUid) {
+                console.log('ℹ️ saveUserStats: user.id rastgele UID gibi görünüyor, Firebase\'e kaydedilmedi:', user.id);
+                return; // Rastgele UID, kaydetme
+            }
             
             console.log('🔥 Firebase\'e kaydediliyor:', {
                 collection: 'user_stats',
                 docId: docId,
                 username: user.username,
-                total_points: stats.total_points
+                total_points: stats.total_points,
+                firebaseUid: firebaseUid
             });
-            
-            // Firebase auth'dan gerçek UID'yi al
-            const auth = getFirebaseAuth();
-            const firebaseUid = auth?.currentUser?.uid || null;
             
             await firestoreSet('user_stats', docId, {
                 user_id: user.id,
@@ -1099,10 +1134,14 @@ async function saveUserStats(stats) {
             console.error('❌ Firebase saveUserStats error:', error);
         }
     } else {
-        console.warn('⚠️ Firebase\'e kaydedilmedi:', {
-            backendType: getBackendType(),
-            user: user ? { id: user.id, isLocal: user.id.startsWith('local-') } : null
-        });
+        // Kullanıcı giriş yapmamışsa bu normal, uyarı gösterme
+        if (user && user.id && !user.id.startsWith('local-')) {
+            console.warn('⚠️ Firebase\'e kaydedilmedi:', {
+                backendType: getBackendType(),
+                user: user ? { id: user.id, isLocal: user.id.startsWith('local-') } : null
+            });
+        }
+        // Kullanıcı yoksa sessizce devam et (normal durum)
     }
 }
 
@@ -1146,9 +1185,24 @@ async function autoCreateCollections() {
         const docId = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
         
         // ÖNEMLİ: docId kontrolü - rastgele string'lerden kaçın
-        if (!docId || docId.length < 2 || docId === 'Kullanici' || docId === 'Kullanıcı') {
-            console.log('ℹ️ autoCreateCollections: Geçersiz docId, atlandı:', docId);
+        // 1. docId boş veya çok kısa olmamalı
+        // 2. "Kullanıcı" veya "Kullanici" olmamalı
+        // 3. Uzun Firebase UID'leri olmamalı (20+ karakter, sadece harf/rakam)
+        const isLongUid = docId.length >= 20 && /^[a-zA-Z0-9]{20,}$/.test(docId);
+        if (!docId || docId.length < 2 || docId === 'Kullanici' || docId === 'Kullanıcı' || isLongUid) {
+            console.log('ℹ️ autoCreateCollections: Geçersiz docId, atlandı:', {
+                docId: docId,
+                length: docId?.length,
+                isLongUid: isLongUid,
+                username: user.username
+            });
             return;
+        }
+        
+        // ÖNEMLİ: user.id de uzun UID ise kaydetme (rastgele Firebase UID'leri)
+        if (user.id && user.id.length >= 20 && /^[a-zA-Z0-9]{20,}$/.test(user.id) && user.id !== firebaseUid) {
+            console.log('ℹ️ autoCreateCollections: user.id rastgele UID gibi görünüyor, atlandı:', user.id);
+            return; // Rastgele UID, kaydetme
         }
         
         console.log('✅ autoCreateCollections: Geçerli kullanıcı bulundu:', {
@@ -1205,16 +1259,23 @@ async function autoCreateCollections() {
                 const existing = await firestoreGet(collection.name, docId);
                 if (!existing) {
                     // Yoksa oluştur
+                    console.log(`📝 ${collection.name} collection'ı oluşturuluyor...`);
                     const result = await firestoreSet(collection.name, docId, collection.data);
                     if (result) {
-                        console.log(`✅ ${collection.name} collection'ı otomatik oluşturuldu`);
+                        console.log(`✅ ${collection.name} collection'ı otomatik oluşturuldu (docId: ${docId})`);
+                    } else {
+                        console.log(`⚠️ ${collection.name} collection'ı oluşturulamadı (firestoreSet false döndü)`);
                     }
+                } else {
+                    console.log(`ℹ️ ${collection.name} collection'ı zaten mevcut (docId: ${docId})`);
                 }
             } catch (error) {
                 // Hata olsa bile devam et (collection zaten var olabilir)
                 console.log(`ℹ️ ${collection.name} kontrol edilemedi (normal olabilir):`, error.message);
             }
         }
+        
+        console.log('✅ autoCreateCollections tamamlandı');
     } catch (error) {
         // Sessizce devam et - hata olsa bile uygulama çalışmaya devam etmeli
         console.log('ℹ️ Otomatik collection oluşturma atlandı:', error.message);
@@ -1353,10 +1414,14 @@ async function saveDailyTasks(tasks) {
             console.error('❌ saveDailyTasks - Firebase kaydetme hatası:', error);
         }
     } else {
-        console.warn('⚠️ saveDailyTasks - Firebase\'e kaydedilmedi:', {
-            backendType: getBackendType(),
-            user: user ? { id: user.id, idStartsWithLocal: user.id?.startsWith('local-') } : null
-        });
+        // Kullanıcı giriş yapmamışsa bu normal, uyarı gösterme
+        if (user && user.id && !user.id.startsWith('local-')) {
+            console.warn('⚠️ saveDailyTasks - Firebase\'e kaydedilmedi:', {
+                backendType: getBackendType(),
+                user: user ? { id: user.id, idStartsWithLocal: user.id?.startsWith('local-') } : null
+            });
+        }
+        // Kullanıcı yoksa sessizce devam et (normal durum)
     }
 }
 

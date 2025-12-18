@@ -337,23 +337,29 @@ async function loadStats() {
                     
                     if (userStats === null || userStats === undefined) {
                         if (retryCount < maxRetries) {
-                            console.log(`⚠️ Backend'den veri yüklenemedi (null/undefined), ${retryDelay * (retryCount + 1)}ms sonra tekrar deneniyor...`);
+                            // Retry yapılacak, sessizce devam et
                             await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
                             retryCount++;
                         } else {
-                            console.warn('⚠️ Backend\'den veri yüklenemedi (max retry aşıldı)');
+                            // Max retry aşıldı - sadece kullanıcı gerçekten giriş yapmışsa uyarı göster
+                            if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                                console.warn('⚠️ Backend\'den veri yüklenemedi (max retry aşıldı)');
+                            }
                             break;
                         }
                     } else {
                         break;
                     }
                 } catch (apiError) {
-                    console.warn(`⚠️ Backend yükleme hatası (deneme ${retryCount + 1}):`, apiError);
+                    // Hata durumunda - sadece kullanıcı gerçekten giriş yapmışsa uyarı göster
+                    if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                        console.warn(`⚠️ Backend yükleme hatası (deneme ${retryCount + 1}):`, apiError);
+                    }
                     if (retryCount < maxRetries) {
                         await new Promise(resolve => setTimeout(resolve, retryDelay * (retryCount + 1)));
                         retryCount++;
                     } else {
-                        console.warn('⚠️ Backend yükleme başarısız, localStorage kullanılacak');
+                        // Max retry aşıldı - sessizce devam et
                         break;
                     }
                 }
@@ -429,11 +435,23 @@ async function loadStats() {
                 
                 console.log('✅ ÖNCELİK 1: Kritik veriler backend\'den yüklendi ve UI güncellendi');
             } else {
-                console.warn('⚠️ Backend\'den veri yüklenemedi (userStats null veya boş)');
+                // Kullanıcı giriş yapmamışsa veya geçersiz kullanıcıysa bu normal, uyarı gösterme
+                // Sadece gerçekten geçerli bir kullanıcı varsa ama veri yüklenemezse uyarı göster
+                if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                    // Geçerli kullanıcı var ama veri yüklenemedi - bu gerçek bir sorun olabilir
+                    // Ancak yeni kullanıcılar için normal olabilir, bu yüzden sadece debug log
+                    if (typeof debugLog === 'function') {
+                        debugLog('ℹ️ Backend\'den veri yüklenemedi (yeni kullanıcı olabilir)');
+                    }
+                }
             }
         } else {
+            // Kullanıcı giriş yapmamışsa bu normal, uyarı gösterme
             if (!user) {
-                console.warn('⚠️ Kullanıcı giriş yapmamış, backend\'den veri yüklenemiyor');
+                // Sessizce devam et - kullanıcı henüz giriş yapmamış
+                if (typeof debugLog === 'function') {
+                    debugLog('ℹ️ Kullanıcı giriş yapmamış, backend\'den veri yüklenemiyor (normal)');
+                }
             }
             if (typeof window.loadUserStats !== 'function') {
                 console.warn('⚠️ window.loadUserStats fonksiyonu bulunamadı, backend entegrasyonu eksik');
