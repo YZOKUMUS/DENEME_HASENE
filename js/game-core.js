@@ -613,7 +613,11 @@ async function loadStats() {
                 await checkDailyTasks();
             }
             updateDailyGoalDisplay();
-            updateTasksDisplay();
+            updateTasksDisplay().then(() => {
+                console.log('✅ DailyTasks localStorage\'dan yüklendi ve UI güncellendi');
+            }).catch(err => {
+                console.error('❌ updateTasksDisplay() hatası (localStorage):', err);
+            });
         }
         
         // Backend'den dailyTasks yükle (paralel, arka planda güncelle)
@@ -767,8 +771,11 @@ async function loadStats() {
                             console.log('✅ updateDailyGoalDisplay() çağrıldı');
                         }
                         if (typeof updateTasksDisplay === 'function') {
-                            updateTasksDisplay();
-                            console.log('✅ updateTasksDisplay() çağrıldı');
+                            updateTasksDisplay().then(() => {
+                                console.log('✅ updateTasksDisplay() tamamlandı (backend daily_tasks yükleme sonrası)');
+                            }).catch(err => {
+                                console.error('❌ updateTasksDisplay() hatası:', err);
+                            });
                         }
                         // Stats bar'ı da güncelle (totalPoints değişmiş olabilir)
                         if (typeof updateStatsBar === 'function') {
@@ -1098,7 +1105,12 @@ async function loadStats() {
             updateDailyGoalDisplay();
             updateStreakDisplay(); // Streak'i de güncelle
             // ÖNEMLİ: updateTasksDisplay() burada çağrılıyor çünkü görevler artık oluşturulmuş
-            updateTasksDisplay(); // Görev sayacını güncelle
+            // updateTasksDisplay() artık async, await edilmeli
+            updateTasksDisplay().then(() => {
+                console.log('✅ updateTasksDisplay() tamamlandı (updateUIAfterLoad içinde)');
+            }).catch(err => {
+                console.error('❌ updateTasksDisplay() hatası:', err);
+            });
             
             console.log('✅ UI güncellendi');
         }
@@ -4370,17 +4382,21 @@ async function checkDailyTasks() {
             hadisOku: 0
         };
         
-        // Sadece geçerli kullanıcı varsa kaydet
-        if (shouldSave) {
-            saveStats();
-        }
+        // ÖNEMLİ: saveStats() çağrılmıyor çünkü oyun oynanmadan hasene_daily_${today}.points 0 olacak
+        // saveStats() içinde saveDailyTasks() çağrılıyor ve bu, Firebase'e 0 kaydedecek
+        // Bunun yerine, sadece görevleri oluşturuyoruz, kaydetme işlemi oyun oynandığında yapılacak
+        // if (shouldSave) {
+        //     saveStats();
+        // }
     } else {
         // Aynı gün, mevcut görevleri template ile senkronize et (ad ve açıklama güncellemeleri için)
         syncTasksWithTemplate();
-        // Sadece geçerli kullanıcı varsa kaydet
-        if (shouldSave) {
-            saveStats(); // Değişiklikleri kaydet
-        }
+        // ÖNEMLİ: saveStats() çağrılmıyor çünkü oyun oynanmadan hasene_daily_${today}.points 0 olacak
+        // saveStats() içinde saveDailyTasks() çağrılıyor ve bu, Firebase'e 0 kaydedecek
+        // Bunun yerine, sadece görevleri senkronize ediyoruz, kaydetme işlemi oyun oynandığında yapılacak
+        // if (shouldSave) {
+        //     saveStats(); // Değişiklikleri kaydet
+        // }
     }
     
     updateTasksDisplay();
@@ -4812,23 +4828,26 @@ function updateWeeklyTaskProgressFromStats() {
 /**
  * Görev görüntüsünü günceller
  */
-function updateTasksDisplay() {
+async function updateTasksDisplay() {
     // Günlük görevler
     const dailyTasksList = document.getElementById('daily-tasks-list');
     if (dailyTasksList) {
         dailyTasksList.innerHTML = '';
         
+        // ÖNEMLİ: Görevler yoksa oluştur (async, await edilmeli)
+        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+            console.log('⚠️ updateTasksDisplay: Görevler yok, checkDailyTasks çağrılıyor...');
+            await checkDailyTasks();
+            console.log('✅ updateTasksDisplay: checkDailyTasks tamamlandı, görev sayısı:', {
+                tasks: dailyTasks.tasks?.length || 0,
+                bonusTasks: dailyTasks.bonusTasks?.length || 0
+            });
+        }
+        
         // ÖNEMLİ: Progress değerlerini güncelle (görevler oluşturulduktan sonra)
         // Bu, UI'da doğru progress değerlerinin görünmesini sağlar
         if (dailyTasks.tasks && dailyTasks.tasks.length > 0) {
             updateTaskProgressFromStats();
-        }
-        
-        // Görevler yoksa kontrol et (ama async bekleme yapmıyoruz, sadece uyarı)
-        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
-            console.warn('⚠️ updateTasksDisplay: Görevler yok! checkDailyTasks çağrılmalı (async, bu yüzden burada await edilemez)');
-            // checkDailyTasks() async, bu yüzden burada await edemeyiz
-            // Ancak görevler yoksa UI'da "Görevler yükleniyor..." gösterilecek
         }
         
         const allDailyTasks = [...(dailyTasks.tasks || []), ...(dailyTasks.bonusTasks || [])];
