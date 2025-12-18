@@ -104,7 +104,7 @@ async function firestoreSet(collection, docId, data) {
     }
 }
 
-async function firestoreGetCollection(collection, userId) {
+async function firestoreGetCollection(collection, userId, username = null) {
     // Eğer kullanıcı Firebase'de giriş yapmamışsa, Firebase kullanma (en önce kontrol et)
     // NOT: Firebase Anonymous Authentication kullanıcıları için userId Firebase UID olacak
     if (!userId || String(userId).startsWith('local-')) {
@@ -131,8 +131,24 @@ async function firestoreGetCollection(collection, userId) {
     }
     
     try {
-        const { getDocs, collection: col, query, where } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        const q = query(col(db, collection), where('user_id', '==', userId));
+        const { getDocs, collection: col, query, where, or } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        
+        // Hem user_id hem de username field'larına göre sorgula (geriye dönük uyumluluk)
+        let q;
+        if (username) {
+            // Username varsa, hem user_id hem de username'e göre sorgula
+            q = query(
+                col(db, collection),
+                or(
+                    where('user_id', '==', userId),
+                    where('username', '==', username)
+                )
+            );
+        } else {
+            // Username yoksa, sadece user_id'ye göre sorgula
+            q = query(col(db, collection), where('user_id', '==', userId));
+        }
+        
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
@@ -142,13 +158,31 @@ async function firestoreGetCollection(collection, userId) {
 }
 
 // Firestore collection helper (subcollection için)
-async function firestoreGetSubCollection(collection, userId, subCollection) {
+async function firestoreGetSubCollection(collection, userId, subCollection, username = null) {
     const db = getFirebaseDb();
     if (!db || getBackendType() !== 'firebase') return [];
     
     try {
         const { getDocs, collection: col, doc: docRef } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-        const userDocRef = docRef(db, collection, userId);
+        
+        // Username varsa önce username ile dene, yoksa userId ile
+        let userDocRef = null;
+        if (username) {
+            const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+            try {
+                userDocRef = docRef(db, collection, cleanUsername);
+                const subColRef = col(userDocRef, subCollection);
+                const querySnapshot = await getDocs(subColRef);
+                if (!querySnapshot.empty) {
+                    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (err) {
+                console.warn('⚠️ firestoreGetSubCollection: Username ile yükleme hatası, UID ile deneniyor:', err);
+            }
+        }
+        
+        // Username ile bulunamadıysa veya username yoksa, userId ile dene (geriye dönük uyumluluk)
+        userDocRef = docRef(db, collection, userId);
         const subColRef = col(userDocRef, subCollection);
         const querySnapshot = await getDocs(subColRef);
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -179,14 +213,22 @@ async function registerUser(email, password, username = null) {
                 await updateProfile(user, { displayName: username });
             }
             
-            // Kullanıcı profilini Firestore'a kaydet
+            // Kullanıcı profilini Firestore'a kaydet (username'i doküman ID'si olarak kullan)
             const db = getFirebaseDb();
             if (db) {
-                await firestoreSet('users', user.uid, {
+                const finalUsername = username || email.split('@')[0];
+                // Username'i Firestore doküman ID'si için temizle
+                const cleanUsername = finalUsername.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+                
+                await firestoreSet('users', cleanUsername, {
                     email: email,
-                    username: username || email.split('@')[0],
-                    created_at: new Date().toISOString()
+                    username: finalUsername,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    auth_type: 'email',
+                    firebase_uid: user.uid // Firebase UID'yi de sakla (gerekirse)
                 });
+                console.log('✅ Email kayıt: Kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', cleanUsername + ', Username:', finalUsername + ')');
             }
             
             localStorage.setItem('hasene_user_email', email);
@@ -221,9 +263,24 @@ async function loginUser(email, password) {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Kullanıcı profilini yükle
-            const userData = await firestoreGet('users', user.uid);
-            const username = userData?.username || user.displayName || email.split('@')[0];
+            // Kullanıcı profilini yükle (önce username ile kontrol et, yoksa UID ile)
+            let userData = null;
+            const emailUsername = email.split('@')[0];
+            const cleanEmailUsername = emailUsername.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+            
+            // Önce username ile kontrol et (yeni sistem)
+            try {
+                userData = await firestoreGet('users', cleanEmailUsername);
+            } catch (err) {
+                console.warn('⚠️ loginUser: Username ile yükleme hatası, UID ile deneniyor:', err);
+            }
+            
+            // Username ile bulunamadıysa, eski UID ile kontrol et (geriye dönük uyumluluk)
+            if (!userData) {
+                userData = await firestoreGet('users', user.uid);
+            }
+            
+            const username = userData?.username || user.displayName || emailUsername;
             
             localStorage.setItem('hasene_user_email', email);
             localStorage.setItem('hasene_username', username);
@@ -261,15 +318,23 @@ async function loginWithGoogle() {
                     console.log('✅ Google redirect sonucu alındı:', redirectResult.user.email);
                     const user = redirectResult.user;
                     
-                    // Kullanıcı profilini Firestore'a kaydet
+                    // Kullanıcı profilini Firestore'a kaydet (username'i doküman ID'si olarak kullan)
                     const db = getFirebaseDb();
                     if (db) {
                         try {
-                            await firestoreSet('users', user.uid, {
+                            const username = user.displayName || user.email.split('@')[0];
+                            // Username'i Firestore doküman ID'si için temizle
+                            const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+                            
+                            await firestoreSet('users', cleanUsername, {
                                 email: user.email,
-                                username: user.displayName || user.email.split('@')[0],
-                                created_at: new Date().toISOString()
+                                username: username,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                                auth_type: 'google',
+                                firebase_uid: user.uid // Firebase UID'yi de sakla (gerekirse)
                             });
+                            console.log('✅ Google login: Kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', cleanUsername + ', Username:', username + ')');
                         } catch (firestoreError) {
                             console.warn('⚠️ Firestore kayıt hatası (normal olabilir):', firestoreError);
                         }
@@ -398,14 +463,22 @@ async function loginWithGitHub() {
             const userCredential = await signInWithPopup(auth, provider);
             const user = userCredential.user;
             
-            // Kullanıcı profilini Firestore'a kaydet
+            // Kullanıcı profilini Firestore'a kaydet (username'i doküman ID'si olarak kullan)
             const db = getFirebaseDb();
             if (db) {
-                await firestoreSet('users', user.uid, {
+                const username = user.displayName || user.email.split('@')[0];
+                // Username'i Firestore doküman ID'si için temizle
+                const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+                
+                await firestoreSet('users', cleanUsername, {
                     email: user.email,
-                    username: user.displayName || user.email.split('@')[0],
-                    created_at: new Date().toISOString()
+                    username: username,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    auth_type: 'github',
+                    firebase_uid: user.uid // Firebase UID'yi de sakla (gerekirse)
                 });
+                console.log('✅ GitHub login: Kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', cleanUsername + ', Username:', username + ')');
             }
             
             localStorage.setItem('hasene_user_email', user.email);
@@ -635,6 +708,60 @@ async function getCurrentUser() {
 }
 
 // ============================================
+// HELPER FUNCTIONS - Username'i doküman ID'si olarak kullan
+// ============================================
+
+/**
+ * Kullanıcı için doküman ID'sini döndürür (username temizlenmiş hali)
+ * Geriye dönük uyumluluk için önce username'e göre kontrol eder, yoksa UID'ye göre kontrol eder
+ */
+async function getUserDocumentId(user) {
+    if (!user || !user.username) {
+        // Username yoksa, eski UID'yi kullan (geriye dönük uyumluluk)
+        return user?.id || null;
+    }
+    
+    // Username'i Firestore doküman ID'si için temizle
+    const cleanUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+    
+    // Eğer Firebase kullanılıyorsa, önce username'e göre kontrol et
+    if (getBackendType() === 'firebase' && user.id && !user.id.startsWith('local-')) {
+        const db = getFirebaseDb();
+        if (db) {
+            try {
+                const { getDoc, doc, collection: col } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                
+                // Önce username ile kontrol et (yeni sistem)
+                const usernameDocRef = doc(col(db, 'users'), cleanUsername);
+                const usernameDocSnap = await getDoc(usernameDocRef);
+                
+                if (usernameDocSnap.exists()) {
+                    // Username ile doküman bulundu, username kullan
+                    return cleanUsername;
+                }
+                
+                // Username ile bulunamadı, eski UID ile kontrol et (geriye dönük uyumluluk)
+                const uidDocRef = doc(col(db, 'users'), user.id);
+                const uidDocSnap = await getDoc(uidDocRef);
+                
+                if (uidDocSnap.exists()) {
+                    // Eski UID ile doküman var, ama yeni sistemde username kullanılacak
+                    // Eski dokümanı username'e migrate et (opsiyonel - şimdilik UID kullan)
+                    console.log('ℹ️ Eski UID dokümanı bulundu, username\'e migrate edilebilir:', user.id, '->', cleanUsername);
+                    // Şimdilik UID kullan (migration yapılmadı)
+                    return user.id;
+                }
+            } catch (err) {
+                console.warn('⚠️ getUserDocumentId: Doküman kontrolü hatası, username kullanılacak:', err);
+            }
+        }
+    }
+    
+    // Username kullan (yeni sistem)
+    return cleanUsername;
+}
+
+// ============================================
 // USER STATS API
 // ============================================
 
@@ -651,15 +778,30 @@ async function loadUserStats() {
     
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            // Doküman ID'sini al (username veya UID)
+            const docId = await getUserDocumentId(user);
+            
             console.log('🔥 Firebase\'den yükleniyor:', {
                 collection: 'user_stats',
-                docId: user.id
+                docId: docId,
+                username: user.username
             });
             
-            const stats = await firestoreGet('user_stats', user.id);
+            // Önce username ile kontrol et (ama "Kullanıcı" default değerini atla)
+            let stats = null;
+            if (user.username && user.username !== 'Kullanıcı') {
+                const cleanUsername = user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+                stats = await firestoreGet('user_stats', cleanUsername);
+            }
+            
+            // Username ile bulunamadıysa, eski UID ile kontrol et (geriye dönük uyumluluk)
+            if (!stats && user.id && !user.id.startsWith('local-')) {
+                stats = await firestoreGet('user_stats', user.id);
+            }
             if (stats) {
                 console.log('✅ Firebase\'den veri yüklendi:', {
-                    docId: user.id,
+                    docId: docId,
+                    username: user.username,
                     total_points: stats.total_points
                 });
                 // Firestore'dan gelen veriyi localStorage'a da kaydet (senkronizasyon)
@@ -677,7 +819,7 @@ async function loadUserStats() {
                     perfect_lessons_count: parseInt(stats.perfect_lessons_count || 0)
                 };
             } else {
-                console.log('ℹ️ Firebase\'de veri bulunamadı (yeni kullanıcı olabilir):', user.id);
+                console.log('ℹ️ Firebase\'de veri bulunamadı (yeni kullanıcı olabilir):', docId || user.id);
             }
         } catch (error) {
             console.error('❌ Firebase loadUserStats error:', error);
@@ -717,18 +859,29 @@ async function saveUserStats(stats) {
     localStorage.setItem('hasene_gameStats', JSON.stringify(stats.game_stats));
     localStorage.setItem('perfectLessonsCount', stats.perfect_lessons_count.toString());
     
-    // Firebase'e de kaydet
+    // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            // Username'i doküman ID'si olarak kullan (ama "Kullanıcı" default değerini atla)
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
             console.log('🔥 Firebase\'e kaydediliyor:', {
                 collection: 'user_stats',
-                docId: user.id,
+                docId: docId,
+                username: user.username,
                 total_points: stats.total_points
             });
             
-            await firestoreSet('user_stats', user.id, {
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            await firestoreSet('user_stats', docId, {
                 user_id: user.id,
                 username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid, // Firestore rules için gerekli
                 total_points: stats.total_points,
                 badges: stats.badges,
                 streak_data: stats.streak_data,
@@ -737,7 +890,8 @@ async function saveUserStats(stats) {
             });
             
             console.log('✅ Firebase\'e başarıyla kaydedildi:', {
-                docId: user.id,
+                docId: docId,
+                username: user.username,
                 total_points: stats.total_points
             });
         } catch (error) {
@@ -763,7 +917,21 @@ async function loadDailyTasks() {
     
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
-            const data = await firestoreGet('daily_tasks', user.id);
+            // Username'i doküman ID'si olarak kullan (ama "Kullanıcı" default değerini atla)
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
+            // Önce username ile kontrol et (ama "Kullanıcı" default değerini atla)
+            let data = null;
+            if (user.username && user.username !== 'Kullanıcı') {
+                data = await firestoreGet('daily_tasks', docId);
+            }
+            
+            // Username ile bulunamadıysa, eski UID ile kontrol et (geriye dönük uyumluluk)
+            if (!data && user.id && !user.id.startsWith('local-')) {
+                data = await firestoreGet('daily_tasks', user.id);
+            }
             if (data) {
                 // Set'leri geri yükle
                 if (data.todayStats) {
@@ -830,11 +998,17 @@ async function saveDailyTasks(tasks) {
     localStorage.setItem('hasene_dailyTasks', JSON.stringify(toSave));
     console.log('💾 saveDailyTasks - localStorage kaydedildi');
     
-    // Firebase'e de kaydet
+    // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
+            // Username'i doküman ID'si olarak kullan (ama "Kullanıcı" default değerini atla)
+            const docId = (user.username && user.username !== 'Kullanıcı') 
+                ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+                : user.id;
+            
             console.log('🔥 saveDailyTasks - Firebase\'e kaydediliyor:', {
-                userId: user.id,
+                docId: docId,
+                username: user.username,
                 collection: 'daily_tasks',
                 todayStats: {
                     ayetOku: toSave.todayStats.ayetOku,
@@ -842,11 +1016,17 @@ async function saveDailyTasks(tasks) {
                     hadisOku: toSave.todayStats.hadisOku
                 }
             });
-            await firestoreSet('daily_tasks', user.id, {
+            // Firebase auth'dan gerçek UID'yi al
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            await firestoreSet('daily_tasks', docId, {
                 user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid, // Firestore rules için gerekli
                 ...toSave
             });
-            console.log('✅ saveDailyTasks - Firebase\'e başarıyla kaydedildi');
+            console.log('✅ saveDailyTasks - Firebase\'e başarıyla kaydedildi (docId:', docId + ')');
         } catch (error) {
             console.error('❌ saveDailyTasks - Firebase kaydetme hatası:', error);
         }
@@ -899,17 +1079,23 @@ async function loadWordStats() {
     
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
-            // word_stats collection'ından tüm kelime istatistiklerini al
-            const wordStatsCollection = await firestoreGetCollection('word_stats', user.id);
-            const stats = {};
-            wordStatsCollection.forEach(item => {
-                if (item.word_id && item.stats) {
-                    stats[item.word_id] = item.stats;
-                }
-            });
-            // localStorage'a da kaydet
-            localStorage.setItem('hasene_wordStats', JSON.stringify(stats));
-            return stats;
+            // Username'i doküman ID'si olarak kullan
+            const docId = user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : user.id;
+            
+            // Username ile sorgula (firestoreGetCollection hem user_id hem username'e göre sorgulayacak)
+            const wordStatsCollection = await firestoreGetCollection('word_stats', user.id, user.username);
+            
+            if (wordStatsCollection && wordStatsCollection.length > 0) {
+                const stats = {};
+                wordStatsCollection.forEach(item => {
+                    if (item.word_id && item.stats) {
+                        stats[item.word_id] = item.stats;
+                    }
+                });
+                // localStorage'a da kaydet
+                localStorage.setItem('hasene_wordStats', JSON.stringify(stats));
+                return stats;
+            }
         } catch (error) {
             console.warn('Firebase loadWordStats error:', error);
         }
@@ -930,15 +1116,18 @@ async function saveWordStat(wordId, stats) {
     allStats[wordId] = stats;
     localStorage.setItem('hasene_wordStats', JSON.stringify(allStats));
     
-    // Firebase'e de kaydet
+    // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
             const db = getFirebaseDb();
             if (db) {
+                // Username'i doküman ID'si olarak kullan
+                const docId = user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : user.id;
                 const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                const docRef = doc(db, 'word_stats', `${user.id}_${wordId}`);
+                const docRef = doc(db, 'word_stats', `${docId}_${wordId}`);
                 await setDoc(docRef, {
                     user_id: user.id,
+                    username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
                     word_id: wordId,
                     stats: stats
                 }, { merge: true });
@@ -961,11 +1150,18 @@ async function loadFavorites() {
     
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
-            const favoritesCollection = await firestoreGetCollection('favorites', user.id);
-            const favorites = favoritesCollection.map(item => item.word_id).filter(Boolean);
-            // localStorage'a da kaydet
-            localStorage.setItem('hasene_favorites', JSON.stringify(favorites));
-            return favorites;
+            // Username'i doküman ID'si olarak kullan
+            const docId = user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : user.id;
+            
+            // Username ile sorgula (firestoreGetCollection hem user_id hem username'e göre sorgulayacak)
+            const favoritesCollection = await firestoreGetCollection('favorites', user.id, user.username);
+            
+            if (favoritesCollection && favoritesCollection.length > 0) {
+                const favorites = favoritesCollection.map(item => item.word_id).filter(Boolean);
+                // localStorage'a da kaydet
+                localStorage.setItem('hasene_favorites', JSON.stringify(favorites));
+                return favorites;
+            }
         } catch (error) {
             console.warn('Firebase loadFavorites error:', error);
         }
@@ -987,15 +1183,18 @@ async function addFavorite(wordId) {
         favorites.push(wordId);
         localStorage.setItem('hasene_favorites', JSON.stringify(favorites));
         
-        // Firebase'e de kaydet
+        // Firebase'e de kaydet (username'i doküman ID'si olarak kullan)
         if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
             try {
                 const db = getFirebaseDb();
                 if (db) {
+                    // Username'i doküman ID'si olarak kullan
+                    const docId = user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : user.id;
                     const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    const docRef = doc(db, 'favorites', `${user.id}_${wordId}`);
+                    const docRef = doc(db, 'favorites', `${docId}_${wordId}`);
                     await setDoc(docRef, {
                         user_id: user.id,
+                        username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
                         word_id: wordId
                     }, { merge: true });
                 }
@@ -1017,14 +1216,29 @@ async function removeFavorite(wordId) {
     const filtered = favorites.filter(id => id !== wordId);
     localStorage.setItem('hasene_favorites', JSON.stringify(filtered));
     
-    // Firebase'den de kaldır
+    // Firebase'den de kaldır (username'i doküman ID'si olarak kullan)
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
             const db = getFirebaseDb();
             if (db) {
+                // Username'i doküman ID'si olarak kullan
+                const docId = user.username ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) : user.id;
                 const { deleteDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                const docRef = doc(db, 'favorites', `${user.id}_${wordId}`);
-                await deleteDoc(docRef);
+                
+                // Önce username ile silmeyi dene
+                if (user.username) {
+                    try {
+                        const docRef = doc(db, 'favorites', `${docId}_${wordId}`);
+                        await deleteDoc(docRef);
+                    } catch (err) {
+                        // Username ile bulunamadıysa, eski UID ile silmeyi dene (geriye dönük uyumluluk)
+                        const oldDocRef = doc(db, 'favorites', `${user.id}_${wordId}`);
+                        await deleteDoc(oldDocRef);
+                    }
+                } else {
+                    const docRef = doc(db, 'favorites', `${user.id}_${wordId}`);
+                    await deleteDoc(docRef);
+                }
             }
         } catch (error) {
             console.warn('Firebase removeFavorite error:', error);
@@ -1347,6 +1561,15 @@ if (typeof window !== 'undefined') {
     window.loginWithGitHub = loginWithGitHub;
     window.logoutUser = logoutUser;
     window.getCurrentUser = getCurrentUser;
+    
+    // Debug: Export kontrolü
+    console.log('✅ api-service.js: Fonksiyonlar export edildi:', {
+        getCurrentUser: typeof window.getCurrentUser,
+        loadUserStats: typeof window.loadUserStats,
+        saveUserStats: typeof window.saveUserStats,
+        firestoreSet: typeof window.firestoreSet,
+        firestoreGet: typeof window.firestoreGet
+    });
 
     // Stats & Tasks API
     window.loadUserStats = loadUserStats;

@@ -202,6 +202,37 @@ async function loadStats() {
             }
         } else {
             console.warn('⚠️ window.getCurrentUser fonksiyonu bulunamadı - Backend entegrasyonu eksik olabilir');
+            
+            // api-service.js henüz yüklenmemiş olabilir, biraz bekle ve tekrar dene
+            let retryCount = 0;
+            const maxRetries = 5;
+            while (retryCount < maxRetries && typeof window.getCurrentUser !== 'function') {
+                await new Promise(resolve => setTimeout(resolve, 200)); // 200ms bekle
+                retryCount++;
+            }
+            
+            if (typeof window.getCurrentUser === 'function') {
+                console.log('✅ getCurrentUser fonksiyonu bulundu (retry sonrası)');
+                try {
+                    user = await window.getCurrentUser();
+                } catch (e) {
+                    console.warn('⚠️ getCurrentUser çağrısı hatası:', e);
+                }
+            } else {
+                console.error('❌ getCurrentUser fonksiyonu hala bulunamadı, api-service.js yüklenmemiş olabilir');
+                // Fallback: localStorage'dan direkt oku
+                const savedEmail = localStorage.getItem('hasene_user_email');
+                const savedUsername = localStorage.getItem('hasene_username');
+                const savedUserId = localStorage.getItem('hasene_user_id');
+                if (savedEmail || savedUsername || savedUserId) {
+                    user = {
+                        id: savedUserId || 'local-' + Date.now(),
+                        email: savedEmail || (savedUsername ? savedUsername + '@local' : 'user@local'),
+                        username: savedUsername || (savedEmail ? savedEmail.split('@')[0] : 'Kullanıcı')
+                    };
+                    console.log('✅ Fallback: localStorage\'dan kullanıcı bilgisi alındı:', user);
+                }
+            }
         }
         
         console.log('🔍 Kullanıcı kontrolü tamamlandı:', user ? `✅ Kullanıcı giriş yapmış (${user.id})` : '❌ Kullanıcı giriş yapmamış');
@@ -406,6 +437,36 @@ async function loadStats() {
             }
             if (typeof window.loadUserStats !== 'function') {
                 console.warn('⚠️ window.loadUserStats fonksiyonu bulunamadı, backend entegrasyonu eksik');
+                
+                // api-service.js henüz yüklenmemiş olabilir, biraz bekle ve tekrar dene
+                let retryCount = 0;
+                const maxRetries = 5;
+                while (retryCount < maxRetries && typeof window.loadUserStats !== 'function') {
+                    await new Promise(resolve => setTimeout(resolve, 200)); // 200ms bekle
+                    retryCount++;
+                }
+                
+                if (typeof window.loadUserStats === 'function' && user) {
+                    console.log('✅ loadUserStats fonksiyonu bulundu (retry sonrası), tekrar deneniyor...');
+                    try {
+                        const backendStats = await window.loadUserStats();
+                        if (backendStats) {
+                            backendDataLoaded = true;
+                            totalPoints = parseInt(backendStats.total_points || 0);
+                            badges = backendStats.badges || { stars: 0, bronze: 0, silver: 0, gold: 0, diamond: 0 };
+                            streakData = backendStats.streak_data || { currentStreak: 0, bestStreak: 0, totalPlayDays: 0 };
+                            gameStats = backendStats.game_stats || { totalCorrect: 0, totalWrong: 0, gameModeCounts: {} };
+                            perfectLessonsCount = parseInt(backendStats.perfect_lessons_count || 0);
+                            console.log('✅ Backend\'den veri yüklendi (retry sonrası):', {
+                                totalPoints,
+                                badgesStars: badges.stars,
+                                currentStreak: streakData.currentStreak
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ loadUserStats çağrısı hatası (retry sonrası):', e);
+                    }
+                }
             }
         }
         
@@ -1042,10 +1103,23 @@ function calculateBadges(points) {
 
 /**
  * Session puanı ekler
+ * - Her doğru cevapta hem oturum skorunu hem de global toplam haseneyi günceller
+ * - Detaylı istatistik ve görev güncellemeleri, ilgili check*Answer fonksiyonlarındaki
+ *   saveDetailedStats / updateTaskProgress çağrıları ile yapılır
  */
 function addSessionPoints(points) {
+    // Oturum skorunu güncelle
     sessionScore += points;
     updateUI();
+
+    // Global toplam haseneyi de anında güncelle (çift saymamak için skipDetailedStats=true)
+    // Not: endGame() bundan sonra sadece perfect bonus varsa onu ekleyecek
+    try {
+        // await etmeden, fire-and-forget şekilde çağırıyoruz
+        addToGlobalPoints(points, 1, true);
+    } catch (e) {
+        console.warn('addSessionPoints -> addToGlobalPoints hata verdi:', e);
+    }
 }
 
 /**
@@ -3757,10 +3831,14 @@ async function endGame() {
     gameStats.totalWrong += sessionWrong || 0;
     
     // Global puanlara ekle
-    // NOT: skipDetailedStats=true çünkü her soru zaten saveDetailedStats ile kaydedildi
-    // Bu şekilde çift sayma önlenir
-    // ÖNEMLİ: await edilmeli - totalPoints güncellenmeden saveStatsImmediate çağrılmamalı
-    await addToGlobalPoints(sessionScore, sessionCorrect, true);
+    // NOT:
+    // - Her doğru cevap sonrası addSessionPoints(points) içinde addToGlobalPoints(points, 1, true)
+    //   çağrıldığı için temel oyun puanları zaten totalPoints'e eklenmiş durumda.
+    // - Burada sadece varsa perfect bonusu ekliyoruz ki çift sayma olmasın.
+    if (perfectBonus > 0) {
+        // correctAnswers parametresini 0 veriyoruz; doğru sayısı soru bazında zaten işlendi.
+        await addToGlobalPoints(perfectBonus, 0, true);
+    }
     
     // Not: Her soru cevaplandığında zaten saveDetailedStats() çağrılıyor
     // Burada sadece perfect lesson bonusu ve oyun sayısını güncelle

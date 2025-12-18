@@ -1560,9 +1560,19 @@
     <script src="js/api-service.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        // Auth.js yüklendikten sonra kontrol et
-        console.log('🔍 Auth.js yüklendikten sonra kontrol:');
+        // Script yükleme kontrolü
+        console.log('🔍 Script yükleme kontrolü:');
+        console.log('🔍 window.getCurrentUser:', typeof window.getCurrentUser);
+        console.log('🔍 window.loadUserStats:', typeof window.loadUserStats);
         console.log('🔍 window.showAuthModal:', typeof window.showAuthModal);
+        console.log('🔍 window.firestoreSet:', typeof window.firestoreSet);
+        
+        if (typeof window.getCurrentUser === 'function') {
+            console.log('✅ getCurrentUser başarıyla yüklendi');
+        } else {
+            console.error('❌ getCurrentUser yüklenemedi! api-service.js yüklenmemiş olabilir.');
+        }
+        
         if (typeof window.showAuthModal === 'function') {
             console.log('✅ showAuthModal başarıyla yüklendi');
         } else {

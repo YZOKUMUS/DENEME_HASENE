@@ -340,23 +340,43 @@ async function handleDirectLogin() {
                 const userCredential = await signInAnonymously(auth);
                 firebaseUser = userCredential.user;
                 
-                // Eğer localStorage'da UID yoksa, Firestore'da kullanıcı adına göre ara
+                // Eğer localStorage'da UID yoksa, Firestore'da username'e göre ara (doküman ID'si olarak)
                 if (!useExistingUid) {
                     const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
                     if (db) {
                         try {
-                            const { getDocs, collection: col, query, where } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                            const q = query(col(db, 'users'), where('username', '==', username));
-                            const querySnapshot = await getDocs(q);
+                            // Username'i temizle (doküman ID formatına uygun)
+                            const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
                             
-                            if (!querySnapshot.empty) {
-                                // Mevcut kullanıcı bulundu!
-                                const userDoc = querySnapshot.docs[0];
-                                foundUid = userDoc.id;
-                                console.log('✅ Mevcut kullanıcı Firestore\'da bulundu:', foundUid, username);
+                            // Doküman ID'si olarak username ile kontrol et
+                            const { getDoc, doc, collection: col } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                            const userDocRef = doc(col(db, 'users'), cleanUsername);
+                            const userDocSnap = await getDoc(userDocRef);
+                            
+                            if (userDocSnap.exists()) {
+                                // Mevcut kullanıcı bulundu! (username doküman ID'si olarak)
+                                foundUid = cleanUsername; // Doküman ID'si olarak username
+                                console.log('✅ Mevcut kullanıcı Firestore\'da bulundu (username doküman ID):', cleanUsername, username);
                                 useExistingUid = true;
                             } else {
-                                console.log('ℹ️ Firestore\'da mevcut kullanıcı bulunamadı (yeni kullanıcı):', username);
+                                // Fallback: Eski sistemde username field'ına göre ara (geriye dönük uyumluluk)
+                                try {
+                                    const { getDocs, query, where } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                                    const q = query(col(db, 'users'), where('username', '==', username));
+                                    const querySnapshot = await getDocs(q);
+                                    
+                                    if (!querySnapshot.empty) {
+                                        // Eski sistemde username field'ına göre bulundu
+                                        const userDoc = querySnapshot.docs[0];
+                                        foundUid = userDoc.id;
+                                        console.log('✅ Mevcut kullanıcı Firestore\'da bulundu (eski sistem - username field):', foundUid, username);
+                                        useExistingUid = true;
+                                    } else {
+                                        console.log('ℹ️ Firestore\'da mevcut kullanıcı bulunamadı (yeni kullanıcı):', username);
+                                    }
+                                } catch (fallbackErr) {
+                                    console.log('ℹ️ Eski sistem kontrolü başarısız (yeni kullanıcı):', fallbackErr.message);
+                                }
                             }
                         } catch (err) {
                             console.error('❌ Firestore kullanıcı arama hatası:', err);
@@ -366,34 +386,76 @@ async function handleDirectLogin() {
                     }
                 }
                 
-                // ÖNEMLİ: Eğer mevcut kullanıcı varsa, eski UID'yi koru (Firestore'da veriler eski UID'de)
-                const finalUid = useExistingUid ? foundUid : firebaseUser.uid;
+                // Username'i Firestore doküman ID'si için temizle (özel karakterleri kaldır, sadece a-z, A-Z, 0-9, _, -)
+                const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
                 
-                // Kullanıcı profilini Firestore'a kaydet (eski UID ile)
+                // ÖNEMLİ: Doküman ID'si olarak username kullan (Firebase konsolunda görünür olması için)
+                // Eğer mevcut kullanıcı varsa, username'e göre kontrol et
+                let documentId = cleanUsername;
+                if (useExistingUid && foundUid) {
+                    // Eski sistemde UID kullanılmışsa, önce username'e göre kontrol et
+                    const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
+                    if (db) {
+                        try {
+                            const { getDoc, doc, collection: col } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                            const userDocRef = doc(col(db, 'users'), cleanUsername);
+                            const userDocSnap = await getDoc(userDocRef);
+                            
+                            if (userDocSnap.exists()) {
+                                // Username ile doküman bulundu, onu kullan
+                                documentId = cleanUsername;
+                                console.log('✅ Mevcut kullanıcı username ile bulundu:', cleanUsername);
+                            } else {
+                                // Username ile doküman yok, eski UID'yi kontrol et
+                                const oldDocRef = doc(col(db, 'users'), foundUid);
+                                const oldDocSnap = await getDoc(oldDocRef);
+                                if (oldDocSnap.exists()) {
+                                    // Eski UID ile doküman var, onu username'e migrate et
+                                    const oldData = oldDocSnap.data();
+                                    // Yeni dokümanı username ile oluştur
+                                    documentId = cleanUsername;
+                                    // Eski dokümanı sil (opsiyonel - veri kaybını önlemek için)
+                                    console.log('ℹ️ Eski UID dokümanı username\'e migrate edilecek:', foundUid, '->', cleanUsername);
+                                } else {
+                                    // Yeni kullanıcı
+                                    documentId = cleanUsername;
+                                }
+                            }
+                        } catch (err) {
+                            console.warn('⚠️ Doküman kontrolü hatası, username kullanılacak:', err);
+                            documentId = cleanUsername;
+                        }
+                    }
+                }
+                
+                // Kullanıcı profilini Firestore'a kaydet (username'i doküman ID'si olarak kullan)
                 const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
                 if (db && typeof window.firestoreSet === 'function') {
                     try {
-                        await window.firestoreSet('users', finalUid, {
+                        await window.firestoreSet('users', documentId, {
                             email: username + '@local',
                             username: username,
                             created_at: new Date().toISOString(),
-                            auth_type: 'anonymous'
+                            updated_at: new Date().toISOString(),
+                            auth_type: 'anonymous',
+                            firebase_uid: firebaseUser.uid // Firebase UID'yi de sakla (gerekirse)
                         });
-                        console.log('✅ Kullanıcı profili Firestore\'a kaydedildi (UID:', finalUid + ')');
+                        console.log('✅ Kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', documentId + ', Username:', username + ')');
                     } catch (err) {
                         console.warn('⚠️ Firestore kullanıcı kayıt hatası (normal olabilir):', err);
                     }
                 }
                 
-                // Firebase kullanıcı bilgilerini localStorage'a kaydet (ESKİ UID'yi kullan!)
+                // Firebase kullanıcı bilgilerini localStorage'a kaydet (documentId kullan!)
                 const userEmail = username + '@local';
                 localStorage.setItem('hasene_username', username);
                 localStorage.setItem('hasene_user_email', userEmail);
-                localStorage.setItem('hasene_user_id', finalUid); // ESKİ UID'yi koru (eğer mevcut kullanıcı varsa)
-                localStorage.setItem('hasene_current_user_id', finalUid); // Kullanıcı değişikliği kontrolü için
+                localStorage.setItem('hasene_user_id', documentId); // Doküman ID'si olarak username kullan
+                localStorage.setItem('hasene_current_user_id', documentId); // Kullanıcı değişikliği kontrolü için
                 
                 console.log('✅ Firebase kullanıcı bilgileri localStorage\'a kaydedildi:', {
-                    uid: finalUid,
+                    uid: firebaseUser.uid,
+                    documentId: documentId,
                     username: username,
                     email: userEmail,
                     isExistingUser: useExistingUid
@@ -630,6 +692,7 @@ async function updateUserUI() {
     }
     
     // getCurrentUser fonksiyonunu kullan (api-service.js'den)
+    // Eğer henüz yüklenmemişse, biraz bekle ve tekrar dene
     let user = null;
     if (typeof window.getCurrentUser === 'function') {
         user = await window.getCurrentUser();
@@ -637,7 +700,35 @@ async function updateUserUI() {
             infoLog('Kullanıcı durumu:', user ? 'Giriş yapmış' : 'Giriş yapmamış', user);
         }
     } else {
-        console.warn('⚠️ getCurrentUser fonksiyonu bulunamadı');
+        // api-service.js henüz yüklenmemiş olabilir, biraz bekle ve tekrar dene
+        console.warn('⚠️ getCurrentUser fonksiyonu bulunamadı, api-service.js yükleniyor mu kontrol ediliyor...');
+        
+        // Kısa bir süre bekle ve tekrar dene (maksimum 3 kez)
+        let retryCount = 0;
+        const maxRetries = 3;
+        while (retryCount < maxRetries && typeof window.getCurrentUser !== 'function') {
+            await new Promise(resolve => setTimeout(resolve, 100)); // 100ms bekle
+            retryCount++;
+        }
+        
+        if (typeof window.getCurrentUser === 'function') {
+            user = await window.getCurrentUser();
+            console.log('✅ getCurrentUser fonksiyonu bulundu (retry sonrası)');
+        } else {
+            console.error('❌ getCurrentUser fonksiyonu hala bulunamadı, api-service.js yüklenmemiş olabilir');
+            // Fallback: localStorage'dan direkt oku
+            const savedEmail = localStorage.getItem('hasene_user_email');
+            const savedUsername = localStorage.getItem('hasene_username');
+            const savedUserId = localStorage.getItem('hasene_user_id');
+            if (savedEmail || savedUsername || savedUserId) {
+                user = {
+                    id: savedUserId || 'local-' + Date.now(),
+                    email: savedEmail || (savedUsername ? savedUsername + '@local' : 'user@local'),
+                    username: savedUsername || (savedEmail ? savedEmail.split('@')[0] : 'Kullanıcı')
+                };
+                console.log('✅ Fallback: localStorage\'dan kullanıcı bilgisi alındı:', user);
+            }
+        }
     }
     
     const userProfileBtn = document.getElementById('user-profile-btn');
@@ -895,15 +986,23 @@ async function initializeAuth() {
                     const user = redirectResult.user;
                     console.log('✅ Google login redirect başarılı:', user.email);
                     
-                    // Kullanıcı profilini Firestore'a kaydet
+                    // Kullanıcı profilini Firestore'a kaydet (username'i doküman ID'si olarak kullan)
                     const db = window.getFirebaseDb ? window.getFirebaseDb() : null;
                     if (db && typeof window.firestoreSet === 'function') {
                         try {
-                            await window.firestoreSet('users', user.uid, {
+                            const username = user.displayName || user.email.split('@')[0];
+                            // Username'i Firestore doküman ID'si için temizle
+                            const cleanUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500);
+                            
+                            await window.firestoreSet('users', cleanUsername, {
                                 email: user.email,
-                                username: user.displayName || user.email.split('@')[0],
-                                created_at: new Date().toISOString()
+                                username: username,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                                auth_type: 'google',
+                                firebase_uid: user.uid // Firebase UID'yi de sakla (gerekirse)
                             });
+                            console.log('✅ Google kullanıcı profili Firestore\'a kaydedildi (Doküman ID:', cleanUsername + ', Username:', username + ')');
                         } catch (err) {
                             console.warn('⚠️ Firestore kayıt hatası (normal olabilir):', err);
                         }
