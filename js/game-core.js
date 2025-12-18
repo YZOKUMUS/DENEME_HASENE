@@ -822,6 +822,52 @@ async function loadStats() {
         if (loadDetailedDataPromises.length > 0) {
             Promise.allSettled(loadDetailedDataPromises).then(() => {
                 console.log('✅ ÖNCELİK 3: Tüm detaylı veriler yüklendi');
+                
+                // ÖNEMLİ: Badges ve achievements yüklendikten sonra UI'ı güncelle
+                // Eğer badges modal açıksa, yeniden render et
+                const badgesModal = document.getElementById('badges-modal');
+                if (badgesModal && badgesModal.style.display !== 'none' && badgesModal.style.display !== '') {
+                    if (typeof showBadgesModal === 'function') {
+                        showBadgesModal();
+                        console.log('🔄 Badges modal yeniden render edildi (backend verileri yüklendikten sonra)');
+                    }
+                }
+                
+                // Eğer achievements modal açıksa, yeniden render et
+                const achievementsModal = document.getElementById('achievements-modal');
+                if (achievementsModal && achievementsModal.style.display !== 'none' && achievementsModal.style.display !== '') {
+                    if (typeof showAchievementsModal === 'function') {
+                        showAchievementsModal();
+                        console.log('🔄 Achievements modal yeniden render edildi (backend verileri yüklendikten sonra)');
+                    }
+                }
+                
+                // Eğer calendar modal açıksa, yeniden render et
+                const calendarModal = document.getElementById('calendar-modal');
+                if (calendarModal && calendarModal.style.display !== 'none' && calendarModal.style.display !== '') {
+                    if (typeof showCalendarModal === 'function') {
+                        showCalendarModal();
+                        console.log('🔄 Calendar modal yeniden render edildi (backend verileri yüklendikten sonra)');
+                    }
+                }
+                
+                // Eğer detailed stats modal açıksa, yeniden render et
+                const detailedStatsModal = document.getElementById('detailed-stats-modal');
+                if (detailedStatsModal && detailedStatsModal.style.display !== 'none' && detailedStatsModal.style.display !== '') {
+                    if (typeof refreshDetailedStatsIfOpen === 'function') {
+                        refreshDetailedStatsIfOpen();
+                        console.log('🔄 Detailed stats modal yeniden render edildi (backend verileri yüklendikten sonra)');
+                    }
+                }
+                
+                // Eğer stats modal açıksa, yeniden render et
+                const statsModal = document.getElementById('stats-modal');
+                if (statsModal && statsModal.style.display !== 'none' && statsModal.style.display !== '') {
+                    if (typeof showStatsModal === 'function') {
+                        showStatsModal();
+                        console.log('🔄 Stats modal yeniden render edildi (backend verileri yüklendikten sonra)');
+                    }
+                }
             });
         }
         perfectLessonsCount = parseInt(safeGetItem('perfectLessonsCount', 0)) || 0;
