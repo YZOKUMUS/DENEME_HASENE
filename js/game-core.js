@@ -656,10 +656,6 @@ async function loadStats() {
                                 toplamYanlis: todayYanlis
                             });
                             
-                            localStorage.setItem('dailyXP', todayPuan.toString());
-                            localStorage.setItem('dailyCorrect', todayDogru.toString());
-                            localStorage.setItem('dailyWrong', todayYanlis.toString());
-                            
                             // ÖNEMLİ: Backend'den gelen toplamPuan'ı hasene_daily_${today}.points'e de yaz
                             // Bu şekilde updateDailyGoalDisplay() doğru değeri gösterir
                             const dailyData = safeGetItem(dailyKey, {
@@ -693,7 +689,27 @@ async function loadStats() {
                                     backendToplamPuan: todayPuan,
                                     localStoragePoints: dailyData.points
                                 });
+                                // localStorage'daki değer daha büyükse, onu kullan
+                                todayPuan = dailyData.points;
+                                todayDogru = dailyData.correct;
+                                todayYanlis = dailyData.wrong;
                             }
+                            
+                            // ÖNEMLİ: dailyTasks.todayStats değerlerini güncelle (updateTaskProgressFromStats için)
+                            // Bu, vazifeler panelindeki görevlerin doğru progress değerlerini göstermesini sağlar
+                            dailyTasks.todayStats.toplamPuan = todayPuan;
+                            dailyTasks.todayStats.toplamDogru = todayDogru;
+                            dailyTasks.todayStats.toplamYanlis = todayYanlis;
+                            
+                            localStorage.setItem('dailyXP', todayPuan.toString());
+                            localStorage.setItem('dailyCorrect', todayDogru.toString());
+                            localStorage.setItem('dailyWrong', todayYanlis.toString());
+                            
+                            console.log('🔄 dailyTasks.todayStats güncellendi:', {
+                                toplamPuan: dailyTasks.todayStats.toplamPuan,
+                                toplamDogru: dailyTasks.todayStats.toplamDogru,
+                                toplamYanlis: dailyTasks.todayStats.toplamYanlis
+                            });
                             
                             if (dailyTasks.tasks || dailyTasks.bonusTasks) {
                                 updateTaskProgressFromStats();
