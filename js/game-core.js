@@ -433,6 +433,15 @@ async function loadStats() {
                 updateStatsBar();
                 updateStreakDisplay();
                 
+                // ÖNEMLİ: Daily goal ve tasks display'i de güncelle (backend'den veri yüklendikten sonra)
+                // Çünkü dailyTasks verisi backend'den yüklenmiş olabilir
+                if (typeof updateDailyGoalDisplay === 'function') {
+                    updateDailyGoalDisplay();
+                }
+                if (typeof updateTasksDisplay === 'function') {
+                    updateTasksDisplay();
+                }
+                
                 console.log('✅ ÖNCELİK 1: Kritik veriler backend\'den yüklendi ve UI güncellendi');
             } else {
                 // Kullanıcı giriş yapmamışsa veya geçersiz kullanıcıysa bu normal, uyarı gösterme
@@ -626,9 +635,18 @@ async function loadStats() {
                             }
                         }
                         
-                        // UI'ı güncelle
-                        updateDailyGoalDisplay();
-                        updateTasksDisplay();
+                        // ÖNEMLİ: UI'ı güncelle (backend'den veri yüklendikten sonra)
+                        // Bu, oyun ekranı ve vazifeler panelindeki rakamların güncellenmesini sağlar
+                        if (typeof updateDailyGoalDisplay === 'function') {
+                            updateDailyGoalDisplay();
+                        }
+                        if (typeof updateTasksDisplay === 'function') {
+                            updateTasksDisplay();
+                        }
+                        // Stats bar'ı da güncelle (totalPoints değişmiş olabilir)
+                        if (typeof updateStatsBar === 'function') {
+                            updateStatsBar();
+                        }
                         console.log('✅ ÖNCELİK 2: DailyTasks backend\'den yüklendi ve UI güncellendi');
                     }
                 } catch (apiError) {
@@ -4105,8 +4123,23 @@ function restartGame() {
 /**
  * Günlük görevleri kontrol eder
  */
-function checkDailyTasks() {
+async function checkDailyTasks() {
     const today = getLocalDateString();
+    
+    // ÖNEMLİ: Geçerli kullanıcı kontrolü - sadece geçerli kullanıcı varsa kaydet
+    let shouldSave = false;
+    if (typeof window.getCurrentUser === 'function') {
+        try {
+            const user = await window.getCurrentUser();
+            // Sadece geçerli Firebase kullanıcısı varsa kaydet
+            if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2 && user.username !== 'Kullanıcı') {
+                shouldSave = true;
+            }
+        } catch (error) {
+            // Hata durumunda kaydetme
+            shouldSave = false;
+        }
+    }
     
     if (dailyTasks.lastTaskDate !== today) {
         // Yeni gün, görevleri oluştur
@@ -4131,11 +4164,17 @@ function checkDailyTasks() {
             hadisOku: 0
         };
         
-        saveStats();
+        // Sadece geçerli kullanıcı varsa kaydet
+        if (shouldSave) {
+            saveStats();
+        }
     } else {
         // Aynı gün, mevcut görevleri template ile senkronize et (ad ve açıklama güncellemeleri için)
         syncTasksWithTemplate();
-        saveStats(); // Değişiklikleri kaydet
+        // Sadece geçerli kullanıcı varsa kaydet
+        if (shouldSave) {
+            saveStats(); // Değişiklikleri kaydet
+        }
     }
     
     updateTasksDisplay();

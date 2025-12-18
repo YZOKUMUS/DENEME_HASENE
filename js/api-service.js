@@ -617,7 +617,22 @@ async function getCurrentUser() {
                 }
                 
                 // Username ve email'i belirle (öncelik: localStorage > Firestore > Firebase Auth)
-                const username = localUsername || userData?.username || currentUser.displayName || 'Kullanıcı';
+                // ÖNEMLİ: Anonymous kullanıcılar için "Kullanıcı" veya UID kullanma
+                let username = localUsername || userData?.username || currentUser.displayName;
+                
+                // Eğer username yoksa veya geçersizse, anonymous kullanıcı olabilir
+                // Anonymous kullanıcılar için null döndür (rastgele kullanıcı oluşturmayı önle)
+                if (!username || username === 'Kullanıcı' || username.length < 2) {
+                    // Anonymous kullanıcı kontrolü: Eğer localStorage'da username yoksa, anonymous kullanıcı olabilir
+                    if (!localUsername) {
+                        console.log('⚠️ getCurrentUser: Anonymous kullanıcı tespit edildi, username yok');
+                        // Anonymous kullanıcı için null döndür (rastgele kullanıcı oluşturmayı önle)
+                        return null;
+                    }
+                    // localStorage'da username varsa onu kullan
+                    username = localUsername;
+                }
+                
                 const email = localEmail || currentUser.email || userData?.email || username + '@local';
                 
                 // Eğer localStorage'da username varsa ve Firebase'de farklıysa, Firebase'i güncelle
@@ -676,7 +691,22 @@ async function getCurrentUser() {
                         // 'null' string'ini temizle
                         if (localEmail === 'null' || localEmail === null) localEmail = null;
                         if (localUsername === 'null' || localUsername === null) localUsername = null;
-                        const username = userData?.username || user.displayName || localUsername || 'Kullanıcı';
+                        // ÖNEMLİ: Anonymous kullanıcılar için "Kullanıcı" veya UID kullanma
+                        let username = localUsername || userData?.username || user.displayName;
+                        
+                        // Eğer username yoksa veya geçersizse, anonymous kullanıcı olabilir
+                        if (!username || username === 'Kullanıcı' || username.length < 2) {
+                            // Anonymous kullanıcı kontrolü: Eğer localStorage'da username yoksa, anonymous kullanıcı olabilir
+                            if (!localUsername) {
+                                console.log('⚠️ getCurrentUser: Anonymous kullanıcı tespit edildi (onAuthStateChanged), username yok');
+                                // Anonymous kullanıcı için null döndür (rastgele kullanıcı oluşturmayı önle)
+                                resolve(null);
+                                return;
+                            }
+                            // localStorage'da username varsa onu kullan
+                            username = localUsername;
+                        }
+                        
                         const email = user.email || userData?.email || localEmail || username + '@local';
                         
                         localStorage.setItem('hasene_user_email', email);
@@ -817,6 +847,47 @@ async function loadUserStats() {
         user: user ? { id: user.id, username: user.username } : null,
         backendType: getBackendType()
     });
+    
+    // ÖNEMLİ: Kullanıcı değişimini kontrol et
+    // Eğer localStorage'da farklı bir kullanıcının verisi varsa temizle
+    const lastUserId = localStorage.getItem('hasene_last_user_id');
+    const lastUsername = localStorage.getItem('hasene_last_username');
+    
+    if (user && user.id && user.username) {
+        const currentUserId = user.id;
+        const currentUsername = user.username;
+        
+        // Kullanıcı değişmiş mi kontrol et
+        if (lastUserId && lastUserId !== currentUserId && lastUserId !== 'null') {
+            console.log('🔄 Kullanıcı değişti! localStorage temizleniyor...', {
+                eski: { id: lastUserId, username: lastUsername },
+                yeni: { id: currentUserId, username: currentUsername }
+            });
+            
+            // localStorage'daki kullanıcı verilerini temizle
+            localStorage.removeItem('hasene_totalPoints');
+            localStorage.removeItem('hasene_badges');
+            localStorage.removeItem('hasene_streakData');
+            localStorage.removeItem('hasene_gameStats');
+            localStorage.removeItem('perfectLessonsCount');
+            localStorage.removeItem('unlockedBadges');
+            
+            // Haftalık XP'yi de temizle
+            const weekStart = getWeekStart();
+            const weekStartStr = weekStart.toISOString().split('T')[0];
+            localStorage.removeItem(`hasene_weekly_xp_${weekStartStr}`);
+            
+            // Günlük verileri de temizle
+            const today = new Date().toISOString().split('T')[0];
+            localStorage.removeItem(`hasene_daily_${today}`);
+            
+            console.log('✅ localStorage temizlendi (kullanıcı değişti)');
+        }
+        
+        // Mevcut kullanıcıyı kaydet
+        localStorage.setItem('hasene_last_user_id', currentUserId);
+        localStorage.setItem('hasene_last_username', currentUsername);
+    }
     
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
@@ -2117,7 +2188,31 @@ async function updateWeeklyXP(points) {
             // Mevcut veriyi al (varsa)
             const existing = await firestoreGet('weekly_leaderboard', leaderboardDocId);
             const existingXP = existing?.weekly_xp || 0;
-            const finalXP = existingXP + points;
+            
+            // ÖNEMLİ: localStorage'daki değer ile Firebase'deki değeri senkronize et
+            const localStorageXP = newXP; // localStorage'daki yeni değer
+            
+            let finalXP;
+            if (localStorageXP < existingXP) {
+                // Kullanıcı sıfırlamış - localStorage'daki değeri kullan
+                finalXP = localStorageXP;
+                console.log('🔄 Haftalık XP senkronize ediliyor (kullanıcı sıfırlamış):', {
+                    localStorageXP: localStorageXP,
+                    existingXP: existingXP,
+                    finalXP: finalXP
+                });
+            } else {
+                // ÖNEMLİ: localStorage'daki değeri kullan (en güncel değer)
+                // Firebase'deki eski değer yerine localStorage'daki yeni değeri kullan
+                // Bu, haftalık XP'nin her zaman localStorage ile senkronize olmasını sağlar
+                finalXP = localStorageXP;
+                console.log('🔄 Haftalık XP localStorage ile senkronize ediliyor:', {
+                    localStorageXP: localStorageXP,
+                    existingXP: existingXP,
+                    points: points,
+                    finalXP: finalXP
+                });
+            }
             
             await firestoreSet('weekly_leaderboard', leaderboardDocId, {
                 user_id: user.id,
@@ -2132,7 +2227,9 @@ async function updateWeeklyXP(points) {
                 docId: leaderboardDocId,
                 weekly_xp: finalXP,
                 points: points,
-                existingXP: existingXP
+                existingXP: existingXP,
+                localStorageXP: localStorageXP,
+                totalHasene: totalHasene
             });
         } catch (error) {
             console.error('❌ updateWeeklyXP - Firebase kaydetme hatası:', error);
@@ -2146,10 +2243,148 @@ async function updateWeeklyXP(points) {
 }
 
 /**
+ * Haftalık XP'yi localStorage'a göre temizle ve senkronize et
+ * (Kullanıcı sıfırladığında Firebase'deki eski veriyi temizlemek için)
+ */
+async function temizleHaftalikXP() {
+    console.log('🧹 Haftalık XP Temizleme Başlatılıyor...\n');
+    
+    try {
+        const user = await getCurrentUser();
+        if (!user || !user.id || user.id.startsWith('local-')) {
+            const result = { success: false, message: 'Firebase kullanıcısı bulunamadı. Lütfen giriş yapın.' };
+            console.log('❌', result.message);
+            return result;
+        }
+        
+        const weekStart = getWeekStart();
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        const docId = (user.username && user.username !== 'Kullanıcı') 
+            ? user.username.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 1500) 
+            : user.id;
+        
+        const leaderboardDocId = `${docId}_${weekStartStr}`;
+        
+        console.log('🔍 Kontrol ediliyor:', {
+            username: user.username,
+            docId: docId,
+            leaderboardDocId: leaderboardDocId,
+            weekStart: weekStartStr
+        });
+        
+        // Mevcut veriyi kontrol et
+        const existing = await firestoreGet('weekly_leaderboard', leaderboardDocId);
+        
+        // localStorage'daki değeri al
+        const key = `hasene_weekly_xp_${weekStartStr}`;
+        const localStorageXP = parseInt(localStorage.getItem(key) || '0');
+        
+        if (existing) {
+            console.log('📊 Mevcut veri:', {
+                weekly_xp: existing.weekly_xp,
+                username: existing.username
+            });
+            
+            console.log('💾 localStorage değeri:', localStorageXP);
+            
+            // Firebase'i localStorage'a göre güncelle
+            const auth = getFirebaseAuth();
+            const firebaseUid = auth?.currentUser?.uid || null;
+            
+            await firestoreSet('weekly_leaderboard', leaderboardDocId, {
+                user_id: user.id,
+                username: user.username || (user.email ? user.email.split('@')[0] : 'Kullanıcı'),
+                firebase_uid: firebaseUid,
+                week_start: weekStartStr,
+                weekly_xp: localStorageXP, // localStorage'daki değeri kullan
+                updated_at: new Date().toISOString()
+            });
+            
+            const result = {
+                success: true,
+                message: 'Haftalık XP temizlendi ve senkronize edildi!',
+                oldXP: existing.weekly_xp,
+                newXP: localStorageXP,
+                weekStart: weekStartStr
+            };
+            
+            console.log('✅', result.message);
+            console.log('📊 Yeni değer:', localStorageXP);
+            return result;
+        } else {
+            const result = {
+                success: true,
+                message: 'Firebase\'de haftalık XP verisi bulunamadı (normal, yeni kullanıcı olabilir)',
+                newXP: localStorageXP,
+                weekStart: weekStartStr
+            };
+            console.log('ℹ️', result.message);
+            return result;
+        }
+    } catch (error) {
+        const result = {
+            success: false,
+            message: 'Hata oluştu: ' + error.message,
+            error: error
+        };
+        console.error('❌ Hata:', error);
+        return result;
+    }
+}
+
+/**
  * Kullanıcının lig bilgilerini getir
  */
 async function getLeagueInfo(userId = null) {
     return null;
+}
+
+/**
+ * Tüm kullanıcıların genel sıralamasını getir (lig fark etmeksizin)
+ */
+async function getAllUsersRankings(limit = 100) {
+    try {
+        const weekStart = getWeekStart();
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        
+        // Tüm kullanıcıların haftalık XP'lerini al
+        const allUsers = await firestoreGetCollection('weekly_leaderboard', null, null);
+        const weekUsers = allUsers.filter(u => u.week_start === weekStartStr);
+        
+        // Her kullanıcının lig seviyesini hesapla
+        const usersWithLeague = weekUsers.map(u => {
+            const uXP = u.weekly_xp || 0;
+            let uLeague = 'mubtedi';
+            if (uXP >= 10000) uLeague = 'ulama';
+            else if (uXP >= 8000) uLeague = 'imam';
+            else if (uXP >= 6000) uLeague = 'faqih';
+            else if (uXP >= 4000) uLeague = 'muhaddis';
+            else if (uXP >= 3000) uLeague = 'mujtahid';
+            else if (uXP >= 2000) uLeague = 'alim';
+            else if (uXP >= 1500) uLeague = 'kurra';
+            else if (uXP >= 1000) uLeague = 'hafiz';
+            else if (uXP >= 500) uLeague = 'mutebahhir';
+            else if (uXP >= 250) uLeague = 'mutavassit';
+            else if (uXP >= 100) uLeague = 'talib';
+            
+            return { ...u, league: uLeague };
+        });
+        
+        // XP'ye göre sırala (yüksekten düşüğe) - GENEL SIRALAMA
+        usersWithLeague.sort((a, b) => (b.weekly_xp || 0) - (a.weekly_xp || 0));
+        
+        // Limit'e göre kes ve pozisyon ekle
+        return usersWithLeague.slice(0, limit).map((u, index) => ({
+            position: index + 1,
+            user_id: u.user_id,
+            username: u.username,
+            weekly_xp: u.weekly_xp || 0,
+            league: u.league
+        }));
+    } catch (error) {
+        console.error('getAllUsersRankings error:', error);
+        return [];
+    }
 }
 
 /**
@@ -2398,8 +2633,10 @@ if (typeof window !== 'undefined') {
     window.getWeekStart = getWeekStart;
     window.getWeekEnd = getWeekEnd;
     window.updateWeeklyXP = updateWeeklyXP;
+    window.temizleHaftalikXP = temizleHaftalikXP;
     window.getLeagueInfo = getLeagueInfo;
     window.getLeagueRankings = getLeagueRankings;
+    window.getAllUsersRankings = getAllUsersRankings;
     window.getUserLeaguePosition = getUserLeaguePosition;
     window.getLeagueConfig = getLeagueConfig;
 }

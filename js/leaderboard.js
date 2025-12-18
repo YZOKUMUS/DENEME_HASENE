@@ -59,8 +59,18 @@ async function loadLeaderboardData() {
         // Kullanıcı bilgilerini göster
         await updateUserLeagueCard(position);
         
-        // Lig sıralamasını yükle
-        if (typeof window.getLeagueRankings === 'function') {
+        // Başlığı "Genel Sıralama" olarak güncelle
+        const leagueTitleEl = document.getElementById('current-league-title');
+        if (leagueTitleEl) {
+            leagueTitleEl.textContent = 'Genel Sıralama';
+        }
+        
+        // TÜM kullanıcıların genel sıralamasını yükle (lig fark etmeksizin)
+        if (typeof window.getAllUsersRankings === 'function') {
+            const allRankings = await window.getAllUsersRankings();
+            await displayAllRankings(allRankings, position);
+        } else if (typeof window.getLeagueRankings === 'function') {
+            // Fallback: Eski yöntem (sadece kullanıcının ligi)
             const rankings = await window.getLeagueRankings(position.league, 20);
             displayRankings(rankings, position);
         }
@@ -133,7 +143,72 @@ function adjustColorBrightness(hex, percent) {
 }
 
 /**
- * Sıralamayı göster
+ * Tüm kullanıcıların genel sıralamasını göster
+ */
+async function displayAllRankings(allRankings, userPosition) {
+    const container = document.getElementById('league-rankings-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (allRankings.length === 0) {
+        container.innerHTML = '<div class="loading-text">Henüz oyuncu yok.</div>';
+        return;
+    }
+    
+    // Kullanıcının user_id'sini al
+    let currentUserId = null;
+    if (typeof window.getCurrentUser === 'function') {
+        const user = await window.getCurrentUser();
+        if (user) currentUserId = user.id;
+    }
+    
+    // Lig config'leri yükle (lig isimlerini göstermek için)
+    const leagueConfigs = {};
+    if (typeof window.getLeagueConfig === 'function') {
+        for (const rank of allRankings) {
+            if (rank.league && !leagueConfigs[rank.league]) {
+                leagueConfigs[rank.league] = await window.getLeagueConfig(rank.league);
+            }
+        }
+    }
+    
+    allRankings.forEach((rank, index) => {
+        const item = document.createElement('div');
+        item.className = 'ranking-item';
+        
+        // Top 3'e özel stil
+        if (index < 3) {
+            item.classList.add('top-3');
+        }
+        
+        // Kullanıcının kendi kaydını vurgula
+        if (currentUserId && rank.user_id === currentUserId) {
+            item.classList.add('user-item');
+        }
+        
+        const position = rank.position || index + 1;
+        const username = rank.username || 'Anonim';
+        const xp = rank.weekly_xp || 0;
+        const league = rank.league || 'mubtedi';
+        const leagueConfig = leagueConfigs[league] || { icon: '📖', display_name: league };
+        
+        const formatNum = typeof window.formatNumber === 'function' ? window.formatNumber : (n) => n.toString();
+        item.innerHTML = `
+            <div class="ranking-position">#${position}</div>
+            <div class="ranking-username">
+                <span style="margin-right: 8px;">${leagueConfig.icon || '📖'}</span>
+                ${escapeHtml(username)}
+            </div>
+            <div class="ranking-xp">${formatNum(xp)} XP</div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
+
+/**
+ * Sıralamayı göster (eski yöntem - sadece belirli lig)
  */
 function displayRankings(rankings, userPosition) {
     const container = document.getElementById('league-rankings-list');

@@ -6330,6 +6330,7 @@ select:focus {
     border-radius: 8px;
     gap: 12px;
     transition: all 0.2s ease;
+    color: var(--text-primary);
 }
 
 .ranking-item:hover {
@@ -6344,7 +6345,9 @@ select:focus {
 
 .ranking-item.user-item {
     border: 2px solid var(--accent-primary);
-    background: rgba(118, 75, 162, 0.1);
+    background: linear-gradient(135deg, rgba(118, 75, 162, 0.15) 0%, rgba(118, 75, 162, 0.25) 100%);
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .ranking-position {
@@ -6364,9 +6367,23 @@ select:focus {
     color: var(--accent-primary);
 }
 
-.ranking-item.top-3 .ranking-xp,
-.ranking-item.user-item .ranking-xp {
+.ranking-item.top-3 .ranking-xp {
     color: white;
+}
+
+.ranking-item.user-item .ranking-xp {
+    color: var(--accent-primary);
+    font-weight: 700;
+}
+
+.ranking-item.user-item .ranking-username {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.ranking-item.user-item .ranking-position {
+    color: var(--accent-primary);
+    font-weight: 700;
 }
 
 .loading-text {
