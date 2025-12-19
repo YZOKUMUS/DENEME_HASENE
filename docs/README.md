@@ -379,18 +379,39 @@ Tüm oyun ekranları **tek sayfa** (`index.html`) içinde, `display: none | flex
 
 ### 4.4. Boşluk Doldur
 
-- `ayetoku.json` içindeki ayetlerden seçilir.
-- Bir kelime boş bırakılır (`<span class="blank">____</span>`).
-- 4 seçenekten doğru kelime seçilir.
-- Puan mantığı yine aynı (doğru → Hasene, combo, perfect olasılığı).
+**Alt Modlar**: Yok (direkt oyun başlar)
+
+**Özellikler**:
+- Veri kaynağı: `ayetoku.json` (ayetler array'i)
+- Ayetlerden rastgele bir ayet seçilir
+- Ayetin bir kelimesi rastgele boş bırakılır (`<span class="blank">____</span>`)
+- Boş bırakılan kelime + 3 yanlış çeldirici = 4 seçenek
+- Çeldiriciler: Ayetin diğer kelimelerinden seçilir
+- Puanlama: Ayet uzunluğuna göre (1-6 kelime: 10 Hasene, 7-12: 15 Hasene, 13+: 20 Hasene)
+- Combo bonusu ve perfect bonus aynı şekilde uygulanır
 
 ### 4.5. Ayet Oku / Dua Et / Hadis Oku
 
-- Bunlar **okuma modu**, oyun değil:
-  - Arapça metin + Türkçe meâl
-  - Ses butonu (varsa)
-  - Önceki / Sonraki butonları
-- Puan verilmez; sadece günlük görev sayacı artabilir ("5 Ayet Oku" gibi).
+**Alt Modlar**: Yok (direkt okuma ekranı açılır)
+
+**Özellikler**:
+- Bunlar **okuma modu**, oyun değil (puan verilmez)
+- Veri kaynakları:
+  - Ayet Oku: `ayetoku.json` (verses array)
+  - Dua Et: `duaet.json` (duas array)
+  - Hadis Oku: `hadisoku.json` (hadis array)
+- İçerik gösterimi:
+  - Arapça metin (büyük font, RTL)
+  - Türkçe meâl/çeviri
+  - Ses butonu (varsa `audio` alanı)
+  - Önceki / Sonraki butonları (rastgele navigasyon)
+- Günlük görev takibi:
+  - Her "Sonraki" butonuna tıklandığında `updateTaskProgress('ayet-oku', ...)` çağrılır
+  - Görev sayacı artar ("5 Ayet Oku" gibi)
+- Veri karıştırma:
+  - Ayetler: `shuffleArray([...allAyet])` ile karıştırılır
+  - Dualar: Rastgele seçim (`Math.random()`)
+  - Hadisler: `shuffleArray([...allHadis])` ile karıştırılır
 
 ### 4.6. Elif Ba
 
