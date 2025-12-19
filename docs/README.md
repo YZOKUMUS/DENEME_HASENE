@@ -72,7 +72,8 @@ DENEME_HASENE/
 ├── assets/
 │   ├── images/          # Genel ikon ve görseller (icon-192, icon-512 vs.)
 │   ├── badges/          # Rozet ikonları (rozet1.png … rozet42.png)
-│   └── game-icons/      # Oyun mod ikonları (kelime, dinle-bul vs.)
+│   ├── game-icons/      # Oyun mod ikonları (kelime, dinle-bul vs.)
+│   └── fonts/            # Arapça font dosyası (KFGQPC Uthmanic Script HAFS Regular.otf)
 └── docs/
     ├── README.md        # Bu doküman
     └── sistem/HASENE_OYUN_TAM_DOKUMANTASYON.md # Çok detaylı versiyon
@@ -84,7 +85,17 @@ DENEME_HASENE/
 
 ## 3. Veri Modelleri (JSON ve Bellek State)
 
-### 3.1. Kelime verisi – `data/kelimebul.json`
+Oyun **5 adet JSON dosyası** kullanır. Tüm dosyalar `data/` klasöründe bulunur ve `data-loader.js` tarafından lazy loading ile yüklenir.
+
+### 3.1. Kelime Verisi – `data/kelimebul.json`
+
+**Kullanım Yerleri**:
+- ✅ **Kelime Çevir** oyunu (tüm alt modlar: Klasik, 30. Cüz, Tekrar Et, Favoriler)
+- ✅ **Dinle Bul** oyunu
+- ✅ **Boşluk Doldur** oyunu
+- ✅ Kelime istatistikleri (`wordStats`)
+- ✅ Favori kelimeler sistemi
+- ✅ Çeldirici (yanlış cevap) oluşturma
 
 Basit şema:
 
@@ -111,28 +122,212 @@ Basit şema:
 - **difficulty**: 1–10 arası zorluk; zorluk seçicisi bu değeri filtreler
 - **audio**: İlgili kelimenin ses kaydı (opsiyonel)
 
-### 3.2. Ayet / Dua / Hadis verileri
+---
 
-Hepsi aynı mantıkta; örnek `ayetoku.json`:
+### 3.2. Ayet Verisi – `data/ayetoku.json`
+
+**Kullanım Yerleri**:
+- ✅ **Ayet Oku** modu (okuma/okuma modu)
+- ✅ Rastgele ayet gösterimi
+- ✅ Ayet ses dosyası oynatma
+
+**Gerçek JSON Şeması** (Array formatında):
+
+```json
+[
+  {
+    "ayet_kimligi": "1:1:1",
+    "sure_adı": "Fâtiha",
+    "ayet_metni": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+    "meal": "Rahman ve Rahim olan Allah'ın adıyla:",
+    "ayet_ses_dosyasi": "https://tanzil.net/res/audio/afasy/001001.mp3"
+  },
+  {
+    "ayet_kimligi": "1:2:1",
+    "sure_adı": "Fâtiha",
+    "ayet_metni": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+    "meal": "Hamd, Alemlerin Rabbi Allah'a mahsustur.",
+    "ayet_ses_dosyasi": "https://tanzil.net/res/audio/afasy/001002.mp3"
+  }
+]
+```
+
+**Alan Açıklamaları**:
+- **ayet_kimligi**: Ayet benzersiz ID'si (format: `sure:verse:wordIndex`, örn: `"1:1:1"`)
+- **sure_adı**: Sure adı (Türkçe, örn: `"Fâtiha"`)
+- **ayet_metni**: Arapça ayet metni (Uthmani script)
+- **meal**: Türkçe meâl/çeviri
+- **ayet_ses_dosyasi**: Ayet ses dosyası URL'i (opsiyonel, `https://tanzil.net/...`)
+
+**Yükleme Fonksiyonu**: `loadAyetData()` (`data-loader.js`)
+
+**Toplam Kayıt**: ~43,000+ ayet
+
+---
+
+### 3.3. Dua Verisi – `data/duaet.json`
+
+**Kullanım Yerleri**:
+- ✅ **Dua Et** modu (okuma/okuma modu)
+- ✅ Rastgele dua gösterimi
+- ✅ Dua ses dosyası oynatma (opsiyonel)
+
+**Gerçek JSON Şeması** (Array formatında):
+
+```json
+[
+  {
+    "ayet": "2:127",
+    "dua": "رَبَّنَا تَقَبَّلۡ مِنَّآۖ إِنَّكَ أَنتَ ٱلسَّمِيعُ ٱلۡعَلِيمُ",
+    "tercume": "İbrahim ve İsmail, Kabenin temellerini yükseltiyordu: 'Rabbimiz! Yaptığımızı kabul buyur. Şüphesiz ki, Sen hem işitir hem bilirsin'",
+    "ses_url": "https://everyayah.com/data/Alafasy_128kbps/002127.mp3",
+    "start": 6.95
+  },
+  {
+    "ayet": "2:128",
+    "dua": "رَبَّنَا وَٱجۡعَلۡنَا مُسۡلِمَيۡنِ لَكَ وَمِن ذُرِّيَّتِنَآ أُمَّةٗ مُّسۡلِمَةٗ لَّكَ وَأَرِنَا مَنَاسِكَنَا وَتُبۡ عَلَيۡنَآۖ إِنَّكَ أَنتَ ٱلتَّوَّابُ ٱلرَّحِيمُ",
+    "tercume": "'Rabbimiz! İkimizi Sana teslim olanlardan kıl, soyumuzdan da Sana teslim olanlardan bir ümmet yetiştir. Bize ibadet yollarımızı göster, tevbemizi kabul buyur, çünkü tevbeleri daima kabul eden, merhametli olan ancak Sensin'.",
+    "ses_url": "https://everyayah.com/data/Alafasy_128kbps/002128.mp3",
+    "start": 0
+  }
+]
+```
+
+**Alan Açıklamaları**:
+- **ayet**: Ayet referansı (format: `sure:verse`, örn: `"2:127"`)
+- **dua**: Arapça dua metni (Uthmani script)
+- **tercume**: Türkçe çeviri/meâl
+- **ses_url**: Dua ses dosyası URL'i (opsiyonel, `https://everyayah.com/...`)
+- **start**: Ses dosyasında başlangıç zamanı (saniye, opsiyonel)
+
+**Yükleme Fonksiyonu**: `loadDuaData()` (`data-loader.js`)
+
+**Toplam Kayıt**: ~300+ dua
+
+---
+
+### 3.4. Hadis Verisi – `data/hadisoku.json`
+
+**Kullanım Yerleri**:
+- ✅ **Hadis Oku** modu (okuma/okuma modu)
+- ✅ Rastgele hadis gösterimi
+- ✅ Hadis kategorilendirme (section, chapterName)
+
+**Gerçek JSON Şeması** (Array formatında):
+
+```json
+[
+  {
+    "section": "İMAN VE İSLAM HAKKINDA",
+    "chapterName": "İman ve İslam'ın Fazileti",
+    "book": "buharimüslimtirmizi",
+    "header": "Ubade İbnus-Samit el-Ensari",
+    "text": "Hz. Peygamber (sav) şöyle buyurdular: \"Kim Allah'tan başka ilah olmadığına Allah'ın bir ve şeriksiz olduğuna ve Muhammed'in onun kulu ve Resulü (elçisi) olduğuna, keza Hz. İsa'nın da Allah'ın kulu ve elçisi olup, Hz. Meryem'e attığı bir kelimesi ve kendinden bir ruh olduğuna, keza cennet ve cehennemin hak olduğuna şehadet ederse, her ne amel üzere olursa olsun Allah onu cennetine koyacaktır.\" ",
+    "refno": "Buhari, Enbiya 47; Müslim, İman 46, (28); Tirmizi, İman 17, (2640)",
+    "id": "1"
+  },
+  {
+    "section": "İMAN VE İSLAM HAKKINDA",
+    "chapterName": "İman ve İslam'ın Fazileti",
+    "book": "tirmizi",
+    "header": "Ebu Sa'id İbnu Malik",
+    "text": "Hz. Peygamber (sav) şöyle buyurdular: \"Kalbinde zerre miktarı iman bulunan kimse ateşten çıkacaktır.\" Ebu Said der ki: \"Kim (bu ihbarın ifade ettiği hakikatten) şüpheye düşerse şu ayeti okusun: \"Allah şüphesiz zerre kadar haksızlık yapmaz...\" (Nisa, 40). ",
+    "refno": "Tirmizi, Sıfatu Cehennem 10, (2601)",
+    "id": "2"
+  }
+]
+```
+
+**Alan Açıklamaları**:
+- **section**: Hadis kategorisi/bölümü (Türkçe, örn: `"İMAN VE İSLAM HAKKINDA"`)
+- **chapterName**: Bölüm adı (Türkçe, örn: `"İman ve İslam'ın Fazileti"`)
+- **book**: Hadis kitabı kaynağı (örn: `"buharimüslimtirmizi"`, `"tirmizi"`)
+- **header**: Ravi/raportör adı (Türkçe, örn: `"Ubade İbnus-Samit el-Ensari"`)
+- **text**: Hadis metni (Türkçe çeviri)
+- **refno**: Hadis referans numarası (kaynak bilgisi, örn: `"Buhari, Enbiya 47; Müslim, İman 46, (28); Tirmizi, İman 17, (2640)"`)
+- **id**: Benzersiz hadis ID'si (string formatında, örn: `"1"`)
+
+**Not**: Hadis metni **sadece Türkçe** olarak saklanır, Arapça orijinal metin yoktur.
+
+**Yükleme Fonksiyonu**: `loadHadisData()` (`data-loader.js`)
+
+**Toplam Kayıt**: ~53,000+ hadis
+
+---
+
+### 3.5. Elif Ba Harf Verisi – `data/harf.json`
+
+**Kullanım Yerleri**:
+- ✅ **Elif Ba** oyunu (tüm alt modlar: Harfler, Kelimeler, Harekeler, Harf Tablosu)
+- ✅ Harf ses dosyaları oynatma
+- ✅ Renk kodlama (ince/kalın sesli harfler)
+
+**Gerçek JSON Şeması** (Object formatında, `harfler` array'i içerir):
 
 ```json
 {
-  "verses": [
+  "harfler": [
     {
-      "id": "1:1",
-      "sure": 1,
-      "verse": 1,
-      "arabic": "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-      "translation": "Rahman ve Rahim olan Allah'ın adıyla",
-      "audio": "https://.../001001.mp3"
+      "harf": "ا",
+      "isim": "Elif",
+      "okunus": "elif",
+      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/sesleri/btn_1.mp3",
+      "sesTipi": "ince_sesli_harf",
+      "renkKodu": "#D4AF37"
+    },
+    {
+      "harf": "ب",
+      "isim": "Bâ",
+      "okunus": "bâ",
+      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/sesleri/btn_2.mp3",
+      "sesTipi": "ince_sesli_harf",
+      "renkKodu": "#D4AF37"
+    },
+    {
+      "harf": "ث",
+      "isim": "Sâ",
+      "okunus": "sâ",
+      "audioUrl": "https://kuran.diyanet.gov.tr/elifba/data/sound/elifba/harfler/sesleri/btn_3.mp3",
+      "sesTipi": "kalın_sesli_harf",
+      "renkKodu": "#0F0F0F"
     }
   ]
 }
 ```
 
-`duaet.json` ve `hadisoku.json` da benzer; sadece alan isimleri (`category`, `ref` gibi) genişleyebilir, ama temel yapı: `id`, `arabic`, `translation`, (opsiyonel) `audio`.
+**Alan Açıklamaları**:
+- **harf**: Arapça harf karakteri (örn: `"ا"`, `"ب"`, `"ث"`)
+- **isim**: Harf ismi (Türkçe, örn: `"Elif"`, `"Bâ"`, `"Sâ"`)
+- **okunus**: Harf okunuşu (Türkçe, örn: `"elif"`, `"bâ"`, `"sâ"`)
+- **audioUrl**: Harf ses dosyası URL'i (opsiyonel, `https://kuran.diyanet.gov.tr/...`)
+- **sesTipi**: Ses tipi (`"ince_sesli_harf"` veya `"kalın_sesli_harf"`)
+- **renkKodu**: Harf rengi (ince sesli: `"#D4AF37"` altın, kalın sesli: `"#0F0F0F"` kömür karası)
 
-### 3.3. Oyun içi ana state (JavaScript)
+**Özel Not**: 
+- JSON'dan yüklenen harfler, oyun içinde **harekeler** (üstün, esre, ötre) ile birleştirilerek **harekeli harfler** oluşturulur.
+- `updateHarfDataFromJSON()` fonksiyonu (`game-core.js`) JSON'dan veriyi yükler ve renk kodlarını otomatik atar.
+
+**Yükleme Fonksiyonu**: `loadHarfData()` (`game-core.js` içinde, `fetch('data/harf.json')` ile direkt yüklenir)
+
+**Toplam Kayıt**: 28 harf (Arapça alfabe)
+
+---
+
+### 3.6. JSON Dosyaları Özet Tablosu
+
+| JSON Dosyası | Kullanıldığı Oyun Modları | Toplam Kayıt | Yükleme Fonksiyonu | Cache Key |
+|--------------|---------------------------|--------------|-------------------|-----------|
+| `kelimebul.json` | Kelime Çevir, Dinle Bul, Boşluk Doldur | ~118,000+ | `loadKelimeData()` | `kelime_data_cache` |
+| `ayetoku.json` | Ayet Oku | ~43,000+ | `loadAyetData()` | `ayet_data_cache` |
+| `duaet.json` | Dua Et | ~300+ | `loadDuaData()` | `dua_data_cache` |
+| `hadisoku.json` | Hadis Oku | ~53,000+ | `loadHadisData()` | `hadis_data_cache` |
+| `harf.json` | Elif Ba (tüm alt modlar) | 28 | `loadHarfData()` | Cache yok |
+
+**Not**: Tüm JSON dosyaları **lazy loading** ile yüklenir (sadece ihtiyaç duyulduğunda). `preloadAllData()` fonksiyonu ile arka planda önceden yüklenebilir.
+
+---
+
+### 3.7. Oyun içi ana state (JavaScript)
 
 `game-core.js` içinde global (veya module-level) değişkenler:
 
@@ -156,7 +351,7 @@ Hepsi aynı mantıkta; örnek `ayetoku.json`:
   - `let streakData` – streak yapısı
   - `let dailyGoalHasene`, `let dailyGoalLevel`
 
-### 3.4. Günlük görev state – `DAILY_TASKS_TEMPLATE`
+### 3.8. Günlük görev state – `DAILY_TASKS_TEMPLATE`
 
 `constants.js` içinde şablonlar, `game-core.js` içinde state:
 
@@ -215,7 +410,7 @@ let dailyTasks = {
 };
 ```
 
-### 3.5. Streak (seri) state
+### 3.9. Streak (seri) state
 
 ```js
 let streakData = {
@@ -230,7 +425,7 @@ let streakData = {
 
 Her gün, **günlük vird hedefi** (örn. 2700 Hasene) tamamlanırsa seri artar; tamamlanmazsa bir gün boş geçince sıfırlanır.
 
-### 3.6. Rozet ve başarımlar – `constants.js`
+### 3.10. Rozet ve başarımlar – `constants.js`
 
 #### Seviyeler
 
@@ -850,6 +1045,371 @@ const processWord = (word) => {
 **Ana Fontlar**:
 - **Sistem Font**: `-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif`
 - **Arapça Font**: `'KFGQPC Uthmanic Script HAFS'` (local font file: `assets/fonts/KFGQPC Uthmanic Script HAFS Regular.otf`)
+
+---
+
+## 12.1. Simgeler, Logolar ve Görseller (Assets)
+
+Oyun **3 ana asset klasörü** kullanır: `images/`, `badges/`, `game-icons/`. Ayrıca **emoji simgeler** navbar ve stats bar'da kullanılır.
+
+### 12.1.1. Ana İkonlar (`assets/images/`)
+
+**Kullanım Yerleri**:
+- ✅ PWA manifest (`manifest.json`)
+- ✅ Loading screen logo
+- ✅ Browser favicon
+- ✅ Apple touch icon
+- ✅ Service Worker cache
+
+**Dosyalar**:
+
+| Dosya | Boyut | Kullanım Yeri | Açıklama |
+|-------|-------|---------------|----------|
+| `icon-192.png` | 192x192 | PWA manifest, Service Worker | Küçük boyutlu uygulama ikonu |
+| `icon-512.png` | 512x512 | PWA manifest, Loading screen, Favicon, Apple touch icon | Büyük boyutlu uygulama ikonu (ana logo) |
+| `icon-192-v4-RED-MUSHAF.png` | 192x192 | Alternatif versiyon | Kırmızı mushaf temalı alternatif ikon |
+| `icon-512-v4-RED-MUSHAF.png` | 512x512 | Alternatif versiyon | Kırmızı mushaf temalı alternatif ikon |
+
+**HTML Kullanımı**:
+```html
+<!-- Loading Screen -->
+<img src="assets/images/icon-512.png" alt="HASENE Logo" class="loading-logo">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="512x512" href="assets/images/icon-512.png">
+<link rel="apple-touch-icon" href="assets/images/icon-512.png">
+```
+
+**Manifest.json Kullanımı**:
+```json
+{
+  "icons": [
+    {
+      "src": "assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+```
+
+---
+
+### 12.1.2. Oyun Mod İkonları (`assets/game-icons/`)
+
+**Kullanım Yerleri**:
+- ✅ Ana menü oyun kartları (game-card)
+- ✅ Fallback emoji simgeler (görsel yüklenemezse)
+
+**Dosyalar**:
+
+| Dosya | Oyun Modu | Fallback Emoji | Kullanım Yeri |
+|-------|-----------|----------------|---------------|
+| `kelime-cevir.png` | Kelime Çevir | 📚 | Ana menü oyun kartı |
+| `dinle-bul.png` | Dinle Bul | 🎧 | Ana menü oyun kartı |
+| `ayet-oku.png` | Ayet Oku | 📖 | Ana menü oyun kartı |
+| `dua-et.png` | Dua Et | 🤲 | Ana menü oyun kartı |
+| `hadis-oku.png` | Hadis Oku | 📜 | Ana menü oyun kartı |
+
+**Not**: `bosluk-doldur` ve `elif-ba` modları için **sadece emoji** kullanılır (PNG dosyası yok):
+- Boşluk Doldur: ✍️
+- Elif Ba: 📘
+
+**HTML Kullanımı**:
+```html
+<div class="game-card" data-game="kelime-cevir">
+    <div class="game-icon">
+        <img src="assets/game-icons/kelime-cevir.png" alt="Kelime Çevir" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <span style="display:none;">📚</span>
+    </div>
+    <h3>Kelime Çevir</h3>
+    <p>Arapça kelimelerin Türkçe meâl karşılığını bul</p>
+</div>
+```
+
+**Fallback Mekanizması**: Görsel yüklenemezse (`onerror`), emoji gösterilir.
+
+---
+
+### 12.1.3. Rozet İkonları (`assets/badges/`)
+
+**Kullanım Yerleri**:
+- ✅ Rozet grid görselleştirme (`badge-visualization.js`)
+- ✅ Başarım modalı (`achievement-icon`)
+- ✅ Rozet detay modalı
+
+**Dosyalar**:
+
+| Dosya | Rozet ID | Açıklama |
+|-------|----------|----------|
+| `rozet1.png` | badge_1 | İlk Adım |
+| `rozet2.png` | badge_2 | İlk Rozet |
+| `rozet3.png` | badge_3 | İlk Yıldız |
+| ... | ... | ... |
+| `rozet42.png` | badge_42 | Son normal rozet |
+| `deve-kervani.png` | Asr-ı Saadet rozeti | Özel rozet |
+| `gokyuzu.png` | Asr-ı Saadet rozeti | Özel rozet |
+| `hira-magarasi.png` | Asr-ı Saadet rozeti | Özel rozet |
+| `mezar-tasi.png` | Asr-ı Saadet rozeti | Özel rozet |
+
+**Toplam**: 42 normal rozet + 4 özel Asr-ı Saadet rozeti = **46 rozet görseli**
+
+**JavaScript Kullanımı**:
+```javascript
+// Rozet görseli yükleme
+const badgeImage = `rozet${badgeNumber}.png`;
+iconEl.src = `assets/badges/${badgeImage}`;
+
+// Fallback mekanizması
+iconEl.onerror = function() {
+    const fallbackIcon = this.nextElementSibling;
+    if (fallbackIcon && fallbackIcon.classList.contains('achievement-icon')) {
+        fallbackIcon.style.display = 'block';
+        fallbackIcon.textContent = badge.name.split(' ')[0] || '🏆';
+    }
+};
+```
+
+---
+
+### 12.1.4. Diğer Görseller (`assets/images/`)
+
+**Kullanım Yerleri**:
+- ✅ Oyun ekranları (hint, speaker butonları)
+- ✅ UI elementleri
+
+**Dosyalar**:
+
+| Dosya | Kullanım Yeri | Açıklama |
+|-------|---------------|----------|
+| `hint-icon.png` | İpucu butonu (Kelime Çevir) | İpucu ikonu |
+| `hoparlor.png` | Ses oynatma butonu (tüm oyun modları) | Hoparlör/speaker ikonu |
+| `hoparlor.webp` | Alternatif format | WebP versiyonu (opsiyonel) |
+| `clue.png` | İpucu görseli (opsiyonel) | İpucu için alternatif görsel |
+| `hasene_hat.png` | Logo/hat (opsiyonel) | Hasene hat yazısı |
+| `kapak.png` | Kapak görseli (opsiyonel) | Uygulama kapağı |
+| `yenilogo.png` | Yeni logo (opsiyonel) | Güncellenmiş logo |
+
+**HTML Kullanımı**:
+```html
+<!-- İpucu Butonu -->
+<button class="hint-icon-btn" id="hint-btn" title="İpucu">
+    <img src="assets/images/hint-icon.png" alt="İpucu" class="hint-icon">
+</button>
+
+<!-- Ses Oynatma Butonu -->
+<button class="play-audio-speaker-btn" id="kelime-play-audio-btn" title="Kelimeyi Dinle">
+    <img src="assets/images/hoparlor.png" alt="Dinle" class="speaker-icon">
+</button>
+```
+
+**CSS Stilleri**:
+```css
+.hint-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.speaker-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+```
+
+---
+
+### 12.1.5. Emoji Simgeler (Unicode)
+
+**Kullanım Yerleri**:
+- ✅ **Navbar/Stats Bar**: Üst istatistikler kartı
+- ✅ **Zorluk Seçici**: Zorluk butonları
+- ✅ **Oyun Ekranları**: Combo gösterimi, butonlar
+- ✅ **Bottom Navigation**: Alt menü butonları
+- ✅ **Onboarding**: İlk açılış turu
+- ✅ **Modallar**: Başarımlar, görevler, rozetler
+
+**Navbar/Stats Bar Emojileri**:
+
+| Emoji | Kullanım Yeri | Açıklama |
+|-------|---------------|----------|
+| ⭐ | Yıldız istatistiği | Toplam yıldız sayısı |
+| 🔥 | Seri (Streak) istatistiği | Günlük seri sayısı |
+| 🎯 | Günlük Vird ikonu | Günlük hedef ilerlemesi |
+| 📱 | PWA Install Banner | Ana ekrana ekleme ikonu |
+| ⚙️ | Ayarlar butonu | Günlük vird ayarları |
+| 🔐 | Giriş butonu | Kullanıcı girişi |
+
+**Zorluk Seçici Emojileri**:
+
+| Emoji | Zorluk Seviyesi | Açıklama |
+|-------|-----------------|----------|
+| 🌱 | Kolay (Easy) | 5-8 Hasene |
+| ⚖️ | Orta (Medium) | 9-12 Hasene |
+| 🔥 | Zor (Hard) | 13-21 Hasene |
+
+**Oyun Modu Emojileri (Fallback)**:
+
+| Emoji | Oyun Modu | Kullanım |
+|-------|-----------|----------|
+| 📚 | Kelime Çevir | Fallback ikon |
+| 🎧 | Dinle Bul | Fallback ikon + Dinleme ikonu |
+| ✍️ | Boşluk Doldur | Ana ikon (PNG yok) |
+| 📖 | Ayet Oku | Fallback ikon |
+| 🤲 | Dua Et | Fallback ikon |
+| 📜 | Hadis Oku | Fallback ikon |
+| 📘 | Elif Ba | Ana ikon (PNG yok) |
+
+**Oyun Ekranı Emojileri**:
+
+| Emoji | Kullanım Yeri | Açıklama |
+|-------|---------------|----------|
+| 🔥 | Combo gösterimi | Art arda doğru sayısı |
+| 🎯 | Alt mod butonu | Klasik Oyun |
+| 📖 | Alt mod butonu | 30.cüz Ayetlerinin Kelimeleri |
+| 🔄 | Alt mod butonu | Yanlış cevaplanan kelimeleri tekrar et |
+| ⭐ | Alt mod butonu | Favori kelimelerden oyna |
+| 🎧 | Dinleme ikonu | Dinle Bul oyunu |
+| ℹ️ | Oyun bilgileri butonu | Oyun kuralları |
+
+**Bottom Navigation Emojileri**:
+
+| Emoji | Buton | Açıklama |
+|-------|-------|----------|
+| 🏠 | Ana Menü | Ana sayfaya dön |
+| 📊 | İstatistikler | Detaylı istatistikler modalı |
+| 🏆 | Muvaffakiyetler | Başarımlar ve rozetler modalı |
+| 📅 | Takvim | Streak takvimi modalı |
+| 📋 | Vazifeler | Günlük görevler modalı |
+
+**Onboarding Emojileri**:
+
+| Emoji | Kullanım Yeri | Açıklama |
+|-------|---------------|----------|
+| 🕌 | Hoş geldiniz | İlk ekran ikonu |
+| 🎯 | Kimler için | İkinci ekran ikonu |
+| 📚 | Oyun modları | Üçüncü ekran ikonu |
+| 💰 | Puan sistemi | Dördüncü ekran ikonu |
+| 📅 | Günlük görevler | Beşinci ekran ikonu |
+| 🏆 | Rozetler | Altıncı ekran ikonu |
+
+**Modal ve Görev Emojileri**:
+
+| Emoji | Kullanım Yeri | Açıklama |
+|-------|---------------|----------|
+| ✅ | Görev tamamlama | Tamamlanan görevler |
+| 💡 | Görev ödülü | İpucu ödülü |
+| 🔥 | Görev ödülü | Combo ödülü |
+| ⭐ | Görev ödülü | Yıldız ödülü |
+| 🎁 | Günlük ödül kutusu | Ödül kutusu ikonu |
+| 📖 | Lig ikonu | Kullanıcı ligi gösterimi |
+
+**HTML Kullanımı**:
+```html
+<!-- Stats Bar -->
+<span class="stat-label">⭐ Yıldız</span>
+<span class="stat-label">🔥 Seri</span>
+
+<!-- Günlük Vird -->
+<span class="daily-goal-icon">🎯</span>
+
+<!-- Zorluk Seçici -->
+<span class="difficulty-icon">🌱</span>
+<span class="difficulty-icon">⚖️</span>
+<span class="difficulty-icon">🔥</span>
+
+<!-- Combo Gösterimi -->
+<span>🔥 Combo: <span id="combo-count">0</span></span>
+```
+
+---
+
+### 12.1.6. Font Dosyası (`assets/fonts/`)
+
+**Dosya**: `KFGQPC Uthmanic Script HAFS Regular.otf`
+
+**Kullanım Yeri**:
+- ✅ Arapça metin gösterimi (tüm oyun modları)
+- ✅ CSS font-family tanımı
+
+**CSS Kullanımı**:
+```css
+@font-face {
+    font-family: 'KFGQPC Uthmanic Script HAFS';
+    src: url('assets/fonts/KFGQPC Uthmanic Script HAFS Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.arabic-text {
+    font-family: 'KFGQPC Uthmanic Script HAFS', 'Uthmani', 'Scheherazade New', serif;
+    direction: rtl;
+}
+```
+
+---
+
+### 12.1.7. Asset Dosyaları Özet Tablosu
+
+| Klasör | Dosya Sayısı | Toplam Boyut (Tahmini) | Kullanım Yeri |
+|--------|--------------|------------------------|---------------|
+| `assets/images/` | ~10 dosya | ~500KB | PWA ikonları, UI görselleri |
+| `assets/game-icons/` | 5 PNG | ~100KB | Oyun mod kartları |
+| `assets/badges/` | 46 PNG | ~2MB | Rozet görselleştirme |
+| `assets/fonts/` | 1 OTF | ~500KB | Arapça font |
+
+**Toplam Asset Boyutu**: ~3.1MB (tahmini)
+
+---
+
+### 12.1.8. Service Worker Cache Stratejisi
+
+**Cache İsimleri**:
+- `hasene-v2`: Ana uygulama dosyaları (HTML, CSS, JS)
+- `hasene-data-v2`: JSON veri dosyaları
+
+**Cache'e Eklenen Asset'ler**:
+```javascript
+const urlsToCache = [
+    './assets/images/icon-192.png',
+    './assets/images/icon-512.png'
+];
+```
+
+**Not**: Oyun mod ikonları ve rozet görselleri **lazy loading** ile yüklenir (cache'e otomatik eklenir).
+
+---
+
+### 12.1.9. Asset Optimizasyon Önerileri
+
+1. **Image Optimization**:
+   - PNG → WebP dönüşümü (modern tarayıcılar için)
+   - Image compression (TinyPNG, ImageOptim)
+   - Responsive images (srcset)
+
+2. **Font Optimization**:
+   - Font subsetting (sadece kullanılan karakterler)
+   - WOFF2 formatına dönüşüm (daha küçük boyut)
+
+3. **Lazy Loading**:
+   - Rozet görselleri lazy load (sadece görünen rozetler yüklenir)
+   - Oyun mod ikonları preload (ana menüde görünür)
+
+4. **CDN Kullanımı**:
+   - Statik asset'ler için CDN (gelecekte)
+
+---
+
+**Bu bölüm, oyunda kullanılan tüm simgeler, logolar ve görsellerin detaylı listesini içerir.**
 - **Google Fonts**: `'Nunito'` (weights: 400, 600, 700, 800), `'Reem Kufi'` (weights: 400, 600, 700)
 
 **Font Boyutları**:
@@ -2567,3 +3127,1080 @@ Bu README'yi takip ederek oyunu yeniden yazmak için **kontrol listesi**:
 ---
 
 **Bu README ile oyunun %100'ü yeniden yazılabilir.** Tüm fonksiyonlar, stil detayları, puanlama formülleri, backend mimarisi, istatistik tipleri ve oyun formatları bu dokümanda mevcuttur.
+
+---
+
+## 30. Geliştirilmesi Gereken Yönler ve Gelecek Özellikler
+
+### 30.1. Performans İyileştirmeleri
+
+**Mevcut Durum**:
+- Tüm JavaScript dosyaları ayrı ayrı yükleniyor (modüler değil)
+- Build/minification süreci yok
+- Büyük JSON dosyaları her seferinde tam yükleniyor
+
+**Önerilen İyileştirmeler**:
+1. **Code Splitting ve Lazy Loading**
+   - Oyun modları için dinamik import (`import()`)
+   - Modal içerikleri lazy load
+   - Route-based code splitting
+
+2. **Bundle ve Minification**
+   - Webpack/Vite/Rollup ile build süreci
+   - CSS ve JS minification
+   - Tree shaking (kullanılmayan kod temizleme)
+   - Source maps (production için)
+
+3. **JSON Veri Optimizasyonu**
+   - JSON dosyalarını parçalara ayırma (chunking)
+   - Lazy loading (sadece ihtiyaç duyulan veriler yüklenir)
+   - Compression (gzip/brotli)
+
+4. **Image Optimization**
+   - WebP formatına dönüştürme
+   - Responsive images (srcset)
+   - Lazy loading (Intersection Observer)
+
+5. **Caching Stratejisi**
+   - Service Worker cache versiyonlama
+   - Stale-while-revalidate pattern
+   - Cache invalidation stratejisi
+
+### 30.2. Kod Kalitesi ve Bakım
+
+**Mevcut Durum**:
+- Global state pattern (React/Redux yok)
+- Bazı deprecated fonksiyonlar (`addDailyXP`)
+- Debug log'ları production'da kapatılmalı
+
+**Önerilen İyileştirmeler**:
+1. **TypeScript Migration**
+   - Type safety
+   - Daha iyi IDE desteği
+   - Refactoring kolaylığı
+
+2. **Unit Test Coverage**
+   - Jest/Vitest ile test framework
+   - Puanlama algoritmaları için testler
+   - Kelime seçim algoritması testleri
+   - SM-2 algoritması testleri
+
+3. **Code Linting ve Formatting**
+   - ESLint kuralları
+   - Prettier formatlama
+   - Pre-commit hooks (Husky)
+
+4. **Deprecated Fonksiyonların Temizlenmesi**
+   - `addDailyXP()` fonksiyonu kaldırılmalı
+   - Eski Firebase entegrasyonu temizlenmeli
+   - Kullanılmayan kod blokları silinmeli
+
+5. **Modüler Yapı**
+   - ES6 Modules'e geçiş
+   - Dependency injection
+   - Daha iyi separation of concerns
+
+### 30.3. Kullanıcı Deneyimi (UX) İyileştirmeleri
+
+**Mevcut Durum**:
+- Temel UX mevcut ama bazı iyileştirmeler yapılabilir
+
+**Önerilen İyileştirmeler**:
+1. **Animasyonlar ve Geçişler**
+   - Daha smooth animasyonlar
+   - Micro-interactions
+   - Loading states (skeleton screens)
+
+2. **Erişilebilirlik (Accessibility)**
+   - ARIA labels
+   - Keyboard navigation
+   - Screen reader desteği
+   - Yüksek kontrast modu
+
+3. **Offline Deneyimi**
+   - Daha iyi offline mesajları
+   - Offline modda çalışan özellikler
+   - Sync conflict çözümü
+
+4. **Hata Yönetimi**
+   - Kullanıcı dostu hata mesajları
+   - Error boundary'ler
+   - Retry mekanizmaları
+
+5. **Tutorial ve Yardım**
+   - İnteraktif tutorial (onboarding genişletilmeli)
+   - Contextual help (tooltips)
+   - FAQ bölümü
+
+### 30.4. Özellik Eksikleri
+
+**Eksik Özellikler**:
+
+1. **Sosyal Özellikler**
+   - Arkadaş ekleme ve karşılaştırma
+   - Paylaşım (sosyal medya)
+   - Grup yarışmaları
+
+2. **İleri Seviye İstatistikler**
+   - Haftalık/aylık trend grafikleri (Chart.js/D3.js)
+   - Kelime öğrenme hızı analizi
+   - Zorluk seviyesi dağılımı
+
+3. **Özelleştirme**
+   - Tema seçenekleri (dark mode, renk paletleri)
+   - Font boyutu ayarları
+   - Ses efektleri açma/kapama
+
+4. **Çoklu Dil Desteği**
+   - İngilizce, Arapça, Türkçe dil seçenekleri
+   - i18n (internationalization) framework
+
+5. **Gelişmiş Kelime Öğrenme**
+   - Flashcard modu
+   - Yazma pratiği modu
+   - Kelime arama ve filtreleme
+
+6. **Push Notifications**
+   - Günlük hatırlatmalar
+   - Görev tamamlama bildirimleri
+   - Streak koruma uyarıları
+
+7. **Export/Import Özellikleri**
+   - İstatistikleri export etme (CSV/JSON)
+   - Veri yedekleme ve geri yükleme
+   - Farklı cihazlar arası senkronizasyon
+
+### 30.5. Backend ve Altyapı
+
+**Mevcut Durum**:
+- Firebase entegrasyonu mevcut ama opsiyonel
+- LocalStorage ana depolama
+
+**Önerilen İyileştirmeler**:
+1. **Backend API Standardizasyonu**
+   - RESTful API tasarımı
+   - GraphQL alternatifi
+   - API versioning
+
+2. **Veri Senkronizasyonu**
+   - Conflict resolution stratejisi
+   - Optimistic updates
+   - Background sync
+
+3. **Analytics ve Monitoring**
+   - Kullanıcı davranış analizi
+   - Performance monitoring
+   - Error tracking (Sentry)
+
+4. **Güvenlik**
+   - Rate limiting
+   - Input validation
+   - XSS/CSRF koruması
+   - Data encryption
+
+### 30.6. Mobil Uygulama
+
+**Mevcut Durum**:
+- PWA olarak çalışıyor
+- Native app yok
+
+**Önerilen Geliştirmeler**:
+1. **React Native / Flutter Migration**
+   - Native iOS/Android app
+   - Daha iyi performans
+   - Native özellikler (push notifications, haptic feedback)
+
+2. **PWA İyileştirmeleri**
+   - Install prompt optimizasyonu
+   - App shortcuts
+   - Share target API
+
+### 30.7. İçerik ve Veri
+
+**Mevcut Durum**:
+- Statik JSON dosyaları
+- Sınırlı kelime/ayet/hadis verisi
+
+**Önerilen İyileştirmeler**:
+1. **Veri Genişletme**
+   - Daha fazla kelime eklenmesi
+   - Daha fazla ayet/hadis/dua
+   - Ses dosyaları eklenmesi
+
+2. **İçerik Yönetimi**
+   - Admin paneli
+   - İçerik ekleme/düzenleme arayüzü
+   - İçerik moderasyonu
+
+3. **Dinamik İçerik**
+   - Günlük ayet/hadis önerileri
+   - Sezonluk içerikler (Ramazan, Kurban Bayramı)
+   - Kullanıcı tarafından eklenen içerikler
+
+### 30.8. Oyun Mekanikleri İyileştirmeleri
+
+**Önerilen Yeni Özellikler**:
+1. **Zamanlı Modlar**
+   - Hızlı oyun modu (30 saniye)
+   - Zaman yarışması
+   - Streak koruma modu
+
+2. **Çoklu Oyuncu**
+   - Canlı yarışmalar
+   - Turnuvalar
+   - Ekip yarışmaları
+
+3. **Özel Görevler**
+   - Kullanıcı tarafından oluşturulan görevler
+   - Haftalık challenge'lar
+   - Özel event'ler
+
+4. **Rozet Sistemi Genişletme**
+   - Daha fazla rozet kategorisi
+   - Özel rozetler (event bazlı)
+   - Rozet kombinasyonları
+
+### 30.9. Teknik Borç (Technical Debt)
+
+**Bilinen Sorunlar**:
+1. **Global State Management**
+   - React/Redux gibi bir state management çözümüne geçiş
+   - State senkronizasyon sorunları
+
+2. **Kod Tekrarı**
+   - Benzer fonksiyonlar farklı dosyalarda tekrarlanıyor
+   - Utility fonksiyonlarının merkezileştirilmesi
+
+3. **Error Handling**
+   - Tutarlı error handling pattern'i yok
+   - Bazı yerlerde try-catch eksik
+
+4. **Documentation**
+   - JSDoc comment'leri eksik
+   - API dokümantasyonu yok
+   - Kod içi açıklamalar yetersiz
+
+### 30.10. Test ve Kalite Güvencesi
+
+**Eksikler**:
+1. **Unit Tests**
+   - Fonksiyon bazlı testler
+   - Edge case testleri
+   - Mock data ile testler
+
+2. **Integration Tests**
+   - API entegrasyon testleri
+   - Veri senkronizasyon testleri
+
+3. **E2E Tests**
+   - Playwright/Cypress ile end-to-end testler
+   - Kullanıcı akışı testleri
+
+4. **Performance Tests**
+   - Load testing
+   - Memory leak testleri
+   - Bundle size monitoring
+
+### 30.11. Öncelik Sırası
+
+**Yüksek Öncelik** (Hemen yapılmalı):
+1. ✅ Deprecated fonksiyonların temizlenmesi
+2. ✅ Error handling iyileştirmeleri
+3. ✅ Performance optimizasyonları (lazy loading)
+4. ✅ Code splitting
+
+**Orta Öncelik** (Yakın gelecekte):
+1. ⚠️ TypeScript migration
+2. ⚠️ Unit test coverage
+3. ⚠️ ESLint/Prettier kurulumu
+4. ⚠️ Dark mode desteği
+
+**Düşük Öncelik** (Uzun vadede):
+1. 📋 React Native migration
+2. 📋 Çoklu dil desteği
+3. 📋 Sosyal özellikler
+4. 📋 Native mobile app
+
+---
+
+## 31. Bilinen Sorunlar ve Çözümleri
+
+### 31.1. Veri Senkronizasyon Sorunları
+
+**Sorun**: localStorage ve Firebase arasında senkronizasyon sorunları olabilir.
+
+**Çözüm**:
+- Conflict resolution stratejisi: Son yazılan kazanır (last-write-wins)
+- Timestamp bazlı karşılaştırma
+- Kullanıcıya conflict durumunda seçim hakkı ver
+
+### 31.2. Performans Sorunları
+
+**Sorun**: Büyük JSON dosyaları yükleme sırasında lag.
+
+**Çözüm**:
+- Lazy loading (sadece ihtiyaç duyulan veriler)
+- Web Workers ile arka plan işleme
+- Virtual scrolling (büyük listeler için)
+
+### 31.3. Mobil Uyumluluk
+
+**Sorun**: Bazı iOS Safari versiyonlarında sorunlar olabilir.
+
+**Çözüm**:
+- Polyfill'ler eklenmeli
+- Cross-browser testing
+- Progressive enhancement
+
+### 31.4. Offline Çalışma
+
+**Sorun**: Offline durumda bazı özellikler çalışmayabilir.
+
+**Çözüm**:
+- Service Worker cache stratejisi iyileştirilmeli
+- Background sync API kullanılmalı
+- Offline-first yaklaşım
+
+---
+
+## 32. Katkıda Bulunma Rehberi
+
+### 32.1. Geliştirme Ortamı Kurulumu
+
+1. **Gereksinimler**:
+   - Node.js 18+ (opsiyonel, build için)
+   - Modern tarayıcı (Chrome, Firefox, Safari)
+   - Git
+
+2. **Kurulum**:
+   ```bash
+   git clone [repo-url]
+   cd DENEME_HASENE
+   # Statik dosyalar için build gerekmez, direkt açılabilir
+   # Veya:
+   npm install  # (eğer build süreci eklenirse)
+   ```
+
+3. **Geliştirme**:
+   - `index.html` dosyasını tarayıcıda aç
+   - Live Server extension kullan (VS Code)
+   - Değişiklikler anında yansır
+
+### 32.2. Kod Standartları
+
+- **İsimlendirme**: camelCase (fonksiyonlar, değişkenler), UPPER_SNAKE_CASE (sabitler)
+- **Fonksiyon Yapısı**: JSDoc comment'leri ekle
+- **Hata Yönetimi**: Try-catch blokları kullan
+- **Logging**: `debugLog()`, `infoLog()`, `errorLog()` fonksiyonlarını kullan
+
+### 32.3. Pull Request Süreci
+
+1. Feature branch oluştur (`feature/yeni-ozellik`)
+2. Değişiklikleri yap
+3. Test et
+4. Pull request aç
+5. Code review bekle
+6. Merge edilince sil
+
+---
+
+## 33. Geliştirme Araçları ve Yazılımlar
+
+Bu proje **Vanilla JavaScript** ile yazıldığı için herhangi bir IDE veya editör kullanılabilir. Aşağıda önerilen ve kullanılabilecek araçlar listelenmiştir.
+
+### 33.1. Kod Editörleri ve IDE'ler
+
+#### 33.1.1. Visual Studio Code (Önerilen)
+
+**Neden Önerilir**:
+- ✅ Ücretsiz ve açık kaynak
+- ✅ Güçlü JavaScript desteği
+- ✅ Geniş eklenti ekosistemi
+- ✅ Built-in Git desteği
+- ✅ Debugging araçları
+- ✅ Live Server extension (geliştirme için)
+
+**Kurulum**:
+1. [VS Code'u indirin](https://code.visualstudio.com/)
+2. Aşağıdaki eklentileri yükleyin:
+
+**Önerilen Eklentiler**:
+- **ESLint** (`dbaeumer.vscode-eslint`) - JavaScript linting
+- **Prettier** (`esbenp.prettier-vscode`) - Code formatting
+- **Live Server** (`ritwickdey.LiveServer`) - Local development server
+- **JavaScript (ES6) code snippets** (`xabikos.JavaScriptSnippets`) - Kod snippet'leri
+- **Auto Rename Tag** (`formulahendry.auto-rename-tag`) - HTML tag otomatik yeniden adlandırma
+- **Bracket Pair Colorizer** (`CoenraadS.bracket-pair-colorizer-2`) - Parantez renklendirme
+- **GitLens** (`eamodio.gitlens`) - Git görselleştirme
+- **Path Intellisense** (`christian-kohler.path-intellisense`) - Dosya yolu tamamlama
+- **Color Highlight** (`naumovs.color-highlight`) - Renk kodlarını vurgulama
+- **HTML CSS Support** (`ecmel.vscode-html-css`) - CSS class/id tamamlama
+
+**VS Code Ayarları** (`.vscode/settings.json`):
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "javascript.validate.enable": true,
+  "html.format.indentInnerHtml": true,
+  "css.validate": true
+}
+```
+
+---
+
+#### 33.1.2. WebStorm (JetBrains)
+
+**Özellikler**:
+- ✅ Güçlü JavaScript/TypeScript desteği
+- ✅ Built-in debugging
+- ✅ Git entegrasyonu
+- ✅ Code refactoring araçları
+- ✅ Test framework desteği
+
+**Not**: Ücretli (öğrenciler için ücretsiz)
+
+**Kurulum**: [WebStorm'u indirin](https://www.jetbrains.com/webstorm/)
+
+---
+
+#### 33.1.3. Sublime Text
+
+**Özellikler**:
+- ✅ Hafif ve hızlı
+- ✅ Çoklu cursor desteği
+- ✅ Güçlü arama/değiştirme
+- ✅ Paket ekosistemi
+
+**Kurulum**: [Sublime Text'i indirin](https://www.sublimetext.com/)
+
+**Önerilen Paketler**:
+- Package Control
+- Emmet
+- JavaScript Completions
+- HTML-CSS-JS Prettify
+
+---
+
+#### 33.1.4. Atom
+
+**Özellikler**:
+- ✅ Açık kaynak
+- ✅ Hackable (özelleştirilebilir)
+- ✅ Git entegrasyonu
+- ✅ Paket ekosistemi
+
+**Kurulum**: [Atom'u indirin](https://atom.io/)
+
+---
+
+#### 33.1.5. Vim / Neovim
+
+**Özellikler**:
+- ✅ Terminal tabanlı editör
+- ✅ Çok hafif
+- ✅ Klavye kısayolları odaklı
+- ✅ Öğrenme eğrisi yüksek
+
+**Kurulum**: 
+- Vim: Çoğu Linux/Mac'te önceden yüklü
+- Neovim: [Neovim'i indirin](https://neovim.io/)
+
+**Önerilen Eklentiler**:
+- coc.nvim (LSP desteği)
+- vim-prettier
+- vim-javascript
+
+---
+
+### 33.2. Tarayıcı Geliştirme Araçları
+
+#### 33.2.1. Chrome DevTools
+
+**Kullanım Alanları**:
+- ✅ Console debugging (`console.log`, `debugger`)
+- ✅ Network monitoring (JSON dosyaları yükleme)
+- ✅ Application tab (localStorage, IndexedDB, Service Worker)
+- ✅ Performance profiling
+- ✅ Mobile device emulation
+- ✅ Lighthouse (PWA test)
+
+**Kısayollar**:
+- `F12` veya `Ctrl+Shift+I` (Windows/Linux)
+- `Cmd+Option+I` (Mac)
+
+**Önemli Özellikler**:
+- **Application → Storage**: localStorage ve IndexedDB verilerini görüntüleme/düzenleme
+- **Application → Service Workers**: Service Worker durumunu kontrol etme
+- **Network**: JSON dosyalarının yüklenme durumunu izleme
+- **Console**: JavaScript hatalarını ve log'ları görüntüleme
+
+---
+
+#### 33.2.2. Firefox Developer Tools
+
+**Özellikler**:
+- ✅ Güçlü debugging araçları
+- ✅ Grid/Flexbox görselleştirme
+- ✅ Accessibility inspector
+- ✅ Network monitor
+
+**Kurulum**: Firefox Developer Edition'ı indirin
+
+---
+
+#### 33.2.3. Safari Web Inspector (Mac)
+
+**Özellikler**:
+- ✅ iOS simülatör entegrasyonu
+- ✅ PWA test araçları
+- ✅ Network timeline
+
+**Kurulum**: Safari → Preferences → Advanced → "Show Develop menu"
+
+---
+
+### 33.3. Build Araçları ve Paket Yöneticileri
+
+#### 33.3.1. Node.js ve npm
+
+**Kullanım Alanları**:
+- ✅ Paket yönetimi (gelecekte)
+- ✅ Build script'leri
+- ✅ Development server
+- ✅ Test framework'leri
+
+**Kurulum**: [Node.js'i indirin](https://nodejs.org/) (LTS versiyonu önerilir)
+
+**Kontrol**:
+```bash
+node --version
+npm --version
+```
+
+---
+
+#### 33.3.2. Webpack (Gelecek için)
+
+**Kullanım Alanları**:
+- ✅ Code bundling
+- ✅ Code splitting
+- ✅ Asset optimization
+- ✅ Hot module replacement (HMR)
+
+**Kurulum**:
+```bash
+npm install --save-dev webpack webpack-cli webpack-dev-server
+```
+
+**Örnek `webpack.config.js`**:
+```javascript
+const path = require('path');
+
+module.exports = {
+  entry: './js/game-core.js',
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
+  mode: 'development',
+  devServer: {
+    contentBase: './',
+    port: 3000
+  }
+};
+```
+
+---
+
+#### 33.3.3. Vite (Gelecek için - Önerilen)
+
+**Özellikler**:
+- ✅ Çok hızlı development server
+- ✅ Hot module replacement
+- ✅ Optimized production builds
+- ✅ Modern ES modules desteği
+
+**Kurulum**:
+```bash
+npm create vite@latest hasene-game -- --template vanilla
+```
+
+---
+
+#### 33.3.4. Rollup (Gelecek için)
+
+**Özellikler**:
+- ✅ Tree shaking (kullanılmayan kod temizleme)
+- ✅ Küçük bundle boyutları
+- ✅ ES modules odaklı
+
+**Kurulum**:
+```bash
+npm install --save-dev rollup
+```
+
+---
+
+### 33.4. Linting ve Formatting Araçları
+
+#### 33.4.1. ESLint
+
+**Kullanım**: JavaScript kod kalitesi kontrolü
+
+**Kurulum**:
+```bash
+npm install --save-dev eslint
+```
+
+**Örnek `.eslintrc.json`**:
+```json
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-unused-vars": "warn",
+    "no-undef": "error"
+  }
+}
+```
+
+---
+
+#### 33.4.2. Prettier
+
+**Kullanım**: Otomatik kod formatlama
+
+**Kurulum**:
+```bash
+npm install --save-dev prettier
+```
+
+**Örnek `.prettierrc`**:
+```json
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 4,
+  "trailingComma": "es5",
+  "printWidth": 100
+}
+```
+
+---
+
+#### 33.4.3. JSHint (Alternatif)
+
+**Kullanım**: ESLint alternatifi
+
+**Kurulum**:
+```bash
+npm install --save-dev jshint
+```
+
+---
+
+### 33.5. Test Araçları
+
+#### 33.5.1. Jest
+
+**Kullanım**: Unit test framework
+
+**Kurulum**:
+```bash
+npm install --save-dev jest
+```
+
+**Örnek Test**:
+```javascript
+// test/game-core.test.js
+describe('addToGlobalPoints', () => {
+  test('should add points correctly', () => {
+    totalPoints = 0;
+    addToGlobalPoints(100);
+    expect(totalPoints).toBe(100);
+  });
+});
+```
+
+---
+
+#### 33.5.2. Vitest (Önerilen)
+
+**Özellikler**:
+- ✅ Jest uyumlu API
+- ✅ Vite entegrasyonu
+- ✅ Daha hızlı
+
+**Kurulum**:
+```bash
+npm install --save-dev vitest
+```
+
+---
+
+#### 33.5.3. Playwright
+
+**Kullanım**: End-to-end (E2E) testler
+
+**Kurulum**:
+```bash
+npm install --save-dev @playwright/test
+```
+
+**Örnek Test**:
+```javascript
+// test/e2e/game-flow.spec.js
+import { test, expect } from '@playwright/test';
+
+test('should start kelime cevir game', async ({ page }) => {
+  await page.goto('http://localhost:3000');
+  await page.click('[data-game="kelime-cevir"]');
+  await expect(page.locator('#kelime-cevir-screen')).toBeVisible();
+});
+```
+
+---
+
+#### 33.5.4. Cypress (Alternatif)
+
+**Kullanım**: E2E test framework
+
+**Kurulum**:
+```bash
+npm install --save-dev cypress
+```
+
+---
+
+### 33.6. Version Control (Git)
+
+#### 33.6.1. Git
+
+**Kurulum**: [Git'i indirin](https://git-scm.com/)
+
+**Temel Komutlar**:
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin <repo-url>
+git push -u origin main
+```
+
+---
+
+#### 33.6.2. GitHub Desktop
+
+**Özellikler**:
+- ✅ GUI tabanlı Git yönetimi
+- ✅ Kolay branch yönetimi
+- ✅ Visual diff görüntüleme
+
+**Kurulum**: [GitHub Desktop'u indirin](https://desktop.github.com/)
+
+---
+
+#### 33.6.3. GitKraken (Ücretli)
+
+**Özellikler**:
+- ✅ Güçlü Git GUI
+- ✅ Merge conflict çözümü
+- ✅ Git flow desteği
+
+**Kurulum**: [GitKraken'i indirin](https://www.gitkraken.com/)
+
+---
+
+### 33.7. Design ve Prototipleme Araçları
+
+#### 33.7.1. Figma
+
+**Kullanım**: UI/UX tasarımı, prototipleme
+
+**Özellikler**:
+- ✅ Web tabanlı (ücretsiz)
+- ✅ Collaborative design
+- ✅ Component library
+- ✅ Export to code
+
+**Kurulum**: [Figma'ya kaydolun](https://www.figma.com/)
+
+---
+
+#### 33.7.2. Adobe XD
+
+**Kullanım**: UI/UX tasarımı
+
+**Özellikler**:
+- ✅ Prototipleme
+- ✅ Animation
+- ✅ Design specs export
+
+**Kurulum**: [Adobe XD'yi indirin](https://www.adobe.com/products/xd.html)
+
+---
+
+#### 33.7.3. Sketch (Mac)
+
+**Kullanım**: UI tasarımı
+
+**Özellikler**:
+- ✅ Vector editing
+- ✅ Symbol library
+- ✅ Plugins
+
+**Kurulum**: [Sketch'i indirin](https://www.sketch.com/)
+
+---
+
+### 33.8. Image Optimization Araçları
+
+#### 33.8.1. TinyPNG / TinyJPG
+
+**Kullanım**: PNG/JPEG sıkıştırma
+
+**Web**: [TinyPNG](https://tinypng.com/)
+
+**API**:
+```bash
+npm install --save-dev tinify
+```
+
+---
+
+#### 33.8.2. ImageOptim (Mac)
+
+**Kullanım**: Batch image optimization
+
+**Kurulum**: [ImageOptim'i indirin](https://imageoptim.com/)
+
+---
+
+#### 33.8.3. Squoosh (Web)
+
+**Kullanım**: Online image optimization
+
+**Web**: [Squoosh](https://squoosh.app/)
+
+---
+
+### 33.9. API Test Araçları
+
+#### 33.9.1. Postman
+
+**Kullanım**: Firebase API testleri
+
+**Özellikler**:
+- ✅ REST API testleri
+- ✅ Collection yönetimi
+- ✅ Environment variables
+
+**Kurulum**: [Postman'i indirin](https://www.postman.com/)
+
+---
+
+#### 33.9.2. Insomnia (Alternatif)
+
+**Kullanım**: API testleri
+
+**Kurulum**: [Insomnia'yı indirin](https://insomnia.rest/)
+
+---
+
+### 33.10. Performance ve Analytics Araçları
+
+#### 33.10.1. Lighthouse
+
+**Kullanım**: PWA ve performance audit
+
+**Kullanım**:
+- Chrome DevTools → Lighthouse tab
+- Veya CLI: `npm install -g lighthouse`
+
+**Test**:
+```bash
+lighthouse http://localhost:3000 --view
+```
+
+---
+
+#### 33.10.2. WebPageTest
+
+**Kullanım**: Web performance testi
+
+**Web**: [WebPageTest](https://www.webpagetest.org/)
+
+---
+
+#### 33.10.3. Chrome Performance Monitor
+
+**Kullanım**: Runtime performance monitoring
+
+**Kullanım**: Chrome DevTools → Performance tab
+
+---
+
+### 33.11. Mobile Testing Araçları
+
+#### 33.11.1. Chrome DevTools Device Mode
+
+**Kullanım**: Mobil cihaz simülasyonu
+
+**Kullanım**: Chrome DevTools → Toggle device toolbar (`Ctrl+Shift+M`)
+
+---
+
+#### 33.11.2. iOS Simulator (Mac)
+
+**Kullanım**: iOS cihaz testi
+
+**Kurulum**: Xcode → Preferences → Components → iOS Simulator
+
+---
+
+#### 33.11.3. Android Studio Emulator
+
+**Kullanım**: Android cihaz testi
+
+**Kurulum**: [Android Studio'yu indirin](https://developer.android.com/studio)
+
+---
+
+### 33.12. Database ve Storage Araçları
+
+#### 33.12.1. Chrome DevTools Application Tab
+
+**Kullanım**: localStorage ve IndexedDB görüntüleme/düzenleme
+
+**Kullanım**: Chrome DevTools → Application → Storage
+
+---
+
+#### 33.12.2. IndexedDB Explorer (Chrome Extension)
+
+**Kullanım**: IndexedDB verilerini görselleştirme
+
+**Kurulum**: Chrome Web Store → "IndexedDB Explorer"
+
+---
+
+### 33.13. Service Worker Araçları
+
+#### 33.13.1. Chrome DevTools Application Tab
+
+**Kullanım**: Service Worker durumunu kontrol etme
+
+**Kullanım**: Chrome DevTools → Application → Service Workers
+
+---
+
+#### 33.13.2. Workbox (Gelecek için)
+
+**Kullanım**: Service Worker yönetimi
+
+**Kurulum**:
+```bash
+npm install --save-dev workbox-cli
+```
+
+---
+
+### 33.14. Önerilen Geliştirme Ortamı Kurulumu
+
+#### Minimum Gereksinimler:
+1. **Kod Editörü**: Visual Studio Code
+2. **Tarayıcı**: Chrome (DevTools için)
+3. **Git**: Git CLI veya GitHub Desktop
+4. **Node.js**: (Opsiyonel, gelecek için)
+
+#### Önerilen Kurulum Adımları:
+
+1. **VS Code Kurulumu**:
+   ```bash
+   # VS Code'u indir ve kur
+   # Önerilen eklentileri yükle
+   ```
+
+2. **Live Server Kurulumu**:
+   ```bash
+   # VS Code'da Live Server extension'ı yükle
+   # index.html'e sağ tık → "Open with Live Server"
+   ```
+
+3. **Git Kurulumu**:
+   ```bash
+   git --version  # Kontrol et
+   git config --global user.name "Your Name"
+   git config --global user.email "your.email@example.com"
+   ```
+
+4. **Chrome DevTools**:
+   - Chrome'u aç
+   - `F12` ile DevTools'u aç
+   - Application tab'ı kullan (localStorage, IndexedDB, Service Worker)
+
+---
+
+### 33.15. Proje İçin Özel Araçlar
+
+#### 33.15.1. JSON Validator
+
+**Kullanım**: JSON dosyalarının doğruluğunu kontrol etme
+
+**Online**: [JSONLint](https://jsonlint.com/)
+
+**VS Code Extension**: "JSON Tools"
+
+---
+
+#### 33.15.2. Arapça Font Preview
+
+**Kullanım**: Arapça font'ları test etme
+
+**Online**: [Google Fonts Arabic](https://fonts.google.com/?subset=arabic)
+
+---
+
+#### 33.15.3. PWA Validator
+
+**Kullanım**: manifest.json ve Service Worker kontrolü
+
+**Online**: [PWA Builder](https://www.pwabuilder.com/)
+
+---
+
+### 33.16. Araçlar Özet Tablosu
+
+| Kategori | Araç | Ücretsiz? | Önerilen? |
+|----------|------|-----------|-----------|
+| **IDE** | VS Code | ✅ | ✅ |
+| **IDE** | WebStorm | ❌ | ⚠️ |
+| **Build** | Vite | ✅ | ✅ |
+| **Build** | Webpack | ✅ | ⚠️ |
+| **Linting** | ESLint | ✅ | ✅ |
+| **Formatting** | Prettier | ✅ | ✅ |
+| **Test** | Vitest | ✅ | ✅ |
+| **Test** | Jest | ✅ | ⚠️ |
+| **E2E Test** | Playwright | ✅ | ✅ |
+| **Git** | Git CLI | ✅ | ✅ |
+| **Design** | Figma | ✅ | ✅ |
+| **Image** | TinyPNG | ✅ | ✅ |
+| **Performance** | Lighthouse | ✅ | ✅ |
+| **Mobile** | Chrome DevTools | ✅ | ✅ |
+
+---
+
+**Bu bölüm, projeyi geliştirmek için kullanılabilecek tüm araçları ve yazılımları içerir. Minimum gereksinimler: VS Code + Chrome DevTools + Git.**
