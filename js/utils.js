@@ -447,7 +447,11 @@ function safeSetItem(key, value) {
         localStorage.setItem(key, JSON.stringify(value));
         return true;
     } catch (e) {
-        console.error('Error writing to localStorage:', e);
+        if (typeof errorLog === 'function') {
+            errorLog('Error writing to localStorage:', e);
+        } else {
+            console.error('Error writing to localStorage:', e);
+        }
         return false;
     }
 }
@@ -490,6 +494,95 @@ function filterJuz30(words) {
         const sureNum = parseInt(w.id.split(':')[0]);
         return sureNum >= 78 && sureNum <= 114;
     });
+}
+
+// ============================================
+// HELPER FUNCTIONS - Validation & Safety
+// ============================================
+
+/**
+ * Kullanıcı adının geçerli olup olmadığını kontrol eder
+ * @param {string} username - Kontrol edilecek kullanıcı adı
+ * @returns {boolean} - Geçerli ise true
+ */
+function isValidUsername(username) {
+    if (!username || typeof username !== 'string') return false;
+    const trimmed = username.trim();
+    return trimmed.length >= 2 && trimmed !== 'Kullanıcı' && trimmed !== 'Kullanici';
+}
+
+/**
+ * Array'in boş olup olmadığını güvenli şekilde kontrol eder
+ * @param {Array} arr - Kontrol edilecek array
+ * @returns {boolean} - Boş ise true
+ */
+function isEmptyArray(arr) {
+    return !arr || !Array.isArray(arr) || arr.length === 0;
+}
+
+/**
+ * Object'in boş olup olmadığını güvenli şekilde kontrol eder
+ * @param {Object} obj - Kontrol edilecek object
+ * @returns {boolean} - Boş ise true
+ */
+function isEmptyObject(obj) {
+    return !obj || typeof obj !== 'object' || Object.keys(obj).length === 0;
+}
+
+/**
+ * String'in boş olup olmadığını güvenli şekilde kontrol eder
+ * @param {string} str - Kontrol edilecek string
+ * @returns {boolean} - Boş ise true
+ */
+function isEmptyString(str) {
+    return !str || typeof str !== 'string' || str.trim().length === 0;
+}
+
+/**
+ * Number'ın geçerli olup olmadığını kontrol eder
+ * @param {*} num - Kontrol edilecek değer
+ * @returns {boolean} - Geçerli number ise true
+ */
+function isValidNumber(num) {
+    return typeof num === 'number' && !isNaN(num) && isFinite(num);
+}
+
+/**
+ * Kullanıcı objesinin geçerli olup olmadığını kontrol eder
+ * @param {Object} user - Kontrol edilecek kullanıcı objesi
+ * @returns {boolean} - Geçerli ise true
+ */
+function isValidUser(user) {
+    if (!user || typeof user !== 'object') return false;
+    if (!user.id || typeof user.id !== 'string') return false;
+    // LocalStorage kullanıcıları geçerli
+    if (user.id.startsWith('local-')) return true;
+    // Firebase kullanıcıları için username kontrolü
+    return isValidUsername(user.username);
+}
+
+/**
+ * Güvenli array erişimi (null/undefined kontrolü ile)
+ * @param {Array} arr - Erişilecek array
+ * @param {number} index - İndeks
+ * @returns {*} - Eleman veya undefined
+ */
+function safeArrayAccess(arr, index) {
+    if (isEmptyArray(arr)) return undefined;
+    if (!isValidNumber(index) || index < 0 || index >= arr.length) return undefined;
+    return arr[index];
+}
+
+/**
+ * Güvenli object property erişimi
+ * @param {Object} obj - Erişilecek object
+ * @param {string} prop - Property adı
+ * @param {*} defaultValue - Varsayılan değer
+ * @returns {*} - Property değeri veya varsayılan
+ */
+function safeGetProperty(obj, prop, defaultValue = undefined) {
+    if (!obj || typeof obj !== 'object') return defaultValue;
+    return obj[prop] !== undefined ? obj[prop] : defaultValue;
 }
 
 
@@ -701,5 +794,14 @@ if (typeof window !== 'undefined') {
     window.shuffleWithEqualDistribution = shuffleWithEqualDistribution;
     window.showGameInfoModal = showGameInfoModal;
     window.switchInfoTab = switchInfoTab;
+    // Helper functions
+    window.isValidUsername = isValidUsername;
+    window.isEmptyArray = isEmptyArray;
+    window.isEmptyObject = isEmptyObject;
+    window.isEmptyString = isEmptyString;
+    window.isValidNumber = isValidNumber;
+    window.isValidUser = isValidUser;
+    window.safeArrayAccess = safeArrayAccess;
+    window.safeGetProperty = safeGetProperty;
 }
 

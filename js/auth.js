@@ -208,7 +208,7 @@ async function handleRegister() {
         return;
     }
     
-    if (password.length < 6) {
+    if (!password || password.length < (VALIDATION_CONSTANTS?.MIN_PASSWORD_LENGTH || 6)) {
         showAuthMessage('Şifre en az 6 karakter olmalıdır', 'error');
         return;
     }
@@ -306,7 +306,7 @@ async function handleDirectLogin() {
         return;
     }
     
-    if (username.length < 2) {
+    if (!isValidUsername(username)) {
         showAuthMessage('Kullanıcı adı en az 2 karakter olmalıdır', 'error');
         return;
     }

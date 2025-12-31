@@ -1043,5 +1043,56 @@ if (typeof window !== 'undefined') {
     window.DAILY_BONUS_TASKS_TEMPLATE = DAILY_BONUS_TASKS_TEMPLATE;
     window.BADGE_COLORS = BADGE_COLORS;
     window.BADGE_DEFINITIONS = BADGE_DEFINITIONS;
+    window.VALIDATION_CONSTANTS = VALIDATION_CONSTANTS;
 }
+
+// ============================================
+// VALIDATION CONSTANTS - Magic Numbers/Strings
+// ============================================
+
+const VALIDATION_CONSTANTS = {
+    // Username validation
+    MIN_USERNAME_LENGTH: 2,
+    DEFAULT_USERNAME: 'Kullanıcı',
+    DEFAULT_USERNAME_ALT: 'Kullanici',
+    
+    // Password validation
+    MIN_PASSWORD_LENGTH: 6,
+    
+    // User ID validation
+    MIN_USER_ID_LENGTH: 2,
+    MIN_FIREBASE_UID_LENGTH: 10,
+    LONG_UID_THRESHOLD: 20,
+    
+    // Array/Object validation
+    MIN_ARRAY_LENGTH: 0,
+    MIN_OBJECT_KEYS: 0,
+    
+    // String validation
+    MIN_STRING_LENGTH: 0,
+    
+    // Firebase
+    LOCAL_USER_PREFIX: 'local-',
+    
+    // Date/Time
+    MOBILE_TIMEOUT_MULTIPLIER: 2,
+    DEFAULT_RETRY_DELAY: 200,
+    DEFAULT_SESSION_WAIT: 500,
+    
+    // Game
+    MIN_QUESTIONS_PER_GAME: 3,
+    DEFAULT_QUESTIONS_PER_GAME: 10,
+    
+    // Difficulty ranges
+    DIFFICULTY_EASY_MIN: 5,
+    DIFFICULTY_EASY_MAX: 8,
+    DIFFICULTY_MEDIUM_MIN: 9,
+    DIFFICULTY_MEDIUM_MAX: 12,
+    DIFFICULTY_HARD_MIN: 13,
+    DIFFICULTY_HARD_MAX: 21,
+    
+    // Juz 30 range
+    JUZ_30_START: 78,
+    JUZ_30_END: 114
+};
 

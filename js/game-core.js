@@ -158,9 +158,11 @@ async function loadStats() {
         
         // Önce kullanıcı kontrolü yap (session yüklenmesini bekle)
         let user = null;
-        console.log('🔍 Kullanıcı kontrolü başlatılıyor...');
-        console.log('🔍 window.getCurrentUser mevcut mu?', typeof window.getCurrentUser === 'function');
-        console.log('🔍 window.loadUserStats mevcut mu?', typeof window.loadUserStats === 'function');
+        if (typeof debugLog === 'function') {
+            debugLog('🔍 Kullanıcı kontrolü başlatılıyor...');
+            debugLog('🔍 window.getCurrentUser mevcut mu?', typeof window.getCurrentUser === 'function');
+            debugLog('🔍 window.loadUserStats mevcut mu?', typeof window.loadUserStats === 'function');
+        }
         
         if (typeof window.getCurrentUser === 'function') {
             let userRetryCount = 0;
@@ -175,7 +177,9 @@ async function loadStats() {
                     }
                     
                     user = await window.getCurrentUser();
-                    console.log(`📥 getCurrentUser() sonucu (deneme ${userRetryCount + 1}/${maxUserRetries}):`, user ? `✅ Kullanıcı var (${user.id}, ${user.username || user.email || 'email yok'})` : '❌ Kullanıcı yok');
+                    if (typeof debugLog === 'function') {
+                        debugLog(`📥 getCurrentUser() sonucu (deneme ${userRetryCount + 1}/${maxUserRetries}):`, user ? `✅ Kullanıcı var (${user.id}, ${user.username || user.email || 'email yok'})` : '❌ Kullanıcı yok');
+                    }
                     
                     if (user) {
                         break; // Kullanıcı bulundu, döngüden çık
@@ -184,7 +188,9 @@ async function loadStats() {
                     
                     // Kullanıcı hala yoksa, tekrar dene
                     if (!user && userRetryCount < maxUserRetries - 1) {
-                        console.log(`🔄 Kullanıcı bulunamadı, tekrar deneniyor... (${userRetryCount + 1}/${maxUserRetries})`);
+                        if (typeof debugLog === 'function') {
+                            debugLog(`🔄 Kullanıcı bulunamadı, tekrar deneniyor... (${userRetryCount + 1}/${maxUserRetries})`);
+                        }
                         await new Promise(resolve => setTimeout(resolve, sessionWaitTime));
                         userRetryCount++;
                     } else {
@@ -342,7 +348,7 @@ async function loadStats() {
                             retryCount++;
                         } else {
                             // Max retry aşıldı - sadece kullanıcı gerçekten giriş yapmışsa uyarı göster
-                            if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                            if (isValidUser(user) && !user.id.startsWith(VALIDATION_CONSTANTS?.LOCAL_USER_PREFIX || 'local-')) {
                                 console.warn('⚠️ Backend\'den veri yüklenemedi (max retry aşıldı)');
                             }
                             break;
@@ -352,7 +358,7 @@ async function loadStats() {
                     }
                 } catch (apiError) {
                     // Hata durumunda - sadece kullanıcı gerçekten giriş yapmışsa uyarı göster
-                    if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                    if (isValidUser(user) && !user.id.startsWith(VALIDATION_CONSTANTS?.LOCAL_USER_PREFIX || 'local-')) {
                         console.warn(`⚠️ Backend yükleme hatası (deneme ${retryCount + 1}):`, apiError);
                     }
                     if (retryCount < maxRetries) {
@@ -485,7 +491,7 @@ async function loadStats() {
             } else {
                 // Kullanıcı giriş yapmamışsa veya geçersiz kullanıcıysa bu normal, uyarı gösterme
                 // Sadece gerçekten geçerli bir kullanıcı varsa ama veri yüklenemezse uyarı göster
-                if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2) {
+                if (isValidUser(user) && !user.id.startsWith(VALIDATION_CONSTANTS?.LOCAL_USER_PREFIX || 'local-')) {
                     // Geçerli kullanıcı var ama veri yüklenemedi - bu gerçek bir sorun olabilir
                     // Ancak yeni kullanıcılar için normal olabilir, bu yüzden sadece debug log
                     if (typeof debugLog === 'function') {
@@ -594,7 +600,7 @@ async function loadStats() {
                 dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
             }
             // ÖNEMLİ: Görevler yoksa oluştur
-            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+            if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
                 await checkDailyTasks();
             }
             updateDailyGoalDisplay();
@@ -609,7 +615,7 @@ async function loadStats() {
                 dailyTasks.todayStats.reviewWords = new Set(dailyTasks.todayStats.reviewWords || []);
             }
             // ÖNEMLİ: Görevler yoksa oluştur
-            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+            if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
                 await checkDailyTasks();
             }
             updateDailyGoalDisplay();
@@ -723,7 +729,7 @@ async function loadStats() {
                             });
                             
                             // ÖNEMLİ: Görevler yoksa oluştur (checkDailyTasks çağrılmalı)
-                            if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                            if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
                                 console.log('⚠️ Backend\'den görevler yüklenmedi veya eksik, checkDailyTasks çağrılıyor...');
                                 await checkDailyTasks();
                                 console.log('✅ checkDailyTasks tamamlandı, görev sayısı:', {
@@ -755,7 +761,7 @@ async function loadStats() {
                         });
                         
                         // ÖNEMLİ: Görevler yoksa oluştur ve bekle (yukarıda zaten kontrol edildi, ama tekrar kontrol ediyoruz)
-                        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                        if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
                             console.log('⚠️ UI güncelleme öncesi: Görevler eksik, checkDailyTasks çağrılıyor...');
                             await checkDailyTasks();
                         }
@@ -1066,7 +1072,7 @@ async function loadStats() {
         }
 
         // ÖNEMLİ: Görevleri kontrol et ve oluştur (await edilmeli)
-        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                        if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
             await checkDailyTasks();
             console.log('✅ checkDailyTasks tamamlandı (loadStats içinde), görev sayısı:', {
                 tasks: dailyTasks.tasks?.length || 0,
@@ -1614,7 +1620,7 @@ async function startKelimeCevirGame(subMode) {
     
     // Verileri yükle
     const allWords = await loadKelimeData();
-    if (!allWords || allWords.length === 0) {
+    if (isEmptyArray(allWords)) {
         showErrorMessage('Kelime verileri yüklenemedi!');
         return;
     }
@@ -1678,7 +1684,7 @@ async function startKelimeCevirGame(subMode) {
         }
         
         const favoriteWordIds = getFavoriteWords();
-        if (favoriteWordIds.length === 0) {
+        if (isEmptyArray(favoriteWordIds)) {
             showCustomAlert('⭐ Henüz favori kelime eklenmemiş. Kelime istatistikleri sayfasından kelimeleri favorilere ekleyebilirsiniz.', 'info');
             return;
         }
@@ -1723,7 +1729,7 @@ async function startKelimeCevirGame(subMode) {
  */
 function loadKelimeQuestion() {
     // Oyun bitti mi kontrol et
-    if (!questions || questions.length === 0) {
+    if (isEmptyArray(questions)) {
         console.warn('⚠️ Kelime Çevir: Soru listesi boş, oyun bitiriliyor');
         endGame();
         return;
@@ -1969,7 +1975,7 @@ async function startDinleBulGame() {
     maxCombo = 0;
     
     const allWords = await loadKelimeData();
-    if (!allWords || allWords.length === 0) {
+    if (isEmptyArray(allWords)) {
         showErrorMessage('Kelime verileri yüklenemedi!');
         return;
     }
@@ -1998,7 +2004,7 @@ async function startDinleBulGame() {
  */
 function loadDinleQuestion() {
     // Oyun bitti mi kontrol et
-    if (!questions || questions.length === 0) {
+    if (isEmptyArray(questions)) {
         console.warn('⚠️ Dinle Bul: Soru listesi boş, oyun bitiriliyor');
         endGame();
         return;
@@ -2285,7 +2291,7 @@ async function startBoslukDoldurGame() {
  */
 async function loadBoslukQuestion() {
     // Oyun bitti mi kontrol et
-    if (!questions || questions.length === 0) {
+    if (isEmptyArray(questions)) {
         console.warn('⚠️ Boşluk Doldur: Soru listesi boş, oyun bitiriliyor');
         endGame();
         return;
@@ -2311,7 +2317,7 @@ async function loadBoslukQuestion() {
         return;
     }
     const words = ayetText.split(' ').filter(w => w.trim().length > 0);
-    if (words.length === 0) {
+    if (isEmptyArray(words)) {
         errorLog('Ayet metninde kelime bulunamadı!');
         // Geçersiz soru varsa bir sonraki soruya geç, eğer soru kalmadıysa oyunu bitir
         currentQuestion++;
@@ -4350,7 +4356,7 @@ async function checkDailyTasks() {
         try {
             const user = await window.getCurrentUser();
             // Sadece geçerli Firebase kullanıcısı varsa kaydet
-            if (user && user.id && !user.id.startsWith('local-') && user.username && user.username.length >= 2 && user.username !== 'Kullanıcı') {
+            if (isValidUser(user) && !user.id.startsWith(VALIDATION_CONSTANTS?.LOCAL_USER_PREFIX || 'local-')) {
                 shouldSave = true;
             }
         } catch (error) {
@@ -4445,7 +4451,7 @@ function setupMidnightReset() {
  * Mevcut görevleri template ile senkronize eder (ad, açıklama ve target güncellemeleri için)
  */
 function syncTasksWithTemplate() {
-    if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) return;
+    if (isEmptyArray(dailyTasks.tasks)) return;
     
     // Template'den görevleri al
     const templateMap = new Map();
@@ -4720,7 +4726,7 @@ function updateTaskProgressFromStats() {
     }
     
     // ÖNEMLİ: Görevler yoksa oluştur (ama async bekleme yapmıyoruz, sadece uyarı veriyoruz)
-    if (!dailyTasks.tasks || dailyTasks.tasks.length === 0) {
+    if (isEmptyArray(dailyTasks.tasks)) {
         console.warn('⚠️ updateTaskProgressFromStats: Görevler yok! checkDailyTasks çağrılmalı.');
         // checkDailyTasks() async, bu yüzden burada await edemeyiz
         // Ancak görevler yoksa progress güncellemesi yapılamaz
@@ -4835,7 +4841,7 @@ async function updateTasksDisplay() {
         dailyTasksList.innerHTML = '';
         
         // ÖNEMLİ: Görevler yoksa oluştur (async, await edilmeli)
-        if (!dailyTasks.tasks || dailyTasks.tasks.length === 0 || !dailyTasks.bonusTasks || dailyTasks.bonusTasks.length === 0) {
+                        if (isEmptyArray(dailyTasks.tasks) || isEmptyArray(dailyTasks.bonusTasks)) {
             console.log('⚠️ updateTasksDisplay: Görevler yok, checkDailyTasks çağrılıyor...');
             await checkDailyTasks();
             console.log('✅ updateTasksDisplay: checkDailyTasks tamamlandı, görev sayısı:', {

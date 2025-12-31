@@ -552,7 +552,7 @@ async function loadWordsStats() {
             wordStatsData = window.wordStats || {};
             
             // Eğer boşsa, direkt boş göster (fallback'e geçme)
-            if (!wordStatsData || Object.keys(wordStatsData).length === 0) {
+            if (isEmptyObject(wordStatsData)) {
                 content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
                 return;
             }
@@ -603,7 +603,7 @@ async function loadWordsStats() {
         const words = Object.keys(wordStatsData || {});
         
         // Kelime yoksa boş mesaj göster
-        if (words.length === 0) {
+        if (isEmptyArray(words)) {
             content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
             return;
         }
@@ -633,7 +633,7 @@ async function loadWordsStats() {
             .filter(w => w.attempts > 0);
         
         // Eğer hiç attempts > 0 olan kelime yoksa, boş mesaj göster
-        if (wordsWithStats.length === 0) {
+        if (isEmptyArray(wordsWithStats)) {
             content.innerHTML = '<div style="text-align: center; padding: var(--spacing-lg); color: var(--text-secondary);">Henüz kelime istatistiği yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
             return;
         }
@@ -685,7 +685,7 @@ async function loadWordsStats() {
         // Zorlanılan kelimeler
         html += '<div class="words-stats-section" id="struggling-words">';
         html += '<h4>🔴 En Zorlanılan Kelimeler</h4>';
-        if (strugglingWords.length === 0) {
+        if (isEmptyArray(strugglingWords)) {
             html += '<div class="words-stats-empty">Henüz zorlanılan kelime yok. En az 2 deneme yapılan kelimeler burada görünecek.</div>';
         } else {
             html += '<div class="words-stats-list">';
@@ -699,7 +699,7 @@ async function loadWordsStats() {
         // İyi bilinen kelimeler
         html += '<div class="words-stats-section" id="mastered-words" style="display:none;">';
         html += '<h4>✅ En İyi Bilinen Kelimeler</h4>';
-        if (masteredWords.length === 0) {
+        if (isEmptyArray(masteredWords)) {
             html += '<div class="words-stats-empty">Henüz iyi bilinen kelime yok. En az 3 deneme ve %80+ başarı oranı gerekiyor.</div>';
         } else {
             html += '<div class="words-stats-list">';
@@ -713,7 +713,7 @@ async function loadWordsStats() {
         // Çok denenen kelimeler
         html += '<div class="words-stats-section" id="attempted-words" style="display:none;">';
         html += '<h4>📊 En Çok Denenen Kelimeler</h4>';
-        if (mostAttempted.length === 0) {
+        if (isEmptyArray(mostAttempted)) {
             html += '<div class="words-stats-empty">Henüz deneme yapılan kelime yok. Oyun oynayarak kelime istatistikleri oluşturun.</div>';
         } else {
             html += '<div class="words-stats-list">';
@@ -727,7 +727,7 @@ async function loadWordsStats() {
         // Son yanlışlar
         html += '<div class="words-stats-section" id="recent-words" style="display:none;">';
         html += '<h4>🕐 Son Yanlış Cevaplanan Kelimeler</h4>';
-        if (recentWrong.length === 0) {
+        if (isEmptyArray(recentWrong)) {
             html += '<div class="words-stats-empty">Henüz yanlış cevap verilen kelime yok. Yanlış cevap verdiğiniz kelimeler burada görünecek.</div>';
         } else {
             html += '<div class="words-stats-list">';
@@ -791,7 +791,7 @@ async function loadFavoritesStats() {
 
     const favoriteWordIds = getFavoriteWords();
     
-    if (favoriteWordIds.length === 0) {
+    if (isEmptyArray(favoriteWordIds)) {
         content.innerHTML = `
             <div class="words-stats-empty">
                 <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">⭐</div>
@@ -836,7 +836,7 @@ async function loadFavoritesStats() {
         })
         .filter(w => w.kelime !== 'Bilinmiyor');
     
-    if (favoriteWordsWithStats.length === 0) {
+    if (isEmptyArray(favoriteWordsWithStats)) {
         content.innerHTML = `
             <div class="words-stats-empty">
                 <p>Favori kelimeler bulunamadı.</p>

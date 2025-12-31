@@ -62,7 +62,9 @@ async function firestoreGet(collection, docId) {
 async function firestoreSet(collection, docId, data) {
     // Eğer docId local- ile başlıyorsa, Firebase kullanma (en önce kontrol et)
     if (!docId || String(docId).startsWith('local-')) {
-        console.log(`ℹ️ firestoreSet: LocalStorage kullanıcısı (${docId}), Firebase kullanılmıyor`);
+        if (typeof debugLog === 'function') {
+            debugLog(`ℹ️ firestoreSet: LocalStorage kullanıcısı (${docId}), Firebase kullanılmıyor`);
+        }
         return false; // LocalStorage kullanıcısı, Firebase kullanma
     }
     
@@ -77,15 +79,21 @@ async function firestoreSet(collection, docId, data) {
         try {
             const currentUser = auth.currentUser;
             if (!currentUser) {
-                console.log('ℹ️ firestoreSet: Firebase\'de kullanıcı yok, erişilmiyor');
+                if (typeof debugLog === 'function') {
+                    debugLog('ℹ️ firestoreSet: Firebase\'de kullanıcı yok, erişilmiyor');
+                }
                 return false; // Firebase'de kullanıcı yok, erişme
             }
         } catch (e) {
-            console.log('ℹ️ firestoreSet: Firebase auth kontrolü hatası, erişilmiyor');
+            if (typeof debugLog === 'function') {
+                debugLog('ℹ️ firestoreSet: Firebase auth kontrolü hatası, erişilmiyor');
+            }
             return false; // Hata durumunda erişme
         }
     } else {
-        console.log('ℹ️ firestoreSet: Firebase auth yok, erişilmiyor');
+        if (typeof debugLog === 'function') {
+            debugLog('ℹ️ firestoreSet: Firebase auth yok, erişilmiyor');
+        }
         return false;
     }
     
@@ -622,7 +630,7 @@ async function getCurrentUser() {
                 
                 // Eğer username yoksa veya geçersizse, anonymous kullanıcı olabilir
                 // Anonymous kullanıcılar için null döndür (rastgele kullanıcı oluşturmayı önle)
-                if (!username || username === 'Kullanıcı' || username.length < 2) {
+                if (!username || !isValidUsername(username)) {
                     // Anonymous kullanıcı kontrolü: Eğer localStorage'da username yoksa, anonymous kullanıcı olabilir
                     if (!localUsername) {
                         console.log('⚠️ getCurrentUser: Anonymous kullanıcı tespit edildi, username yok');
@@ -695,7 +703,7 @@ async function getCurrentUser() {
                         let username = localUsername || userData?.username || user.displayName;
                         
                         // Eğer username yoksa veya geçersizse, anonymous kullanıcı olabilir
-                        if (!username || username === 'Kullanıcı' || username.length < 2) {
+                        if (!username || !isValidUsername(username)) {
                             // Anonymous kullanıcı kontrolü: Eğer localStorage'da username yoksa, anonymous kullanıcı olabilir
                             if (!localUsername) {
                                 console.log('⚠️ getCurrentUser: Anonymous kullanıcı tespit edildi (onAuthStateChanged), username yok');
@@ -1054,7 +1062,7 @@ async function saveUserStats(stats) {
     if (getBackendType() === 'firebase' && user && user.id && !user.id.startsWith('local-')) {
         try {
             // ÖNEMLİ: Kullanıcı kontrolü - sadece geçerli kullanıcılar için çalış
-            if (!user.username || user.username === 'Kullanıcı' || user.username.length < 2) {
+            if (!user.username || !isValidUsername(user.username)) {
                 console.log('ℹ️ saveUserStats: Geçersiz username, Firebase\'e kaydedilmedi:', user.username);
                 return; // Geçersiz kullanıcı, Firebase'e kaydetme
             }
